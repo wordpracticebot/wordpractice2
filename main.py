@@ -19,6 +19,9 @@ Config = namedtuple(
         "DATABASE_URI",
         "DATABASE_NAME",
         "DBL_TOKEN",
+        "COMMAND_LOG",
+        "TEST_LOG",
+        "IMPORTANT_LOG",
     ],
 )
 
@@ -30,6 +33,9 @@ def main():
         DATABASE_URI=os.environ["DATABASE_URI"],
         DATABASE_NAME=os.environ["DATABASE_NAME"],
         DBL_TOKEN=os.environ["DBL_TOKEN"],
+        COMMAND_LOG=os.environ["COMMAND_LOG"],
+        TEST_LOG=os.environ["TEST_LOG"],
+        IMPORTANT_LOG=os.environ["IMPORTANT_LOG"],
     )
 
     intents = discord.Intents.default()

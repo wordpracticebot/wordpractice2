@@ -1,5 +1,6 @@
 py-cord
-"umongo[motor]"
+umongo[motor]
 motor
 black
 dnspython
+git+https://github.com/Pycord-Development/pycord.git

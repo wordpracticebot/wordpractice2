@@ -1,3 +1,5 @@
+import pickle
+import time
 from datetime import datetime
 
 import discord
@@ -33,7 +35,6 @@ class Guild(Document):
 
 
 class Infraction(EmbeddedDocument):
-    inf_type = StringField()
     moderator = StringField()  # NAME#DISCRIMINATOR (ID)
     reason = StringField()
     timestamp = DateTimeField()
@@ -67,7 +68,6 @@ class User(Document):
     discriminator = IntegerField(required=True)
     avatar = StringField(default=None)
 
-    # TODO: add validation to other fields
     # Statistics
     coins = StringField(default=0)
     words = IntegerField(default=0)
@@ -134,35 +134,79 @@ class Mongo(commands.Cog):
 
     async def fetch_user(self, user: discord.Member):
         # Checking if the user is in the cache
-        res = self.bot.user_cache.get(user.id)
-        if res is not None:
-            return res
+        u = self.bot.user_cache.get(user.id)
+        if u is not None:
+            u = self.User.build_from_mongo(pickle.loads(u))
+        else:
+            u = await self.User.find_one({"id": user.id})
+            if u is None:
+                u = self.User(
+                    id=user.id,
+                    name=user.name,
+                    discriminator=user.discriminator,
+                    avatar=user.avatar.key if user.avatar else None,
+                )
+                try:
+                    await u.commit()
+                except pymongo.errors.DuplicateKeyError:
+                    pass
 
-        u = await self.User.find_one({"id": user.id})
-        if u is None:
-            u = self.User(
-                id=user.id,
-                name=user.name,
-                discriminator=user.discriminator,
-                avatar=user.avatar.key if user.avatar else None,
-            )
-            try:
-                await u.commit()
-            except pymongo.errors.DuplicateKeyError:
-                pass
+                # Caching user
+                self.bot.user_cache[user.id] = pickle.dumps(u.to_mongo())
 
-            # Caching user
-            self.bot.user_cache[user.id] = u
+                return u
+
+        current = {
+            "name": user.name,
+            "discriminator": user.discriminator,
+            "avatar": user.avatar.key if user.avatar else None,
+        }
+
+        uj = u.to_mongo()
+
+        # Checking if user info needs to be updated
+        if current.values() != [u.name, u.discriminator, u.avatar]:
+            await self.db.user.update_one({"_id": user.id}, {"$set": current})
+            uj.update(current)
+
+        # Updating in cache
+        self.bot.user_cache[user.id] = pickle.dumps(uj)
 
         return u
 
-    async def update_user(self, user, query: dict):
+    async def update_user(self, user, query: dict, del_cache=True):
         if hasattr(user, "id"):
             user = user.id
 
         await self.db.user.update_one({"_id": user}, query)
 
-        del self.bot.user_cache[user]
+        if del_cache:
+            if user in self.bot.user_cache:
+                del self.bot.user_cache[user]
+
+    async def ban_user(self, user, moderator: str, reason: str):
+        inf = self.Infraction(
+            moderator=moderator, reason=reason, timestamp=datetime.now()
+        )
+        await self.update_user(
+            user, {"$set": {"banned": True}, "$push": {"infractions": inf.to_mongo()}}
+        )
+
+        timestamp = round(time.time())
+
+        # TODO: improve embed display
+        # Logging user ban
+        embed = self.bot.embed(
+            title="User Banned",
+            description=(
+                f"User: {user} ({user.id})\n"
+                f"Moderator: {moderator}\n"
+                f"Reason: {reason}\n"
+                f"Timestamp: <t:{timestamp}:R>"
+            ),
+        )
+
+        await self.bot.cmd_wh.send(embed=embed)
 
 
 def setup(bot):

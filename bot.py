@@ -64,12 +64,11 @@ class WordPractice(commands.AutoShardedBot):
         self.activity = discord.Activity(
             type=discord.ActivityType.watching, name=" for %help"
         )
-        self.http_session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession()
 
-        # TODO: add spam control
         # Spam protection
         self.spam_control = commands.CooldownMapping.from_cooldown(
-            10, 12.0, commands.BucketType.user
+            6, 8.0, commands.BucketType.user
         )
         self.spam_counter = Counter()
 
@@ -116,7 +115,7 @@ class WordPractice(commands.AutoShardedBot):
 
     async def close(self):
         await super().close()
-        await self.http_session.close()
+        await self.session.close()
 
     async def get_context(self, message, *, cls=CustomContext):
         # Using custom context class
@@ -137,32 +136,54 @@ class WordPractice(commands.AutoShardedBot):
         if message.content == self.user.mention:
             prefix = await self.get_prefix(message)
             embed = self.embed(title=f"My prefix is `{prefix}`\nType `{prefix}help`")
-            return await message.reply(embed=embed)
+            return await ctx.reply(embed=embed)
 
         # Checking if command is valid
-        if ctx.command is not None:
+        if ctx.command is None:
             # Processing command to raise command not found in error handler
             return await self.invoke(ctx)
+
+        user = await self.mongo.fetch_user(message.author)
+        if user.banned:
+            embed = self.error_embed(
+                title="You are banned",
+                description="Join the support server and create a ticket for a ban appeal",
+            )
+            view = discord.ui.View()
+
+            item = discord.ui.Button(
+                style=discord.ButtonStyle.link,
+                label="Click here!",
+                url=constants.SUPPORT_SERVER,
+            )
+            view.add_item(item=item)
+            return await ctx.reply(embed=embed, view=view)
 
         # Spam protection
         # https://github.com/Rapptz/RoboDanny/blob/rewrite/bot.py
         bucket = self.spam_control.get_bucket(message)
-        current = message.created_at.timestamp()
+        current = message.created_at.replace().timestamp()
 
         retry_after = bucket.update_rate_limit(current)
         author_id = message.author.id
 
         if retry_after and author_id != self.owner_id:
             self.spam_counter[author_id] += 1
-            if self.spam_counter[author_id] >= 3:
-                # TODO: ban the user
+            if self.spam_counter[author_id] >= 2:
+                # Banning user
+                await self.mongo.ban_user(
+                    user=message.author,
+                    moderator="Auto Moderator",
+                    reason="Spamming commands",
+                )
                 del self.spam_counter[author_id]
             else:
-                pass
-                # TODO: log the spamming
-            return
+                print("SPAMMING")
+
         else:
             self.spam_counter.pop(author_id, None)
+
+        await self.invoke(ctx)
 
         # TODO: log command
 
@@ -177,6 +198,21 @@ class WordPractice(commands.AutoShardedBot):
             self.prefix_cache[msg.guild.id] = prefix
 
         return commands.when_mentioned_or(prefix)(self, msg)
+
+    @discord.utils.cached_property
+    def cmd_wh(self):
+        hook = discord.Webhook.from_url(self.config.COMMAND_LOG, session=self.session)
+        return hook
+
+    @discord.utils.cached_property
+    def test_wh(self):
+        hook = discord.Webhook.from_url(self.config.TEST_LOG, session=self.session)
+        return hook
+
+    @discord.utils.cached_property
+    def impt_wh(self):
+        hook = discord.Webhook.from_url(self.config.IMPORTANT_LOG, session=self.session)
+        return hook
 
     def run(self):
         super().run(self.config.BOT_TOKEN, reconnect=True)
