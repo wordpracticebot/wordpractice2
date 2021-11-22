@@ -21,6 +21,10 @@ BOT_TOKEN= # Your bot token
 DATABASE_URI= # Mongodb database uri
 DATABASE_NAME= # Cluster name
 DBL_TOKEN= # dbl token
+
+COMMAND_LOG= # command log webhook url
+TEST_LOG= # test log webhook url
+IMPORTANT_LOG= # important log webhook url
 ```
 
 ## Formatting
