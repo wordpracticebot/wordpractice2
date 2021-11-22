@@ -1,6 +1,14 @@
-py-cord
+# Discord wrapper
+git+https://github.com/Pycord-Development/pycord.git
+
+# Database
 umongo[motor]
 motor
-black
 dnspython
-git+https://github.com/Pycord-Development/pycord.git
+
+# Other
+rapidfuzz
+
+# Formatting
+black
+isort

@@ -17,13 +17,23 @@ from helpers.ui import CustomEmbed
 # TODO: use max concurrency for typing test
 
 
+def unqualify(name):
+    return name.rsplit(".", maxsplit=1)[-1]
+
+
+# https://github.com/python-discord/bot/blob/main/bot/utils/extensions.py
 def get_exts():
     for module in pkgutil.walk_packages(cogs.__path__, f"{cogs.__name__}."):
-        imported = importlib.import_module(module.name)
 
-        # If the module doesn't have a setup function, it's not an extension
-        if not inspect.isfunction(getattr(imported, "setup", None)):
+        # Not loading modules that start with underscore
+        if unqualify(module.name).startswith("_"):
             continue
+
+        if module.ispkg:
+            imported = importlib.import_module(module.name)
+            # Checking for setup function to determine if it is an extension
+            if not inspect.isfunction(getattr(imported, "setup", None)):
+                continue
 
         yield module.name
 

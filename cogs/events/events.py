@@ -12,6 +12,11 @@ class Events(commands.Cog):
         if after.content != before.content:
             await self.bot.process_commands(after)
 
+    # TODO: create error handler
+    # @commands.Cog.listener()
+    # async def on_command_error(self, ctx, error):
+    #     pass
+
 
 def setup(bot):
     bot.add_cog(Events(bot))
