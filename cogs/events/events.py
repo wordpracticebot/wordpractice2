@@ -7,7 +7,6 @@ from helpers.utils import filter_commands
 
 
 def get_similar_results(name, choices):
-    print(name, choices)
     result = process.extract(
         default_process(name),
         choices,
@@ -35,7 +34,7 @@ class Events(commands.Cog):
     async def on_command(self, ctx):
         timestamp = int(time.time())
 
-        embed = self.embed(
+        embed = self.bot.embed(
             description=(
                 f"**Username:** {ctx.author}\n"
                 f"**User ID:** {ctx.author.id}\n"
@@ -74,15 +73,16 @@ class Events(commands.Cog):
                 await self.get_options(ctx),
             )
 
-            matches = "\n".join(f"`{m}`" for m in matches) if matches != [] else ""
+            if matches != []:
+                matches = "\n".join(f"`{m}`" for m in matches)
+                content = f"\n\n**Did you mean**\n{matches}"
+            else:
+                content = ""
 
             await self.send_error(
                 ctx,
                 "Command Not Found",
-                (
-                    f"Type `{ctx.prefix}help` for a list of commands\n\n"
-                    f"**Did you mean**\n{matches}"
-                ),
+                f"Type `{ctx.prefix}help` for a list of commands" + content,
             )
 
         elif isinstance(error, errors.UserInputError):

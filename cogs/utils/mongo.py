@@ -209,7 +209,7 @@ class Mongo(commands.Cog):
             add_footer=False,
         )
 
-        await self.bot.cmd_wh.send(embed=embed)
+        await self.bot.impt_wh.send(embed=embed)
 
 
 def setup(bot):
