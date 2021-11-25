@@ -4,10 +4,10 @@ Practice your typing skills while having fun, compete with typists from around t
 
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the required dependencies.
+Use [poetry](https://python-poetry.org/) to install the required dependencies.
 
 ```bash
-pip install -r requirements.txt
+poetry install
 ```
 
 ## Configuration
@@ -29,7 +29,7 @@ IMPORTANT_LOG= # important log webhook url
 
 ## Formatting
 
-[Black](https://github.com/psf/black) and [isort](https://github.com/PyCQA/isort) are used for formatting.
+[Black](https://github.com/psf/black) is used for formatting.
 
 ## Running
 

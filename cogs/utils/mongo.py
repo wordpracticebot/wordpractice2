@@ -6,7 +6,7 @@ import discord
 import pymongo
 from discord.ext import commands
 from motor.motor_asyncio import AsyncIOMotorClient
-from umongo import Document, EmbeddedDocument, validate
+from umongo import Document, EmbeddedDocument
 from umongo.fields import (
     BooleanField,
     DateTimeField,
@@ -35,30 +35,30 @@ class Guild(Document):
 
 
 class Infraction(EmbeddedDocument):
-    moderator = StringField()  # NAME#DISCRIMINATOR (ID)
-    reason = StringField()
-    timestamp = DateTimeField()
+    moderator = StringField(required=True)  # NAME#DISCRIMINATOR (ID)
+    reason = StringField(required=True)
+    timestamp = DateTimeField(required=True)
 
 
 class Score(EmbeddedDocument):
-    wpm = FloatField()
-    raw = FloatField()
-    acc = FloatField()
+    wpm = FloatField(required=True)
+    raw = FloatField(required=True)
+    acc = FloatField(required=True)
 
     # correct words
-    cw = IntegerField()
+    cw = IntegerField(required=True)
     # total words
-    tw = IntegerField()
+    tw = IntegerField(required=True)
 
     # User input
-    u_input = StringField(validate=[validate.Length(max=750)])
+    u_input = StringField(required=True)
 
     # Quote
-    quote = ListField(StringField)
+    quote = ListField(StringField, required=True)
 
     # coin earnings
-    earnings = IntegerField()
-    timestamp = DateTimeField()
+    earnings = IntegerField(required=True)
+    timestamp = DateTimeField(required=True)
 
 
 class User(Document):
@@ -186,24 +186,27 @@ class Mongo(commands.Cog):
 
     async def ban_user(self, user, moderator: str, reason: str):
         inf = self.Infraction(
-            moderator=moderator, reason=reason, timestamp=datetime.now()
+            moderator=moderator,
+            reason=reason,
+            timestamp=datetime.now(),
         )
+
         await self.update_user(
-            user, {"$set": {"banned": True}, "$push": {"infractions": inf.to_mongo()}}
+            user, {"$push": {"infractions": inf.to_mongo()}, "$set": {"banned": True}}
         )
 
         timestamp = round(time.time())
 
-        # TODO: improve embed display
-        # Logging user ban
-        embed = self.bot.embed(
-            title="User Banned",
+        # Logging ban
+        embed = self.bot.error_embed(
+            title=f"User Banned",
             description=(
-                f"User: {user} ({user.id})\n"
-                f"Moderator: {moderator}\n"
-                f"Reason: {reason}\n"
-                f"Timestamp: <t:{timestamp}:R>"
+                f"**User:** {user} ({user.id})\n"
+                f"**Moderator:** {moderator}\n"
+                f"**Reason:** {reason}\n"
+                f"**Timestamp:** <t:{timestamp}:R>"
             ),
+            add_footer=False,
         )
 
         await self.bot.cmd_wh.send(embed=embed)

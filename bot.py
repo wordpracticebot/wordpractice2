@@ -15,6 +15,7 @@ import constants
 from helpers.ui import CustomEmbed
 
 # TODO: use max concurrency for typing test
+# TODO: check if user is banned when giving roles
 
 
 def unqualify(name):
@@ -54,10 +55,10 @@ class WordPractice(commands.AutoShardedBot):
 
         self.config = config
 
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
 
-        super().__init__(**kwargs, loop=loop, command_prefix=self.get_prefix)
+        super().__init__(**kwargs, loop=self.loop, command_prefix=self.get_prefix)
 
         self.add_check(
             commands.bot_has_permissions(
@@ -74,11 +75,11 @@ class WordPractice(commands.AutoShardedBot):
         self.activity = discord.Activity(
             type=discord.ActivityType.watching, name=" for %help"
         )
-        self.session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession(loop=self.loop)
 
         # Spam protection
         self.spam_control = commands.CooldownMapping.from_cooldown(
-            6, 8.0, commands.BucketType.user
+            8, 10.0, commands.BucketType.user
         )
         self.spam_counter = Counter()
 
@@ -137,15 +138,16 @@ class WordPractice(commands.AutoShardedBot):
 
         await self.process_commands(message)
 
-    # TODO: use epoch discord timestamps for logs
-
     async def process_commands(self, message):
         ctx = await self.get_context(message)
 
         # If bot is mentioned it will return prefix
-        if message.content == self.user.mention:
-            prefix = await self.get_prefix(message)
-            embed = self.embed(title=f"My prefix is `{prefix}`\nType `{prefix}help`")
+        if message.content in [f"<@!{self.user.id}>", f"<@{self.user.id}>"]:
+            prefix = await self.get_raw_prefix(message)
+            embed = self.embed(
+                title="Prefix",
+                description=f"My prefix is `{prefix}`\nType `{prefix}help` for a list of commands.",
+            )
             return await ctx.reply(embed=embed)
 
         # Checking if command is valid
@@ -158,6 +160,7 @@ class WordPractice(commands.AutoShardedBot):
             embed = self.error_embed(
                 title="You are banned",
                 description="Join the support server and create a ticket for a ban appeal",
+                add_footer=False,
             )
             view = discord.ui.View()
 
@@ -179,7 +182,7 @@ class WordPractice(commands.AutoShardedBot):
 
         if retry_after and author_id != self.owner_id:
             self.spam_counter[author_id] += 1
-            if self.spam_counter[author_id] >= 2:
+            if self.spam_counter[author_id] >= 3:
                 # Banning user
                 await self.mongo.ban_user(
                     user=message.author,
@@ -187,17 +190,14 @@ class WordPractice(commands.AutoShardedBot):
                     reason="Spamming commands",
                 )
                 del self.spam_counter[author_id]
-            else:
-                print("SPAMMING")
+            return
 
         else:
             self.spam_counter.pop(author_id, None)
 
         await self.invoke(ctx)
 
-        # TODO: log command
-
-    async def get_prefix(self, msg):
+    async def get_raw_prefix(self, msg):
         if msg.guild.id in self.prefix_cache:
             prefix = self.prefix_cache[msg.guild.id]
         else:
@@ -207,7 +207,11 @@ class WordPractice(commands.AutoShardedBot):
 
             self.prefix_cache[msg.guild.id] = prefix
 
-        return commands.when_mentioned_or(prefix)(self, msg)
+        return prefix
+
+    async def get_prefix(self, msg):
+        raw_prefix = await self.get_raw_prefix(msg)
+        return commands.when_mentioned_or(raw_prefix)(self, msg)
 
     @discord.utils.cached_property
     def cmd_wh(self):

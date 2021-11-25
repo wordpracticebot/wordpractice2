@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "wordPractice"
+version = "2.0.0"
+description = "The typing test Discord bot."
+authors = ["principle105"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+py-cord = {git = "https://github.com/Pycord-Development/pycord.git"}
+umongo = {extras = ["motor"], version = "^3.0.1"}
+motor = "^2.5.1"
+dnspython = "^2.1.0"
+rapidfuzz = "^1.8.3"
+certifi = "^2021.10.8"
+humanfriendly = "^10.0"
+black = "^21.11b1"
+python-dotenv = "^0.19.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

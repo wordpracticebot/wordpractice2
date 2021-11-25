@@ -4,10 +4,24 @@ import discord
 from discord.ext import commands
 from rapidfuzz import fuzz, process
 from rapidfuzz.utils import default_process
+from helpers.utils import filter_commands
 
+import constants
 from helpers.ui import Base_View
 
 Category = namedtuple("Category", ["name", "description", "cogs"])
+
+
+def add_commands(embed, ctx, cmds):
+    """Formats commands fields and adds them to embeds"""
+    for cmd in cmds:
+        embed.add_field(
+            name=f"{ctx.prefix}{cmd} {cmd.signature}",
+            value=cmd.help or "No command description",
+            inline=False,
+        )
+
+    return embed
 
 
 class Category_Selector(discord.ui.Select):
@@ -25,7 +39,7 @@ class Category_Selector(discord.ui.Select):
     def add_options(self):
         self.add_option(
             label="Welcome",
-            description="Learn how to use the bot",
+            description="Learn about the bot",
             emoji="\N{WAVING HAND SIGN}",
             value="Welcome",
         )
@@ -33,7 +47,7 @@ class Category_Selector(discord.ui.Select):
 
             self.add_option(
                 label=cog.qualified_name,
-                description=cog.description,
+                description=cog.description or "No category description",
                 emoji=getattr(cog, "emoji", None),
                 value=cog.qualified_name,
             )
@@ -55,8 +69,27 @@ class Help_View(Base_View):
 
     async def create_page(self, option):
         if option == "Welcome":
+            # TODO: add more information about commands like typing test
             embed = self.ctx.bot.embed(
-                title="Help", description="blah blah blah no help for you"
+                title="Help",
+                description="Welcome to wordPractice!",
+            )
+            embed.add_field(
+                name="What is wordPractice?",
+                value=(
+                    "wordPractice most feature dense typing test Discord Bot.\n"
+                    "Practice your typing skills while having fun by competing in seasons,\n"
+                    "racing against others, collecting badges and much more!"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="Support",
+                value=(
+                    "If you need any help or just want to talk about typing,\n"
+                    f"join our community discord server at\n{constants.SUPPORT_SERVER}"
+                ),
+                inline=False,
             )
             return embed
 
@@ -68,12 +101,7 @@ class Help_View(Base_View):
             add_footer=False,
         )
 
-        for cmd in cmds:
-            embed.add_field(
-                name=f"{cmd.name}{cmd.signature}",
-                value=cmd.help or "No command description",
-                inline=False,
-            )
+        embed = add_commands(embed, self.ctx, cmds)
 
         return embed
 
@@ -110,10 +138,8 @@ class Custom_Help(commands.HelpCommand):
         cogs = {
             cog.qualified_name: [m, cog]
             for cog in ctx.bot.cogs.values()
-            if len(m := await self.filter_commands(cog.walk_commands()))
+            if len(m := await filter_commands(ctx, cog.walk_commands(), sort=True))
         }
-
-        print(cogs)
 
         view = Help_View(self.context, default_page)
 
@@ -122,20 +148,48 @@ class Custom_Help(commands.HelpCommand):
         await view.start()
 
     async def send_group_help(self, group):
-        print("Group")
+        ctx = self.context
 
-    async def send_command_help(self, command):
-        print("Command")
+        embed = ctx.bot.embed(title=f"{group.qualified_name}")
+
+        embed = add_commands(
+            embed, ctx, await filter_commands(ctx, group.commands, sort=True)
+        )
+
+        await ctx.reply(embed=embed)
+
+    async def send_command_help(self, cmd):
+        ctx = self.context
+
+        embed = ctx.bot.embed(title=f"{cmd.qualified_name.capitalize()}")
+
+        embed = add_commands(embed, ctx, [cmd])
+
+        if cmd.aliases:
+            embed.add_field(name="Aliases", value="\n".join(cmd.aliases), inline=False)
+
+        await ctx.reply(embed=embed)
 
     async def send_cog_help(self, cog):
-        print("Cog")
+        ctx = self.context
+
+        embed = ctx.bot.embed(
+            title=cog.qualified_name,
+            description=cog.description or "No category description",
+        )
+
+        embed = add_commands(
+            embed, ctx, await filter_commands(ctx, cog.commands, sort=True)
+        )
+
+        await ctx.reply(embed=embed)
 
     async def get_help_options(self):
         ctx = self.context
 
         options = set()
 
-        for cmd in await self.filter_commands(ctx.bot.walk_commands()):
+        for cmd in await filter_commands(ctx, ctx.bot.walk_commands()):
             options.add(str(cmd))
 
             if isinstance(cmd, commands.Command):
