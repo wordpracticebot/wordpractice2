@@ -1,13 +1,12 @@
-FROM python:3.9 
+FROM python:3.9.7
 
-# Creating the working directory
 WORKDIR /app
 
-ENV PYTHONUNBUFFERED 1
+RUN pip install poetry
+RUN poetry config virtualenvs.create false
 
-# Installing dependencies
-COPY requirements.txt ./
-RUN pip3 install -r requirements.txt
+COPY pyproject.toml poetry.lock ./
+RUN poetry install --no-dev
 
 COPY . .
 CMD ["python", "main.py"]

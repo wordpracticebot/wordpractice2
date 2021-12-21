@@ -48,7 +48,8 @@ def main():
         config=config,
         allowed_mentions=allowed_mentions,
         chunk_guilds_at_startup=False,
-        case_insensitive=intents,
+        case_insensitive=True,
+        intents=intents,
     )
 
     bot.run()

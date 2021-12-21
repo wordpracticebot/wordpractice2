@@ -22,7 +22,7 @@ class CustomEmbed(discord.Embed):
         return random.choice(["yes", "no", "maybe"])
 
 
-class Base_View(discord.ui.View):
+class BaseView(discord.ui.View):
     def __init__(self, ctx):
         self.ctx = ctx
 
@@ -31,7 +31,7 @@ class Base_View(discord.ui.View):
     async def on_timeout(self):
         for child in self.children:
             child.disabled = True
-        await self.response.edit(view=self)
+        await self.response.edit_original_message(view=self)
 
     async def interaction_check(self, interaction):
         if self.ctx.author.id != interaction.user.id:
@@ -40,16 +40,6 @@ class Base_View(discord.ui.View):
             )
             return False
         return True
-
-    async def on_error(self, error, item, interaction):
-        print(str(error))
-        traceback.print_exc()
-        if interaction.response.is_done():
-            await interaction.followup.send("An unknown error happened", ephemeral=True)
-        else:
-            await interaction.response.send_message(
-                "An unknown error happened", ephemeral=True
-            )
 
     async def interaction_check(self, interaction):
         if interaction.user and interaction.user.id == self.ctx.author.id:
@@ -65,6 +55,17 @@ class Base_View(discord.ui.View):
     async def update_buttons(self):
         pass
 
+    async def on_error(self, error, item, interaction):
+        if interaction.response.is_done():
+            await interaction.followup.send("An unknown error happened", ephemeral=True)
+        else:
+            await interaction.response.send_message(
+                "An unknown error happened", ephemeral=True
+            )
+
+        # TODO: remove this in production + log error
+        raise error
+
     async def update_message(self, interaction):
         embed = await self.create_page()
         await interaction.message.edit(embed=embed, view=self)
@@ -76,10 +77,10 @@ class Base_View(discord.ui.View):
     async def start(self):
         embed = await self.create_page()
         await self.update_buttons()
-        self.response = await self.ctx.reply(embed=embed, view=self)
+        self.response = await self.ctx.respond(embed=embed, view=self)
 
 
-class Scroll_View(Base_View):
+class ScrollView(BaseView):
     def __init__(self, ctx, max_page: int, compact=True):
         super().__init__(ctx)
 
@@ -132,3 +133,18 @@ class Scroll_View(Base_View):
             self.page = self.max_page - 1
 
             await self.update_all(interaction)
+
+
+def create_link_view(links: dict):
+    """
+    Creates a link view
+    links: {name: url}
+    """
+
+    view = discord.ui.View()
+
+    for label, url in links.items():
+        item = discord.ui.Button(style=discord.ButtonStyle.link, label=label, url=url)
+        view.add_item(item=item)
+
+    return view

@@ -6,7 +6,6 @@ authors = ["principle105"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-py-cord = {git = "https://github.com/Pycord-Development/pycord.git"}
 umongo = {extras = ["motor"], version = "^3.0.1"}
 motor = "^2.5.1"
 dnspython = "^2.1.0"
@@ -15,6 +14,8 @@ certifi = "^2021.10.8"
 humanfriendly = "^10.0"
 black = "^21.11b1"
 python-dotenv = "^0.19.2"
+py-cord = {git = "https://github.com/Pycord-Development/pycord"}
+Pillow = "^8.4.0"
 
 [tool.poetry.dev-dependencies]
 

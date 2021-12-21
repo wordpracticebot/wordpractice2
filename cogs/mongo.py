@@ -18,20 +18,7 @@ from umongo.fields import (
     StringField,
 )
 from umongo.frameworks import MotorAsyncIOInstance
-
-import constants
-
-
-class Guild(Document):
-
-    # Server id
-    id = IntegerField(attribute="_id")
-
-    # Server prefix
-    prefix = StringField(default=constants.DEFAULT_PREFIX)
-
-    # # Disabled channels
-    disabled = ListField(IntegerField, default=[])
+from typing import Union
 
 
 class Infraction(EmbeddedDocument):
@@ -69,7 +56,6 @@ class User(Document):
     avatar = StringField(default=None)
 
     # Statistics
-    coins = StringField(default=0)
     words = IntegerField(default=0)
     last24 = ListField(ListField(IntegerField), default=[[0], [0]])
 
@@ -113,7 +99,6 @@ class Mongo(commands.Cog):
         g = globals()
 
         for n in (
-            "Guild",
             "Infraction",
             "Score",
             "User",
@@ -122,37 +107,37 @@ class Mongo(commands.Cog):
             setattr(self, n, instance.register(g[n]))
             getattr(self, n).bot = bot
 
-    async def fetch_guild(self, guild: discord.Guild):
-        g = await self.Guild.find_one({"id": guild.id})
-        if g is None:
-            g = self.Guild(id=guild.id)
-            try:
-                await g.commit()
-            except pymongo.errors.DuplicateKeyError:
-                pass
-        return g
+    async def fetch_user(self, user: Union[discord.Member, int]):
+        if isinstance(user, int):
+            user_id = user
+        else:
+            user_id = user.id
 
-    async def fetch_user(self, user: discord.Member):
         # Checking if the user is in the cache
-        u = self.bot.user_cache.get(user.id)
+        u = self.bot.user_cache.get(user_id)
         if u is not None:
             u = self.User.build_from_mongo(pickle.loads(u))
         else:
-            u = await self.User.find_one({"id": user.id})
+            u = await self.User.find_one({"id": user_id})
             if u is None:
-                u = self.User(
-                    id=user.id,
-                    name=user.name,
-                    discriminator=user.discriminator,
-                    avatar=user.avatar.key if user.avatar else None,
-                )
-                try:
-                    await u.commit()
-                except pymongo.errors.DuplicateKeyError:
-                    pass
+                if user != user_id:
+                    u = self.User(
+                        id=user.id,
+                        name=user.name,
+                        discriminator=user.discriminator,
+                        avatar=user.avatar.key if user.avatar else None,
+                    )
+                    try:
+                        await u.commit()
+                    except pymongo.errors.DuplicateKeyError:
+                        pass
 
-                # Caching user
-                self.bot.user_cache[user.id] = pickle.dumps(u.to_mongo())
+                    # Caching user
+                    self.bot.user_cache[user.id] = pickle.dumps(u.to_mongo())
+
+                else:
+                    self.bot.user[user.id] = None
+                    return None
 
                 return u
 
@@ -166,7 +151,7 @@ class Mongo(commands.Cog):
 
         # Checking if user info needs to be updated
         if current.values() != [u.name, u.discriminator, u.avatar]:
-            await self.db.user.update_one({"_id": user.id}, {"$set": current})
+            await self.update_user(user.id, {"$set": current})
             uj.update(current)
 
         # Updating in cache
@@ -174,15 +159,14 @@ class Mongo(commands.Cog):
 
         return u
 
-    async def update_user(self, user, query: dict, del_cache=True):
+    async def update_user(self, user, query: dict):
         if hasattr(user, "id"):
             user = user.id
 
         await self.db.user.update_one({"_id": user}, query)
 
-        if del_cache:
-            if user in self.bot.user_cache:
-                del self.bot.user_cache[user]
+        if user in self.bot.user_cache:
+            del self.bot.user_cache[user]
 
     async def ban_user(self, user, moderator: str, reason: str):
         inf = self.Infraction(

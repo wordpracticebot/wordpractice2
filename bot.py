@@ -4,6 +4,7 @@ import inspect
 import pkgutil
 import sys
 import traceback
+import time
 from collections import Counter
 
 import aiohttp
@@ -16,6 +17,8 @@ from helpers.ui import CustomEmbed
 
 # TODO: use max concurrency for typing test
 # TODO: check if user is banned when giving roles
+# TODO: build typing test gifs more efficiently
+# TODO: use discord.utils.oauth_url for invite
 
 
 def unqualify(name):
@@ -30,24 +33,12 @@ def get_exts():
         if unqualify(module.name).startswith("_"):
             continue
 
-        if module.ispkg:
-            imported = importlib.import_module(module.name)
-            # Checking for setup function to determine if it is an extension
-            if not inspect.isfunction(getattr(imported, "setup", None)):
-                continue
+        imported = importlib.import_module(module.name)
+        # Checking for setup function to determine if it is an extension
+        if not inspect.isfunction(getattr(imported, "setup", None)):
+            continue
 
         yield module.name
-
-
-class CustomContext(commands.Context):
-    @discord.utils.copy_doc(discord.Message.reply)
-    async def reply(self, content=None, **kwargs):
-        # Setting mention author to False by default
-        mention = kwargs.pop("mention_author", None)
-        if mention is None:
-            mention = False
-
-        return await self.message.reply(content, mention_author=mention, **kwargs)
 
 
 class WordPractice(commands.AutoShardedBot):
@@ -58,7 +49,7 @@ class WordPractice(commands.AutoShardedBot):
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
-        super().__init__(**kwargs, loop=self.loop, command_prefix=self.get_prefix)
+        super().__init__(**kwargs, loop=self.loop)
 
         self.add_check(
             commands.bot_has_permissions(
@@ -128,34 +119,27 @@ class WordPractice(commands.AutoShardedBot):
         await super().close()
         await self.session.close()
 
-    async def get_context(self, message, *, cls=CustomContext):
-        # Using custom context class
-        return await super().get_context(message, cls=cls)
+    async def log_interaction(self, ctx):
+        # Logging the interaction
 
-    async def on_message(self, message):
-        if message.guild is None or message.author.bot:
-            return
+        timestamp = int(time.time())
 
-        await self.process_commands(message)
+        embed = self.embed(
+            description=(
+                f"**User:** {ctx.author} ({ctx.author.id})\n"
+                f"**Server:** {ctx.guild} ({ctx.guild.id})\n"
+                f"**Command:** {ctx.command}\n"
+                f"**Timestamp:** <t:{timestamp}:R>"
+            ),
+            add_footer=False,
+        )
 
-    async def process_commands(self, message):
-        ctx = await self.get_context(message)
+        await self.cmd_wh.send(embed=embed)
 
-        # If bot is mentioned it will return prefix
-        if message.content in [f"<@!{self.user.id}>", f"<@{self.user.id}>"]:
-            prefix = await self.get_raw_prefix(message)
-            embed = self.embed(
-                title="Prefix",
-                description=f"My prefix is `{prefix}`\nType `{prefix}help` for a list of commands.",
-            )
-            return await ctx.reply(embed=embed)
+    async def on_interaction(self, interaction):
+        user = await self.mongo.fetch_user(interaction.user)
 
-        # Checking if command is valid
-        if ctx.command is None:
-            # Processing command to raise command not found in error handler
-            return await self.invoke(ctx)
-
-        user = await self.mongo.fetch_user(message.author)
+        # Checking if the user is banned
         if user.banned:
             embed = self.error_embed(
                 title="You are banned",
@@ -170,48 +154,15 @@ class WordPractice(commands.AutoShardedBot):
                 url=constants.SUPPORT_SERVER,
             )
             view.add_item(item=item)
-            return await ctx.reply(embed=embed, view=view)
 
-        # Spam protection
-        # https://github.com/Rapptz/RoboDanny/blob/rewrite/bot.py
-        bucket = self.spam_control.get_bucket(message)
-        current = message.created_at.replace().timestamp()
+            ctx = await self.get_application_context(interaction)
 
-        retry_after = bucket.update_rate_limit(current)
-        author_id = message.author.id
+            return await ctx.respond(embed=embed, view=view)
 
-        if retry_after and author_id != self.owner_id:
-            self.spam_counter[author_id] += 1
-            if self.spam_counter[author_id] >= 3:
-                # Banning user
-                await self.mongo.ban_user(
-                    user=message.author,
-                    moderator="Auto Moderator",
-                    reason="Spamming commands",
-                )
-                del self.spam_counter[author_id]
-            return
+        # TODO: add ratelimiting when pycord adds cooldowns for slash commands
 
-        else:
-            self.spam_counter.pop(author_id, None)
-
-        await self.invoke(ctx)
-
-    async def get_raw_prefix(self, msg):
-        if msg.guild.id in self.prefix_cache:
-            prefix = self.prefix_cache[msg.guild.id]
-        else:
-            guild = await self.mongo.fetch_guild(msg.guild)
-
-            prefix = guild.prefix or constants.DEFAULT_PREFIX
-
-            self.prefix_cache[msg.guild.id] = prefix
-
-        return prefix
-
-    async def get_prefix(self, msg):
-        raw_prefix = await self.get_raw_prefix(msg)
-        return commands.when_mentioned_or(raw_prefix)(self, msg)
+        # Processing command
+        await self.process_application_commands(interaction)
 
     @discord.utils.cached_property
     def cmd_wh(self):
