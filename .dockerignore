@@ -4,6 +4,7 @@ __pycache__
 *.pyd
 
 .env
+.env.example
 .git
 
 docker

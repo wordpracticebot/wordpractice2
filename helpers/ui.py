@@ -1,8 +1,17 @@
 import random
 import traceback
-
 import discord
 
+def create_link_view(links: dict[str, str]):
+    """
+    links: {NAME: URL}
+    """
+    view = discord.ui.View()
+
+    for name, url in links.items():
+        view.add_item(discord.ui.Button(label=name, url=url))
+
+    return view
 
 class CustomEmbed(discord.Embed):
     def __init__(self, bot, add_footer=True, **kwargs):

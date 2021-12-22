@@ -1,6 +1,4 @@
-import constants
 from discord.ext import commands
-from helpers.converters import opt_colour
 
 
 class Misc(commands.Cog):
@@ -9,7 +7,7 @@ class Misc(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.slash_command(guild_ids=constants.GUILDS)
+    @commands.slash_command()
     async def ping(self, ctx):
         """View the bot's latency"""
 
@@ -20,8 +18,29 @@ class Misc(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(guild_ids=constants.GUILDS)
+    @commands.slash_command()
     async def help(self, ctx):
+        """List of commands"""
+        pass
+
+    @commands.slash_command()
+    async def stats(self, ctx):
+        pass
+
+    @commands.slash_command()
+    async def privacy(self, ctx):
+        pass
+
+    @commands.slash_command()
+    async def invite(self, ctx):
+        pass
+
+    @commands.slash_command()
+    async def rules(self, ctx):
+        pass
+
+    @commands.slash_command()
+    async def vote(self, ctx):
         pass
 
 

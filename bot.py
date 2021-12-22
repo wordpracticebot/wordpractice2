@@ -19,6 +19,7 @@ from helpers.ui import CustomEmbed
 # TODO: check if user is banned when giving roles
 # TODO: build typing test gifs more efficiently
 # TODO: use discord.utils.oauth_url for invite
+# TODO: customize pacer type (horizonal, vertical)
 
 
 def unqualify(name):

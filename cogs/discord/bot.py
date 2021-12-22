@@ -1,4 +1,3 @@
-import constants
 import discord
 from discord.ext import commands
 from helpers.ui import BaseView
@@ -65,8 +64,8 @@ class User(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.slash_command(guild_ids=constants.GUILDS)
-    async def profile(self, ctx, user: opt_user):
+    @commands.slash_command()
+    async def profile(self, ctx, user: opt_user()):
         """View user statistics"""
         if user is None:
             user = ctx.author

@@ -21,11 +21,11 @@ class HexOrRGB(commands.Converter):
                 colour = colour.translate({40: "", 41: ""})
                 return [int(c) for c in colour.split(",")]
 
-        raise commands.BadArgument("That is not a valid rgb or hex colour")
+        raise commands.BadArgument(f'"{colour}" is not a valid rgb or hex colour')
 
 
-# Commonly used arguments
-opt_user = Option(discord.User, "Enter a user", required=False, default=None)
-rqd_user = Option(discord.User, "Enter a user", required=True)
+# Commonly used arguments using functions to work with groups
+opt_user = lambda: Option(discord.User, "Enter a user", required=False, default=None)
+rqd_user = lambda: Option(discord.User, "Enter a user", required=True)
 
-opt_colour = Option(HexOrRGB, "Enter a hex or rgb colour", required=False, default=None)
+rqd_colour = lambda: Option(HexOrRGB, "Enter a hex or rgb colour", required=True)

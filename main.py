@@ -49,6 +49,7 @@ def main():
         allowed_mentions=allowed_mentions,
         chunk_guilds_at_startup=False,
         case_insensitive=True,
+        debug_guild=903449744196661270,
         intents=intents,
     )
 
