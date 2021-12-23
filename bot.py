@@ -65,7 +65,7 @@ class WordPractice(commands.AutoShardedBot):
         )
 
         self.activity = discord.Activity(
-            type=discord.ActivityType.watching, name=" for %help"
+            type=discord.ActivityType.watching, name=" your wpm 👀 "
         )
         self.session = aiohttp.ClientSession(loop=self.loop)
 
@@ -76,7 +76,6 @@ class WordPractice(commands.AutoShardedBot):
         self.spam_counter = Counter()
 
         # Cache
-        self.prefix_cache = {}
         self.user_cache = {}
 
         self.load_exts()
@@ -115,27 +114,6 @@ class WordPractice(commands.AutoShardedBot):
         pass
         # if guild.id in self.blacklist:
         #     await guild.leave()
-
-    async def close(self):
-        await super().close()
-        await self.session.close()
-
-    async def log_interaction(self, ctx):
-        # Logging the interaction
-
-        timestamp = int(time.time())
-
-        embed = self.embed(
-            description=(
-                f"**User:** {ctx.author} ({ctx.author.id})\n"
-                f"**Server:** {ctx.guild} ({ctx.guild.id})\n"
-                f"**Command:** {ctx.command}\n"
-                f"**Timestamp:** <t:{timestamp}:R>"
-            ),
-            add_footer=False,
-        )
-
-        await self.cmd_wh.send(embed=embed)
 
     async def on_interaction(self, interaction):
         user = await self.mongo.fetch_user(interaction.user)
@@ -179,6 +157,10 @@ class WordPractice(commands.AutoShardedBot):
     def impt_wh(self):
         hook = discord.Webhook.from_url(self.config.IMPORTANT_LOG, session=self.session)
         return hook
+
+    async def close(self):
+        await super().close()
+        await self.session.close()
 
     def run(self):
         super().run(self.config.BOT_TOKEN, reconnect=True)

@@ -1,3 +1,5 @@
+import discord
+import word_list
 from discord.ext import commands
 from discord.commands import SlashCommandGroup, Option
 from helpers.errors import ImproperArgument
@@ -6,7 +8,7 @@ from helpers.converters import rqd_colour
 
 def get_difficulty_choices(name):
     """Finds language difficulty options from selected language"""
-    return [name]
+    return word_list.languages.get(name, {"levels": []})["levels"]
 
 
 class Customization(commands.Cog):
@@ -35,15 +37,19 @@ class Customization(commands.Cog):
     async def language(
         self,
         ctx,
-        name: Option(str, "Choose a language", choices=["English", "French"]),
+        name: Option(str, "Choose a language", choices=word_list.languages.keys()),
         difficulty: Option(
             str,
-            autocomplete=lambda ctx: get_difficulty_choices(ctx.options.get("name")),
+            autocomplete=discord.utils.basic_autocomplete(
+                lambda ctx: get_difficulty_choices(ctx.options.get("name"))
+            ),
         ),
     ):
         # Checking if difficulty is valid
-        if (choices := get_difficulty_choices(name)) == []:
+        if difficulty not in (choices := get_difficulty_choices(name)):
             raise ImproperArgument("That is not a valid difficulty", choices)
+
+        print(0 / 0)
 
         await ctx.respond(f"language: {name} {difficulty}")
 
