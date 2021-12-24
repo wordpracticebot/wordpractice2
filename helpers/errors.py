@@ -8,5 +8,7 @@ class ImproperArgument(commands.BadArgument):
     BadArgument should be used instead of no options are needed
     """
 
-    def __init__(self, options: list):
+    def __init__(self, *args, options: list, **kwargs):
+        super().__init__(*args, **kwargs)
+        
         self.options = options

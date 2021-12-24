@@ -47,9 +47,7 @@ class Customization(commands.Cog):
     ):
         # Checking if difficulty is valid
         if difficulty not in (choices := get_difficulty_choices(name)):
-            raise ImproperArgument("That is not a valid difficulty", choices)
-
-        print(0 / 0)
+            raise ImproperArgument("That is not a valid difficulty", options=list(choices.keys()))
 
         await ctx.respond(f"language: {name} {difficulty}")
 
