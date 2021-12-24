@@ -10,5 +10,5 @@ class ImproperArgument(commands.BadArgument):
 
     def __init__(self, *args, options: list, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         self.options = options

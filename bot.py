@@ -78,6 +78,8 @@ class WordPractice(commands.AutoShardedBot):
         # Cache
         self.user_cache = {}
 
+        self.start_time = time.time()
+
         self.load_exts()
 
     def embed(self, **kwargs):

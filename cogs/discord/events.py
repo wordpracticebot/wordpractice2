@@ -70,7 +70,7 @@ class Events(commands.Cog):
                 message += f"\n\n**Did you mean?**\n{options}"
 
             await self.send_error(ctx, "Invalid Argument", message)
-        
+
         else:
             await self.send_error(
                 ctx,
@@ -80,7 +80,6 @@ class Events(commands.Cog):
                     f"Type `{ctx.prefix}help` for a list of commands"
                 ),
             )
-
 
     async def handle_check_failure(self, ctx, error):
         if isinstance(
@@ -93,11 +92,12 @@ class Events(commands.Cog):
         ):
             try:
                 await self.send_error(
-                    ctx, "Permission Error", "I do not have the correct server permissons"
+                    ctx,
+                    "Permission Error",
+                    "I do not have the correct server permissons",
                 )
-            except: # base exception :eyes:
+            except:  # base exception :eyes:
                 pass
-
 
     async def handle_unexpected_error(self, ctx, error):
         view = create_link_view({"Support Server": constants.SUPPORT_SERVER})

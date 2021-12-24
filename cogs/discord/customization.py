@@ -25,10 +25,7 @@ class Customization(commands.Cog):
         pass
 
     @theme_group.command()
-    async def premade(
-        self,
-        ctx,
-    ):
+    async def premade(self, ctx):
         """Choose a premade theme for your typing test"""
         # TODO: use a dropdown with custom emojis
         pass
@@ -47,7 +44,9 @@ class Customization(commands.Cog):
     ):
         # Checking if difficulty is valid
         if difficulty not in (choices := get_difficulty_choices(name)):
-            raise ImproperArgument("That is not a valid difficulty", options=list(choices.keys()))
+            raise ImproperArgument(
+                "That is not a valid difficulty", options=list(choices.keys())
+            )
 
         await ctx.respond(f"language: {name} {difficulty}")
 

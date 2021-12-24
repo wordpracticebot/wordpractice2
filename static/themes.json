@@ -1,0 +1,66 @@
+{
+    "Dracula": {
+        "colours": ["#282a36", "#bd93f9"], 
+        "icon": ""
+    },
+    "Electric": {
+        "colours": ["#1b1c1e", "#00d0bf"], 
+        "icon": ""
+    },
+    "Nightlight": {
+        "colours": ["#005178", "#a7d0df"], 
+        "icon": ""
+    },
+    "Dev": {
+        "colours": ["#1a2029", "#00a9db"], 
+        "icon": ""
+    },
+    "Chaos Theory": {
+        "colours": ["#181226", "#f75ad2"], 
+        "icon": ""
+    },
+    "Material": {
+        "colours": ["#243239", "#69cec6"], 
+        "icon": ""
+    },
+    "Frost": {
+        "colours": ["#1d0a57", "#9496ff"], 
+        "icon": ""
+    },
+    "Red Samurai": {
+        "colours": ["#4d0505", "#f5f17a"], 
+        "icon": ""
+    },
+    "Sakura": {
+        "colours": ["#380808", "#f0aae9"], 
+        "icon": ""
+    },
+    "Discord Dark Theme": {
+        "colours": ["#2f3136", "#ffffff"], 
+        "icon": ""
+    },
+    "Discord Light Theme": {
+        "colours": ["#f2f3f5", "#000000"], 
+        "icon": ""
+    },
+    "Lavender": {
+        "colours": ["#968aad", "#fefefd"], 
+        "icon": ""
+    },
+    "Snowy Day": {
+        "colours": ["#fefefd", "#968aad"], 
+        "icon": ""
+    },
+    "Mewni Sunset": {
+        "colours": ["#fefefd", "#968aad"], 
+        "icon": ""
+    },
+    "Cinnamon Mocha": {
+        "colours": ["#80687a", "#eecfbf"], 
+        "icon": ""
+    },
+    "Light of Egress": {
+        "colours": ["#968aad", "#fefefd"], 
+        "icon": ""
+    }
+}
