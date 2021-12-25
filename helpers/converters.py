@@ -1,9 +1,10 @@
 import re
-import discord
-from discord.ext import commands
-from discord.commands import Option
-from PIL import ImageColor
 from functools import lru_cache
+
+import discord
+from discord.commands import Option
+from discord.ext import commands
+from PIL import ImageColor
 
 RGB_STRING = re.compile(
     r"^\(?(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d),(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d),(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d)\)?$"

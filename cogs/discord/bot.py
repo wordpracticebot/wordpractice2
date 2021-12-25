@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
-from helpers.ui import BaseView
+
 from helpers.converters import opt_user
+from helpers.ui import BaseView
 
 
 class ProfileView(BaseView):

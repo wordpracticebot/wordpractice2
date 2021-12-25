@@ -1,9 +1,10 @@
 import discord
-import word_list
+from discord.commands import Option, SlashCommandGroup
 from discord.ext import commands
-from discord.commands import SlashCommandGroup, Option
-from helpers.errors import ImproperArgument
+
+import word_list
 from helpers.converters import rqd_colour
+from helpers.errors import ImproperArgument
 
 
 def get_difficulty_choices(name):

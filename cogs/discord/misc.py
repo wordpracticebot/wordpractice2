@@ -1,5 +1,8 @@
 import time
+
 from discord.ext import commands
+
+from helpers.ui import create_link_view
 
 
 class Misc(commands.Cog):
@@ -53,7 +56,10 @@ class Misc(commands.Cog):
     @commands.slash_command()
     async def invite(self, ctx):
         """Get the invite link for the bot"""
-        pass
+
+        view = create_link_view({"Invite Bot": self.bot.create_invite_link()})
+
+        await ctx.respond("Here you go!", view=view)
 
     @commands.slash_command()
     async def rules(self, ctx):

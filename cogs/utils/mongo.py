@@ -1,6 +1,7 @@
 import pickle
 import time
 from datetime import datetime
+from typing import Union
 
 import discord
 import pymongo
@@ -18,7 +19,6 @@ from umongo.fields import (
     StringField,
 )
 from umongo.frameworks import MotorAsyncIOInstance
-from typing import Union
 
 
 class Infraction(EmbeddedDocument):
@@ -136,7 +136,7 @@ class Mongo(commands.Cog):
                     self.bot.user_cache[user.id] = pickle.dumps(u.to_mongo())
 
                 else:
-                    self.bot.user[user.id] = None
+                    self.bot.user_cache[user.id] = None
                     return None
 
                 return u

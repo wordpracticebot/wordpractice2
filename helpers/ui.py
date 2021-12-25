@@ -1,5 +1,5 @@
 import random
-import traceback
+
 import discord
 
 
