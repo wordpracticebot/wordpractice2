@@ -123,7 +123,10 @@ class WordPractice(commands.AutoShardedBot):
         )
 
     async def on_interaction(self, interaction):
-        user = await self.mongo.fetch_user(interaction.user)
+        user = await self.mongo.fetch_user(interaction.user, create=True)
+
+        if user is None:
+            return
 
         # Checking if the user is banned
         if user.banned:

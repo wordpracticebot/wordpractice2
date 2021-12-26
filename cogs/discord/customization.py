@@ -43,6 +43,8 @@ class Customization(commands.Cog):
             ),
         ),
     ):
+        """Choose a language for your typing test"""
+
         # Checking if difficulty is valid
         if difficulty not in (choices := get_difficulty_choices(name)):
             raise ImproperArgument(

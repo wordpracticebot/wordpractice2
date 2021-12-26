@@ -1,5 +1,5 @@
 import re
-from functools import lru_cache
+import word_list
 
 import discord
 from discord.commands import Option
@@ -12,7 +12,6 @@ RGB_STRING = re.compile(
 
 
 class HexOrRGB(commands.Converter):
-    @lru_cache(maxsize=50)
     async def convert(self, colour: str):
         try:
             return ImageColor.getrgb(colour)
@@ -26,7 +25,26 @@ class HexOrRGB(commands.Converter):
 
 
 # Commonly used arguments using functions to work with groups
-opt_user = lambda: Option(discord.User, "Enter a user", required=False, default=None)
-rqd_user = lambda: Option(discord.User, "Enter a user", required=True)
 
+# Users
+opt_user = lambda: Option(
+    discord.User, "Enter a user or user id", required=False, default=None
+)
+rqd_user = lambda: Option(discord.User, "Enter a user or user id", required=True)
+
+# Colours
 rqd_colour = lambda: Option(HexOrRGB, "Enter a hex or rgb colour", required=True)
+
+# Typing test dictionary amount
+word_amt = lambda: Option(
+    int,
+    "Choose a word amount from 1-100",
+    autocomplete=discord.utils.basic_autocomplete(list(range(10, 101, 10))),
+    required=True,
+)
+quote_amt = lambda: Option(
+    str,
+    "Choose a quote length",
+    choices=list(word_list.quotes["lengths"].keys()),
+    required=True,
+)

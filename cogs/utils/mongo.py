@@ -107,7 +107,7 @@ class Mongo(commands.Cog):
             setattr(self, n, instance.register(g[n]))
             getattr(self, n).bot = bot
 
-    async def fetch_user(self, user: Union[discord.Member, int]):
+    async def fetch_user(self, user: Union[discord.Member, int], create=False):
         if isinstance(user, int):
             user_id = user
         else:
@@ -117,10 +117,14 @@ class Mongo(commands.Cog):
         u = self.bot.user_cache.get(user_id)
         if u is not None:
             u = self.User.build_from_mongo(pickle.loads(u))
-        else:
+
+        if create is False:
+            return u
+
+        if u is None:
             u = await self.User.find_one({"id": user_id})
             if u is None:
-                if user != user_id:
+                if user != user_id and not user.bot:
                     u = self.User(
                         id=user.id,
                         name=user.name,
