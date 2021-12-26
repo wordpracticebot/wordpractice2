@@ -1,5 +1,4 @@
 import re
-import word_list
 
 import discord
 from discord.commands import Option
@@ -34,17 +33,3 @@ rqd_user = lambda: Option(discord.User, "Enter a user or user id", required=True
 
 # Colours
 rqd_colour = lambda: Option(HexOrRGB, "Enter a hex or rgb colour", required=True)
-
-# Typing test dictionary amount
-word_amt = lambda: Option(
-    int,
-    "Choose a word amount from 1-100",
-    autocomplete=discord.utils.basic_autocomplete(list(range(10, 101, 10))),
-    required=True,
-)
-quote_amt = lambda: Option(
-    str,
-    "Choose a quote length",
-    choices=list(word_list.quotes["lengths"].keys()),
-    required=True,
-)

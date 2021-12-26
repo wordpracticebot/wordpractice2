@@ -99,6 +99,11 @@ class User(commands.Cog):
         """See the top users in any category"""
         pass
 
+    @commands.slash_command()
+    async def achievements(self, ctx):
+        """See all the achievements"""
+        pass
+
 
 def setup(bot):
     bot.add_cog(User(bot))
