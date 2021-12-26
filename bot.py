@@ -3,8 +3,8 @@ import importlib
 import inspect
 import pkgutil
 import sys
-import traceback
 import time
+import traceback
 from collections import Counter
 
 import aiohttp
@@ -18,7 +18,6 @@ from helpers.ui import CustomEmbed
 # TODO: use max concurrency for typing test
 # TODO: check if user is banned when giving roles
 # TODO: build typing test gifs more efficiently
-# TODO: use discord.utils.oauth_url for invite
 # TODO: customize pacer type (horizonal, vertical)
 
 
@@ -59,7 +58,6 @@ class WordPractice(commands.AutoShardedBot):
                 embed_links=True,
                 attach_files=True,
                 read_message_history=True,
-                add_reactions=True,
                 external_emojis=True,
             ).predicate
         )
@@ -117,8 +115,18 @@ class WordPractice(commands.AutoShardedBot):
         # if guild.id in self.blacklist:
         #     await guild.leave()
 
+    def create_invite_link(self):
+        return discord.utils.oauth_url(
+            client_id=self.user.id,
+            permissions=discord.Permissions(permissions=constants.PERMISSONS),
+            scopes=("bot", "applications.commands"),
+        )
+
     async def on_interaction(self, interaction):
-        user = await self.mongo.fetch_user(interaction.user)
+        user = await self.mongo.fetch_user(interaction.user, create=True)
+
+        if user is None:
+            return
 
         # Checking if the user is banned
         if user.banned:

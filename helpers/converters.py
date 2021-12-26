@@ -1,9 +1,9 @@
 import re
+
 import discord
-from discord.ext import commands
 from discord.commands import Option
+from discord.ext import commands
 from PIL import ImageColor
-from functools import lru_cache
 
 RGB_STRING = re.compile(
     r"^\(?(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d),(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d),(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d)\)?$"
@@ -11,7 +11,6 @@ RGB_STRING = re.compile(
 
 
 class HexOrRGB(commands.Converter):
-    @lru_cache(maxsize=50)
     async def convert(self, colour: str):
         try:
             return ImageColor.getrgb(colour)
@@ -25,7 +24,12 @@ class HexOrRGB(commands.Converter):
 
 
 # Commonly used arguments using functions to work with groups
-opt_user = lambda: Option(discord.User, "Enter a user", required=False, default=None)
-rqd_user = lambda: Option(discord.User, "Enter a user", required=True)
 
+# Users
+opt_user = lambda: Option(
+    discord.User, "Enter a user or user id", required=False, default=None
+)
+rqd_user = lambda: Option(discord.User, "Enter a user or user id", required=True)
+
+# Colours
 rqd_colour = lambda: Option(HexOrRGB, "Enter a hex or rgb colour", required=True)

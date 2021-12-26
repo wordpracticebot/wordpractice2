@@ -40,6 +40,7 @@ def main():
 
     intents = discord.Intents.default()
     intents.members = True
+    intents.messages = True
 
     allowed_mentions = discord.AllowedMentions(everyone=False, roles=False)
 

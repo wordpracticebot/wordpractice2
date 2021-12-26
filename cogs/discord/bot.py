@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
-from helpers.ui import BaseView
+
 from helpers.converters import opt_user
+from helpers.ui import BaseView
 
 
 class ProfileView(BaseView):
@@ -59,14 +60,16 @@ class ProfileView(BaseView):
 
 
 class User(commands.Cog):
-    """User profile and statistic commands"""
+    """Essential bot commands"""
 
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.slash_command()
-    async def profile(self, ctx, user: opt_user()):
-        """View user statistics"""
+    async def user_check(self, ctx, user):
+        """Handles the user inputted and fetches user"""
+        if isinstance(user, (discord.User, discord.Member)) and user.bot:
+            raise commands.BadArgument("That user is a bot")
+
         if user is None:
             user = ctx.author
 
@@ -75,9 +78,31 @@ class User(commands.Cog):
         if user is None:
             raise commands.BadArgument("User not found")
 
+        return user
+
+    @commands.slash_command()
+    async def profile(self, ctx, user: opt_user()):
+        """View user statistics"""
+        user = await self.user_check(ctx, user)
+
         view = ProfileView(ctx, user)
 
         await view.start()
+
+    @commands.slash_command()
+    async def graph(self, ctx, user: opt_user()):
+        """See a graph of a user's typing scores"""
+        user = await self.user_check(ctx, user)
+
+    @commands.slash_command()
+    async def leaderboard(self, ctx):
+        """See the top users in any category"""
+        pass
+
+    @commands.slash_command()
+    async def achievements(self, ctx):
+        """See all the achievements"""
+        pass
 
 
 def setup(bot):

@@ -1,5 +1,8 @@
 import time
+
 from discord.ext import commands
+
+from helpers.ui import create_link_view
 
 
 class Misc(commands.Cog):
@@ -40,8 +43,8 @@ class Misc(commands.Cog):
 
         embed.add_field(name="Servers", value=len(self.bot.guilds), inline=False)
         embed.add_field(name="Shards", value=len(self.bot.shards), inline=False)
-        embed.add_field(name="Uptime", value=f"{h} hrs {m} min", inline=False)
         embed.add_field(name="Typists", value=typist_count, inline=False)
+        embed.add_field(name="Uptime", value=f"{h} hrs {m} min", inline=False)
 
         await ctx.respond(embed=embed)
 
@@ -53,7 +56,10 @@ class Misc(commands.Cog):
     @commands.slash_command()
     async def invite(self, ctx):
         """Get the invite link for the bot"""
-        pass
+
+        view = create_link_view({"Invite Bot": self.bot.create_invite_link()})
+
+        await ctx.respond("Here you go!", view=view)
 
     @commands.slash_command()
     async def rules(self, ctx):

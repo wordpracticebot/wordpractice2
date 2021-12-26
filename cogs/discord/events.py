@@ -1,12 +1,14 @@
 import time
-import discord
 import traceback
-import constants
 from io import BytesIO
+
+import discord
 from discord.ext import commands
 from discord.ext.commands import errors
-from helpers.ui import create_link_view
+
+import constants
 from helpers.errors import ImproperArgument
+from helpers.ui import create_link_view
 
 
 class Events(commands.Cog):
@@ -136,6 +138,8 @@ class Events(commands.Cog):
         file = discord.File(buffer, filename="text.txt")
 
         await self.bot.impt_wh.send(embed=embed, file=file)
+
+        print(msg)
 
     @commands.Cog.listener()
     async def on_application_command(self, ctx):

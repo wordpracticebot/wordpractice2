@@ -4,3 +4,5 @@ german_250k.json
 italian_280k.json
 
 themes.json
+
+*.py
