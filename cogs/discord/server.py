@@ -1,5 +1,5 @@
+from discord.commands import Option, SlashCommandGroup
 from discord.ext import commands
-from discord.commands import SlashCommandGroup, Option
 
 
 class Server(commands.Cog):

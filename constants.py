@@ -6,3 +6,9 @@ ERROR_CLR = 0xFF5858
 PERMISSONS = 412317248576
 SUPPORT_SERVER = "https://discord.gg/wordpractice"
 PRIVACY_POLICY = ""
+
+# Testing
+DEBUG_GUILD = 903449744196661270
+
+# Leaderboards
+LB_LENGTH = 500

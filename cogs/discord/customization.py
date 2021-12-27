@@ -1,4 +1,3 @@
-from static import themes
 import discord
 from discord.commands import Option, SlashCommandGroup
 from discord.ext import commands
@@ -6,29 +5,12 @@ from discord.ext import commands
 import word_list
 from helpers.converters import rqd_colour
 from helpers.errors import ImproperArgument
-from helpers.ui import BaseView
-
-
-class ThemeView(BaseView):
-    def __init__(self, ctx, default_page):
-        super().__init__(ctx)
-
-        self.default_page = default_page
-
-    async def create_page(self, selection):
-        return self.ctx.bot.embed(title=f"{selection}")
-
-    async def update_message(self, interaction, option):
-        embed = await self.create_page(option)
-        await interaction.message.edit(embed=embed, view=self)
-
-    async def start(self):
-        embed = await self.create_page(self.default_page)
-        self.response = await self.ctx.respond(embed=embed, view=self)
+from helpers.ui import CustomEmbed
+from static import themes
 
 
 class ThemeSelect(discord.ui.Select):
-    def __init__(self):
+    def __init__(self, ctx):
         super().__init__(
             placeholder="Select a theme",
             min_values=1,
@@ -37,14 +19,33 @@ class ThemeSelect(discord.ui.Select):
                 discord.SelectOption(label=name, emoji=value["icon"])
                 for name, value in themes.default.items()
             ],
+            row=1,
+        )
+        self.ctx = ctx
+
+    async def update_theme(self, theme_value: list[str, str]):
+        await self.ctx.bot.mongo.update_user(
+            self.ctx.author, {"$set": {"theme": theme_value}}
         )
 
     async def callback(self, interaction):
         option = self.values[0]
 
-        self.view.page = 1
+        self.disabled = True
 
-        await self.view.update_message(interaction, option)
+        theme_value = themes.default[option]["colours"]
+
+        embed = CustomEmbed(
+            self.ctx.bot,
+            title="Theme Selected",
+            color=int(theme_value[1].replace("#", "0x"), 16),
+        )
+
+        # TODO: generate a preview image
+
+        await interaction.message.edit(embed=embed, view=None)
+
+        await self.update_theme(theme_value)
 
 
 def get_difficulty_choices(name):
@@ -69,10 +70,10 @@ class Customization(commands.Cog):
     @theme_group.command()
     async def premade(self, ctx):
         """Choose a premade theme for your typing test"""
-        # TODO: use a dropdown with custom emojis
-        view = ThemeView(ctx, "Games")
-        view.add_item(ThemeSelect())
-        await view.start()
+        view = discord.ui.View()
+        view.add_item(ThemeSelect(ctx))
+
+        await ctx.respond(content="** **", view=view)
 
     @commands.slash_command()
     async def language(

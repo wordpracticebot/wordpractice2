@@ -6,6 +6,7 @@ except ImportError:
     pass
 
 import os
+import constants
 from collections import namedtuple
 
 import discord
@@ -50,7 +51,7 @@ def main():
         allowed_mentions=allowed_mentions,
         chunk_guilds_at_startup=False,
         case_insensitive=True,
-        debug_guild=903449744196661270,
+        debug_guild=constants.DEBUG_GUILD,
         intents=intents,
     )
 

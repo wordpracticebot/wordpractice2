@@ -30,7 +30,7 @@ class Misc(commands.Cog):
     @commands.slash_command()
     async def stats(self, ctx):
         """Various statistics related to the bot"""
-        embed = self.bot.embed(title="wordPractice Stats")
+        embed = self.bot.embed(title="Bot Stats")
 
         uptime = time.time() - self.bot.start_time
 
