@@ -100,6 +100,11 @@ class User(commands.Cog):
         pass
 
     @commands.slash_command()
+    async def highscore(self, ctx):
+        """See the fastest users in any category"""
+        pass
+
+    @commands.slash_command()
     async def achievements(self, ctx):
         """See all the achievements"""
         pass

@@ -6,11 +6,11 @@ except ImportError:
     pass
 
 import os
-import constants
 from collections import namedtuple
 
 import discord
 
+import constants
 from bot import WordPractice
 
 Config = namedtuple(

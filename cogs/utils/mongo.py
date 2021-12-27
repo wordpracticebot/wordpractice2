@@ -118,13 +118,13 @@ class Mongo(commands.Cog):
         if u is not None:
             u = self.User.build_from_mongo(pickle.loads(u))
 
-        if create is False:
+        if u is not None and create is False:
             return u
 
         if u is None:
             u = await self.User.find_one({"id": user_id})
             if u is None:
-                if user != user_id and not user.bot:
+                if not isinstance(user, int) and not user.bot:
                     u = self.User(
                         id=user.id,
                         name=user.name,
@@ -145,32 +145,59 @@ class Mongo(commands.Cog):
 
                 return u
 
-        current = {
-            "name": user.name,
-            "discriminator": user.discriminator,
-            "avatar": user.avatar.key if user.avatar else None,
-        }
-
         uj = u.to_mongo()
 
-        # Checking if user info needs to be updated
-        if current.values() != [u.name, u.discriminator, u.avatar]:
-            await self.update_user(user.id, {"$set": current})
-            uj.update(current)
+        if not isinstance(user, int):
+            current = self.get_current(user)
+
+            # Checking if user info needs to be updated
+            if current.values() != [u.name, u.discriminator, u.avatar]:
+                await self.update_user(user.id, {"$set": current})
+                uj.update(current)
+
+            u = self.User.build_from_mongo(uj)
 
         # Updating in cache
         self.bot.user_cache[user.id] = pickle.dumps(uj)
 
         return u
 
-    async def update_user(self, user, query: dict):
-        if hasattr(user, "id"):
-            user = user.id
+    def get_current(self, user):
+        return {
+            "name": user.name,
+            "discriminator": user.discriminator,
+            "avatar": user.avatar.key if user.avatar else None,
+        }
 
-        await self.db.user.update_one({"_id": user}, query)
+    async def update_user(self, user, query: dict):
+        if isinstance(user, int):
+            user_id = user
+        else:
+            user_id = user.id
+
+        # Updating user data
+        if not isinstance(user, int):
+            current = self.get_current(user)
+
+            if "$set" in query:
+                query["$set"].update(current)
+
+        await self.db.user.update_one({"_id": user_id}, query)
 
         if user in self.bot.user_cache:
-            del self.bot.user_cache[user]
+            if list(query.keys()) == ["$set"]:
+                new_user = pickle.loads(self.bot.user_cache[user_id])
+
+                new_user.update(query["$set"])
+
+                self.bot.user_cache[user_id] = pickle.dumps(new_user)
+            else:
+                del self.bot.user_cache[user_id]
+
+    async def add_achievement(self, user, achievement):
+        await self.update_user(
+            user, {"$set": {f"achievements.{achievement}": datetime.now()}}
+        )
 
     async def ban_user(self, user, moderator: str, reason: str):
         inf = self.Infraction(

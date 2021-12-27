@@ -1,6 +1,8 @@
-import constants
-from discord.ext import commands, tasks
 from typing import Union
+
+from discord.ext import commands, tasks
+
+import constants
 
 
 class Tasks(commands.Cog):

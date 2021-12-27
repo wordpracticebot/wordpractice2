@@ -9,6 +9,7 @@ from discord.ext.commands import errors
 import constants
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
+from static.achievements import check_all
 
 
 class Events(commands.Cog):
@@ -144,6 +145,12 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_application_command(self, ctx):
         await self.log_interaction(ctx)
+
+    @commands.Cog.listener()
+    async def on_application_command_completion(self, ctx):
+        user = await self.bot.mongo.fetch_user(ctx.author, create=True)
+
+        completed = [i async for i in check_all(ctx, user)]
 
 
 def setup(bot):

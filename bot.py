@@ -111,12 +111,6 @@ class WordPractice(commands.AutoShardedBot):
                 print(f"Failed to load extension: {ext}", file=sys.stderr)
                 traceback.print_exc()
 
-    # TODO: add server blacklist
-    async def on_guild_join(self, guild):
-        pass
-        # if guild.id in self.blacklist:
-        #     await guild.leave()
-
     def create_invite_link(self):
         return discord.utils.oauth_url(
             client_id=self.user.id,
@@ -125,7 +119,9 @@ class WordPractice(commands.AutoShardedBot):
         )
 
     async def on_interaction(self, interaction):
+        print("on interaction", time.time())
         user = await self.mongo.fetch_user(interaction.user, create=True)
+        print("after fetch", time.time())
 
         if user is None:
             return
@@ -151,9 +147,12 @@ class WordPractice(commands.AutoShardedBot):
             return await ctx.respond(embed=embed, view=view)
 
         # TODO: add ratelimiting when pycord adds cooldowns for slash commands
+        print("before processing", time.time())
 
         # Processing command
         await self.process_application_commands(interaction)
+
+        print("done processing", time.time(), "\n")
 
     @discord.utils.cached_property
     def cmd_wh(self):
