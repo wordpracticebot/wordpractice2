@@ -75,8 +75,10 @@ class WordPractice(commands.AutoShardedBot):
 
         # Cache
         self.user_cache = {}
+        self.lbs = []
 
         self.start_time = time.time()
+        self.last_lb_update = time.time()
 
         self.load_exts()
 
