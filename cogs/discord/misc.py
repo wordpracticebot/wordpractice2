@@ -14,7 +14,6 @@ class Misc(commands.Cog):
     @commands.slash_command()
     async def ping(self, ctx):
         """View the bot's latency"""
-        print("command", time.time())
 
         # Discord API latency
         latency = round(self.bot.latency * 1000, 3)

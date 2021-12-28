@@ -2,22 +2,26 @@ from .base import Achievement, Category
 
 
 def highest_speed(user):
-    if user.highspeed == []:
+    if user.highspeed == {}:
         return 0
 
-    short, medium, long = user.highspeed
-
-    return max(short.wpm, medium.wpm, long.wpm)
+    return max([s.wpm for s in user.highspeed.values()])
 
 
 class Speed(Achievement):
     def __init__(self, name, wpm):
-        super().__init__(name, f"Type {wpm} wpm")
+        super().__init__(name, f"Type {wpm} wpm", "Get some coins")
 
         self.wpm = wpm
 
+    @staticmethod
+    def changer(user):
+        user.xp += 10
+
+        return user
+
     async def callback(self, user):
-        return highest_speed(user) > self.wpm
+        return self.changer if highest_speed(user) >= self.wpm else False
 
     async def progress(self, user):
         return highest_speed(user) / self.wpm

@@ -1,3 +1,12 @@
+"""
+callback -> 
+
+True = finished but no state change
+False = not finished
+Callable[[dict], dict] = state change
+"""
+
+
 class Achievement:
     def __init__(self, name: str, desc: str, reward: str = None):
         self.name = name

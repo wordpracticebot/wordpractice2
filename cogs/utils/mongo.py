@@ -59,10 +59,17 @@ class User(Document):
     words = IntegerField(default=0)
     last24 = ListField(ListField(IntegerField), default=[[0], [0]])
 
-    highspeed = ListField(EmbeddedField(Score), default=[])
+    # Season
+    xp = IntegerField(default=0)
+
+    highspeed = DictField(
+        StringField(),
+        EmbeddedField(Score),
+        default={},
+    )
     verified = FloatField(default=0.0)
     scores = ListField(EmbeddedField(Score), default=[])
-    achievements = DictField(StringField(), DateTimeField, default={})  # id: timestamp
+    achievements = DictField(StringField(), DateTimeField, default=[])  # id: timestamp
 
     # Cosmetics
     medals = ListField(IntegerField, default=[0, 0, 0, 0])
@@ -184,20 +191,19 @@ class Mongo(commands.Cog):
 
         await self.db.user.update_one({"_id": user_id}, query)
 
-        if user in self.bot.user_cache:
-            if list(query.keys()) == ["$set"]:
-                new_user = pickle.loads(self.bot.user_cache[user_id])
+        if user_id in self.bot.user_cache:
+            del self.bot.user_cache[user_id]
 
-                new_user.update(query["$set"])
+    async def replace_user_data(self, user, user_data):
+        if isinstance(user, int):
+            user_id = user
+        else:
+            user_id = user.id
 
-                self.bot.user_cache[user_id] = pickle.dumps(new_user)
-            else:
-                del self.bot.user_cache[user_id]
+        await self.update_user(user, {"$set": user_data})
 
-    async def add_achievement(self, user, achievement):
-        await self.update_user(
-            user, {"$set": {f"achievements.{achievement}": datetime.now()}}
-        )
+        # Caching new user data
+        self.bot.user_cache[user_id] = pickle.dumps(user_data)
 
     async def ban_user(self, user, moderator: str, reason: str):
         inf = self.Infraction(
