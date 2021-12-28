@@ -152,8 +152,6 @@ class WordPractice(commands.AutoShardedBot):
         # Processing command
         await self.process_application_commands(interaction)
 
-        print("done processing", time.time(), "\n")
-
     @discord.utils.cached_property
     def cmd_wh(self):
         hook = discord.Webhook.from_url(self.config.COMMAND_LOG, session=self.session)
