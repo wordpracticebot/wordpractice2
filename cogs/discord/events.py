@@ -1,5 +1,7 @@
+import copy
 import time
 import traceback
+from datetime import datetime
 from io import BytesIO
 
 import discord
@@ -7,6 +9,7 @@ from discord.ext import commands
 from discord.ext.commands import errors
 
 import constants
+from achievements import check_all
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
 
@@ -144,6 +147,44 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_application_command(self, ctx):
         await self.log_interaction(ctx)
+
+    @commands.Cog.listener()
+    async def on_application_command_completion(self, ctx):
+        user = await self.bot.mongo.fetch_user(ctx.author, create=True)
+
+        new_user = copy.deepcopy(user)
+
+        names = []
+
+        done_checking = False
+
+        while done_checking is False:
+            new_names = []
+
+            # Looping through all the finished achievements
+            async for a, changer in check_all(new_user):
+                new_names.append(a.name)
+
+                # adding achievemnt to document
+                new_user.achievements[a.name] = datetime.now()
+
+                if a.reward is None:
+                    continue
+
+                # Checking if the state doesn't need to be updated
+                if changer == True:
+                    continue
+
+                # Updating the new user state
+                new_user = changer(new_user)
+
+            if new_names != []:
+                names += new_names
+            else:
+                done_checking = True
+
+        if user.to_mongo() != (user_data := new_user.to_mongo()):
+            await self.bot.mongo.replace_user_data(ctx.author, user_data)
 
 
 def setup(bot):

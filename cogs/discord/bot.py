@@ -1,11 +1,12 @@
 import discord
 from discord.ext import commands
 
+from achievements import categories
 from helpers.converters import opt_user
-from helpers.ui import BaseView
+from helpers.ui import PageView, ViewFromDict
 
 
-class ProfileView(BaseView):
+class ProfileView(PageView):
     def __init__(self, ctx, user):
         super().__init__(ctx)
 
@@ -59,6 +60,29 @@ class ProfileView(BaseView):
             await self.update_all(interaction, 1)
 
 
+class AchievementsView(ViewFromDict):
+    def __init__(self, ctx, the_dict, user):
+        super().__init__(ctx, the_dict)
+
+        self.user = user  # user data
+
+    async def create_page(self):
+        c = self.the_dict[self.page]
+
+        embed = self.ctx.bot.embed(title=f"{self.page}", description=c.desc)
+
+        for i, a in enumerate(c.challenges):
+            if i % 2 == 1:
+                embed.add_field(name="** **", value="** **")
+
+            embed.add_field(
+                name=a.name,
+                value=f"{a.desc}\n**Reward**: {a.reward}\n\n** **",
+            )
+
+        return embed
+
+
 class User(commands.Cog):
     """Essential bot commands"""
 
@@ -100,9 +124,18 @@ class User(commands.Cog):
         pass
 
     @commands.slash_command()
+    async def highscore(self, ctx):
+        """See the fastest users in any category"""
+        pass
+
+    @commands.slash_command()
     async def achievements(self, ctx):
         """See all the achievements"""
-        pass
+        user_data = await self.bot.mongo.fetch_user(ctx.author)
+
+        view = AchievementsView(ctx, categories, user_data)
+
+        await view.start()
 
 
 def setup(bot):

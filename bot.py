@@ -9,11 +9,12 @@ from collections import Counter
 
 import aiohttp
 import discord
+from discord import InteractionType
 from discord.ext import commands
 
 import cogs
 import constants
-from helpers.ui import CustomEmbed
+from helpers.ui import BaseView, CustomEmbed
 
 # TODO: use max concurrency for typing test
 # TODO: check if user is banned when giving roles
@@ -75,8 +76,10 @@ class WordPractice(commands.AutoShardedBot):
 
         # Cache
         self.user_cache = {}
+        self.lbs = []
 
         self.start_time = time.time()
+        self.last_lb_update = time.time()
 
         self.load_exts()
 
@@ -109,12 +112,6 @@ class WordPractice(commands.AutoShardedBot):
                 print(f"Failed to load extension: {ext}", file=sys.stderr)
                 traceback.print_exc()
 
-    # TODO: add server blacklist
-    async def on_guild_join(self, guild):
-        pass
-        # if guild.id in self.blacklist:
-        #     await guild.leave()
-
     def create_invite_link(self):
         return discord.utils.oauth_url(
             client_id=self.user.id,
@@ -123,32 +120,33 @@ class WordPractice(commands.AutoShardedBot):
         )
 
     async def on_interaction(self, interaction):
-        user = await self.mongo.fetch_user(interaction.user, create=True)
+        if interaction.type is InteractionType.application_command:
+            # TODO: add ratelimiting when pycord adds cooldowns for slash commands
 
-        if user is None:
-            return
+            user = await self.mongo.fetch_user(interaction.user, create=True)
 
-        # Checking if the user is banned
-        if user.banned:
-            embed = self.error_embed(
-                title="You are banned",
-                description="Join the support server and create a ticket for a ban appeal",
-                add_footer=False,
-            )
-            view = discord.ui.View()
+            if user is None:
+                return
 
-            item = discord.ui.Button(
-                style=discord.ButtonStyle.link,
-                label="Click here!",
-                url=constants.SUPPORT_SERVER,
-            )
-            view.add_item(item=item)
+            # Checking if the user is banned
+            if user.banned:
+                embed = self.error_embed(
+                    title="You are banned",
+                    description="Join the support server and create a ticket for a ban appeal",
+                    add_footer=False,
+                )
+                view = BaseView(personal=True)
 
-            ctx = await self.get_application_context(interaction)
+                item = discord.ui.Button(
+                    style=discord.ButtonStyle.link,
+                    label="Click here!",
+                    url=constants.SUPPORT_SERVER,
+                )
+                view.add_item(item=item)
 
-            return await ctx.respond(embed=embed, view=view)
+                ctx = await self.get_application_context(interaction)
 
-        # TODO: add ratelimiting when pycord adds cooldowns for slash commands
+                return await ctx.respond(embed=embed, view=view, ephemeral=True)
 
         # Processing command
         await self.process_application_commands(interaction)

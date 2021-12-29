@@ -1,6 +1,7 @@
-import word_list
+from discord.commands import Option, SlashCommandGroup
 from discord.ext import commands
-from discord.commands import SlashCommandGroup, Option
+
+import word_list
 
 MAX_RACE_JOIN = 10
 TEST_RANGE = (1, 100)

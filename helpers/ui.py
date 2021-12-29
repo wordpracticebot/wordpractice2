@@ -2,17 +2,7 @@ import random
 
 import discord
 
-
-def create_link_view(links: dict[str, str]):
-    """
-    links: {NAME: URL}
-    """
-    view = discord.ui.View()
-
-    for name, url in links.items():
-        view.add_item(discord.ui.Button(label=name, url=url))
-
-    return view
+from static.hints import hints
 
 
 class CustomEmbed(discord.Embed):
@@ -30,41 +20,25 @@ class CustomEmbed(discord.Embed):
 
     # TODO: add proper hints
     def get_random_hint(self):
-        return random.choice(["yes", "no", "maybe"])
+        return random.choice(hints)
 
 
 class BaseView(discord.ui.View):
-    def __init__(self, ctx):
-        self.ctx = ctx
-
+    def __init__(self, personal=True):
         super().__init__()
 
-    async def on_timeout(self):
-        for child in self.children:
-            child.disabled = True
-        await self.response.edit_original_message(view=self)
+        self.personal = personal
 
     async def interaction_check(self, interaction):
-        if self.ctx.author.id != interaction.user.id:
-            await interaction.response.send_message(
-                "You are not the author of this command.", ephemeral=True
-            )
-            return False
-        return True
-
-    async def interaction_check(self, interaction):
-        if interaction.user and interaction.user.id == self.ctx.author.id:
+        if self.personal or (
+            interaction.user and interaction.user.id == self.ctx.author.id
+        ):
             return True
+
         await interaction.response.send_message(
             "You are not the author of this command", ephemeral=True
         )
         return False
-
-    async def create_page(self):
-        return self.ctx.bot.embed()
-
-    async def update_buttons(self):
-        pass
 
     async def on_error(self, error, item, interaction):
         if interaction.response.is_done():
@@ -76,6 +50,24 @@ class BaseView(discord.ui.View):
 
         # TODO: remove this in production + log error
         raise error
+
+
+class PageView(BaseView):
+    def __init__(self, ctx):
+        self.ctx = ctx
+
+        super().__init__()
+
+    async def on_timeout(self):
+        for child in self.children:
+            child.disabled = True
+        await self.response.edit_original_message(view=self)
+
+    async def create_page(self):
+        return self.ctx.bot.embed()
+
+    async def update_buttons(self):
+        pass
 
     async def update_message(self, interaction):
         embed = await self.create_page()
@@ -91,7 +83,7 @@ class BaseView(discord.ui.View):
         self.response = await self.ctx.respond(embed=embed, view=self)
 
 
-class ScrollView(BaseView):
+class ScrollView(PageView):
     def __init__(self, ctx, max_page: int, compact=True):
         super().__init__(ctx)
 
@@ -146,16 +138,71 @@ class ScrollView(BaseView):
             await self.update_all(interaction)
 
 
-def create_link_view(links: dict):
-    """
-    Creates a link view
-    links: {name: url}
-    """
+class DictButton(discord.ui.Button):
+    def toggle_success(self):
+        self.style = discord.ButtonStyle.success
 
-    view = discord.ui.View()
+    def toggle_regular(self):
+        self.style = discord.ButtonStyle.primary
 
-    for label, url in links.items():
-        item = discord.ui.Button(style=discord.ButtonStyle.link, label=label, url=url)
-        view.add_item(item=item)
+    async def callback(self, interaction):
+        self.toggle_success()
+
+        await self.view.update_all(interaction, self.label)
+
+
+class ViewFromDict(PageView):
+    def __init__(self, ctx, the_dict):
+        super().__init__(ctx)
+
+        self.the_dict = the_dict
+
+    @property
+    def order(self):
+        return list(self.the_dict.keys())
+
+    async def update_message(self, interaction):
+        embed = await self.create_page()
+        await interaction.message.edit(embed=embed, view=self)
+
+    async def create_page(self):
+        pass
+
+    async def update_buttons(self, page):
+        if self.page is not None:
+            prev_index = self.order.index(self.page)
+
+            self.children[prev_index].toggle_regular()
+
+        self.page = page
+
+    async def update_all(self, interaction, page):
+        await self.update_buttons(page)
+        await self.update_message(interaction)
+
+    async def start(self):
+        start_index = 0
+        # Generating the buttons
+        for i, name in enumerate(self.order):
+            button = DictButton(label=name, style=discord.ButtonStyle.primary)
+
+            if i == start_index:
+                self.page = name
+                button.toggle_success()
+
+            self.add_item(button)
+
+        embed = await self.create_page()
+        self.response = await self.ctx.respond(embed=embed, view=self)
+
+
+def create_link_view(links: dict[str, str]):
+    """
+    links: {NAME: URL}
+    """
+    view = BaseView()
+
+    for name, url in links.items():
+        view.add_item(discord.ui.Button(label=name, url=url))
 
     return view
