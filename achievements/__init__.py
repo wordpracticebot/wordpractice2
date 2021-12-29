@@ -8,17 +8,31 @@ categories = {
     # "Badges"
 }
 
-# TODO: cache results
-async def check_all(user: dict):
+
+def handle_achievement(a, user):
+    if a.name in user.achievements or a.has_callback() is False:
+        return None
+
+    changer = a.callback(user)
+
+    # Checking if the achievement was completed
+    if changer is False:
+        return None
+
+    return a, changer
+
+
+def check_all(user: dict):
     for cv in categories.values():
         for a in cv.challenges:
-            if a.name in user.achievements or a.has_callback() is False:
-                continue
+            # Handling if it's not a tier
+            if not isinstance(a, list):
+                a = [a]
 
-            changer = await a.callback(user)
+            for n in a:
+                result = handle_achievement(n, user)
 
-            # Checking if the achievement was completed
-            if changer is False:
-                continue
+                if result is None:
+                    continue
 
-            yield a, changer
+                yield result

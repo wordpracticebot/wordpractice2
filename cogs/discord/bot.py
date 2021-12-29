@@ -4,6 +4,7 @@ from discord.ext import commands
 from achievements import categories
 from helpers.converters import opt_user
 from helpers.ui import PageView, ViewFromDict
+from constants import PROGRESS, BAR_SIZE
 
 
 class ProfileView(PageView):
@@ -66,18 +67,57 @@ class AchievementsView(ViewFromDict):
 
         self.user = user  # user data
 
+    @staticmethod
+    def get_bar(p):
+        bar = ""
+        for i in range(BAR_SIZE):
+            if i == 0:
+                bar += PROGRESS[0][int(p != 0)]
+            elif i == BAR_SIZE - 1:
+                bar += PROGRESS[2][int(p >= BAR_SIZE)]
+            else:
+                bar += PROGRESS[1][2 if i == p else int(i > p)]
+
+        return bar
+
     async def create_page(self):
         c = self.the_dict[self.page]
 
+        tier = None
+
         embed = self.ctx.bot.embed(title=f"{self.page}", description=c.desc)
 
-        for i, a in enumerate(c.challenges):
-            if i % 2 == 1:
-                embed.add_field(name="** **", value="** **")
+        spacing = " " * 5
+
+        for a in c.challenges:
+            tier = None
+            # Tiers
+            if isinstance(a, list):
+                names = [m.name for m in a]
+
+                user_a = set(self.user.achievements)
+
+                if names[-1] in user_a or names[-2] in user_a:
+                    tier = len(names) - 1
+                if user_a.isdisjoint(names):
+                    tier = 0
+                else:
+                    # getting the highest achievement in tier that user has
+                    tier = sorted([names.index(x) for x in set(names) & user_a])[-1] + 1
+
+                a = a[tier]
+
+            progress = a.progress(self.user)
+
+            bar = self.get_bar(int(progress * BAR_SIZE))
 
             embed.add_field(
-                name=a.name,
-                value=f"{a.desc}\n**Reward**: {a.reward}\n\n** **",
+                name=a.name
+                + (f" `[{tier + 1}/{len(names)}]`" if tier is not None else ""),
+                value=(
+                    f">>> {a.desc}\n**Reward:** {a.reward}{spacing}\n"
+                    f"{bar} `{min(round(progress*100, 2), 100)}%`"
+                ),
             )
 
         return embed

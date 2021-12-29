@@ -162,7 +162,7 @@ class Events(commands.Cog):
             new_names = []
 
             # Looping through all the finished achievements
-            async for a, changer in check_all(new_user):
+            for a, changer in check_all(new_user):
                 new_names.append(a.name)
 
                 # adding achievemnt to document
@@ -182,6 +182,8 @@ class Events(commands.Cog):
                 names += new_names
             else:
                 done_checking = True
+
+        print(names)
 
         if user.to_mongo() != (user_data := new_user.to_mongo()):
             await self.bot.mongo.replace_user_data(ctx.author, user_data)

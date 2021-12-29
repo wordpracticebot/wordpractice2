@@ -6,6 +6,11 @@ False = not finished
 Callable[[dict], dict] = state change
 """
 
+"""
+Challenges:
+[[a,b,c], a, b] 
+"""
+
 
 class Achievement:
     def __init__(self, name: str, desc: str, reward: str = None):
@@ -13,8 +18,8 @@ class Achievement:
         self.desc = desc
         self.reward = reward
 
-    async def progress(self, user) -> int:
-        return int(self.name in user.achievements) * 100
+    def progress(self, user) -> int:
+        return int(self.name in user.achievements)
 
     def has_callback(self):
         return callable(getattr(self.__class__, "callback", False))
