@@ -1,9 +1,9 @@
 import discord
-from achievements import categories
 from discord.ext import commands
 
+from achievements import categories
 from helpers.converters import opt_user
-from helpers.ui import PageView
+from helpers.ui import PageView, ViewFromDict
 
 
 class ProfileView(PageView):
@@ -60,49 +60,16 @@ class ProfileView(PageView):
             await self.update_all(interaction, 1)
 
 
-class AchievementButton(discord.ui.Button):
-    async def callback(self, interaction):
-        self.style = discord.ButtonStyle.success
+class AchievementsView(ViewFromDict):
+    def __init__(self, ctx, the_dict, user):
+        super().__init__(ctx, the_dict)
 
-        await self.view.update_all(interaction, self.label)
-
-
-class AchievementsView(PageView):
-    def __init__(self, ctx, user):
-        super().__init__(ctx)
-
-        self.page = None
         self.user = user  # user data
-
-    async def update_message(self, interaction):
-        embed = await self.create_page()
-        await interaction.message.edit(embed=embed, view=self)
 
     async def create_page(self):
         embed = self.ctx.bot.embed(title=f"Page {self.page}")
 
         return embed
-
-    async def update_buttons(self, page):
-        if self.page is not None:
-            prev_index = list(categories.keys()).index(self.page)
-
-            self.children[prev_index].style = discord.ButtonStyle.primary
-
-        self.page = page
-
-    async def update_all(self, interaction, page):
-        await self.update_buttons(page)
-        await self.update_message(interaction)
-
-    async def start(self):
-        # Generating the buttons
-        for name in categories.keys():
-            button = AchievementButton(label=name, style=discord.ButtonStyle.primary)
-            self.add_item(button)
-
-        embed = await self.create_page()
-        self.response = await self.ctx.respond(embed=embed, view=self)
 
 
 class User(commands.Cog):
@@ -155,7 +122,7 @@ class User(commands.Cog):
         """See all the achievements"""
         user_data = await self.bot.mongo.fetch_user(ctx.author)
 
-        view = AchievementsView(ctx, user_data)
+        view = AchievementsView(ctx, categories, user_data)
 
         await view.start()
 

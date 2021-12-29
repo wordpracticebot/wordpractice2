@@ -138,6 +138,64 @@ class ScrollView(PageView):
             await self.update_all(interaction)
 
 
+class DictButton(discord.ui.Button):
+    def toggle_success(self):
+        self.style = discord.ButtonStyle.success
+
+    def toggle_regular(self):
+        self.style = discord.ButtonStyle.primary
+
+    async def callback(self, interaction):
+        self.toggle_success()
+
+        await self.view.update_all(interaction, self.label)
+
+
+class ViewFromDict(PageView):
+    def __init__(self, ctx, the_dict):
+        super().__init__(ctx)
+
+        self.the_dict = the_dict
+
+    @property
+    def order(self):
+        return list(self.the_dict.keys())
+
+    async def update_message(self, interaction):
+        embed = await self.create_page()
+        await interaction.message.edit(embed=embed, view=self)
+
+    async def create_page(self):
+        pass
+
+    async def update_buttons(self, page):
+        if self.page is not None:
+            prev_index = self.order.index(self.page)
+
+            self.children[prev_index].toggle_regular()
+
+        self.page = page
+
+    async def update_all(self, interaction, page):
+        await self.update_buttons(page)
+        await self.update_message(interaction)
+
+    async def start(self):
+        start_index = 0
+        # Generating the buttons
+        for i, name in enumerate(self.order):
+            button = DictButton(label=name, style=discord.ButtonStyle.primary)
+
+            if i == start_index:
+                self.page = name
+                button.toggle_success()
+
+            self.add_item(button)
+
+        embed = await self.create_page()
+        self.response = await self.ctx.respond(embed=embed, view=self)
+
+
 def create_link_view(links: dict[str, str]):
     """
     links: {NAME: URL}
