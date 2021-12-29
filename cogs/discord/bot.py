@@ -2,9 +2,9 @@ import discord
 from discord.ext import commands
 
 from achievements import categories
+from constants import BAR_SIZE, PROGRESS
 from helpers.converters import opt_user
 from helpers.ui import PageView, ViewFromDict
-from constants import PROGRESS, BAR_SIZE
 
 
 class ProfileView(PageView):

@@ -1,11 +1,12 @@
+from .badges import badges
 from .beginning import beginning
 from .speed import speed
 
 categories = {
     "Beginning": beginning,
-    "Speed": speed
+    "Speed": speed,
+    "Badges": badges,
     # "Endurance"
-    # "Badges"
 }
 
 
