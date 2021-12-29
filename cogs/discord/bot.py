@@ -67,7 +67,18 @@ class AchievementsView(ViewFromDict):
         self.user = user  # user data
 
     async def create_page(self):
-        embed = self.ctx.bot.embed(title=f"Page {self.page}")
+        c = self.the_dict[self.page]
+
+        embed = self.ctx.bot.embed(title=f"{self.page}", description=c.desc)
+
+        for i, a in enumerate(c.challenges):
+            if i % 2 == 1:
+                embed.add_field(name="** **", value="** **")
+
+            embed.add_field(
+                name=a.name,
+                value=f"{a.desc}\n**Reward**: {a.reward}\n\n** **",
+            )
 
         return embed
 
