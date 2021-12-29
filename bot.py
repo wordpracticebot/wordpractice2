@@ -9,11 +9,12 @@ from collections import Counter
 
 import aiohttp
 import discord
+from discord import InteractionType
 from discord.ext import commands
 
 import cogs
 import constants
-from helpers.ui import CustomEmbed
+from helpers.ui import BaseView, CustomEmbed
 
 # TODO: use max concurrency for typing test
 # TODO: check if user is banned when giving roles
@@ -119,35 +120,33 @@ class WordPractice(commands.AutoShardedBot):
         )
 
     async def on_interaction(self, interaction):
-        print("on interaction", time.time())
-        user = await self.mongo.fetch_user(interaction.user, create=True)
-        print("after fetch", time.time())
+        if interaction.type is InteractionType.application_command:
+            # TODO: add ratelimiting when pycord adds cooldowns for slash commands
 
-        if user is None:
-            return
+            user = await self.mongo.fetch_user(interaction.user, create=True)
 
-        # Checking if the user is banned
-        if user.banned:
-            embed = self.error_embed(
-                title="You are banned",
-                description="Join the support server and create a ticket for a ban appeal",
-                add_footer=False,
-            )
-            view = discord.ui.View()
+            if user is None:
+                return
 
-            item = discord.ui.Button(
-                style=discord.ButtonStyle.link,
-                label="Click here!",
-                url=constants.SUPPORT_SERVER,
-            )
-            view.add_item(item=item)
+            # Checking if the user is banned
+            if user.banned:
+                embed = self.error_embed(
+                    title="You are banned",
+                    description="Join the support server and create a ticket for a ban appeal",
+                    add_footer=False,
+                )
+                view = BaseView(personal=True)
 
-            ctx = await self.get_application_context(interaction)
+                item = discord.ui.Button(
+                    style=discord.ButtonStyle.link,
+                    label="Click here!",
+                    url=constants.SUPPORT_SERVER,
+                )
+                view.add_item(item=item)
 
-            return await ctx.respond(embed=embed, view=view)
+                ctx = await self.get_application_context(interaction)
 
-        # TODO: add ratelimiting when pycord adds cooldowns for slash commands
-        print("before processing", time.time())
+                return await ctx.respond(embed=embed, view=view, ephemeral=True)
 
         # Processing command
         await self.process_application_commands(interaction)

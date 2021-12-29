@@ -152,7 +152,7 @@ class Events(commands.Cog):
     async def on_application_command_completion(self, ctx):
         user = await self.bot.mongo.fetch_user(ctx.author, create=True)
 
-        new_user = copy.copy(user)
+        new_user = copy.deepcopy(user)
 
         names = []
 
@@ -183,9 +183,8 @@ class Events(commands.Cog):
             else:
                 done_checking = True
 
-        print(names)
-
-        await self.bot.mongo.replace_user_data(ctx.author, new_user.to_mongo())
+        if user.to_mongo() != (user_data := new_user.to_mongo()):
+            await self.bot.mongo.replace_user_data(ctx.author, user_data)
 
 
 def setup(bot):

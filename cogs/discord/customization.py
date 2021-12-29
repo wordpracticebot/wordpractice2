@@ -5,7 +5,7 @@ from discord.ext import commands
 import word_list
 from helpers.converters import rqd_colour
 from helpers.errors import ImproperArgument
-from helpers.ui import CustomEmbed
+from helpers.ui import BaseView, CustomEmbed
 from static import themes
 
 
@@ -70,7 +70,7 @@ class Customization(commands.Cog):
     @theme_group.command()
     async def premade(self, ctx):
         """Choose a premade theme for your typing test"""
-        view = discord.ui.View()
+        view = BaseView(personal=True)
         view.add_item(ThemeSelect(ctx))
 
         await ctx.respond(content="** **", view=view)
