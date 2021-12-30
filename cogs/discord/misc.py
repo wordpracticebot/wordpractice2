@@ -1,5 +1,4 @@
 import time
-from datetime import datetime
 
 from discord.ext import commands
 
@@ -20,22 +19,6 @@ class Misc(commands.Cog):
         latency = round(self.bot.latency * 1000, 3)
 
         embed = self.bot.embed(title=f"Pong! {latency} ms", add_footer=False)
-
-        score = self.bot.mongo.Score(
-            wpm=200,
-            raw=200,
-            acc=100,
-            cw=20,
-            tw=20,
-            u_input="he he he he he he he he he he he he he he he he he he he he",
-            quote="he he he he he he he he he he he he he he he he he he he he".split(),
-            earnings=100,
-            timestamp=datetime.now(),
-        )
-
-        await self.bot.mongo.update_user(
-            ctx.author, {"$set": {"highspeed.short": score.to_mongo()}}
-        )
 
         await ctx.respond(embed=embed)
 

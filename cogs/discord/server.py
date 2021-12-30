@@ -1,4 +1,3 @@
-from discord.commands import Option, SlashCommandGroup
 from discord.ext import commands
 
 

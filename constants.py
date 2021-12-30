@@ -26,3 +26,4 @@ PROGRESS = [
     ["<:b5:925835167359201321>", "<:b7:925835167241740319>"],
 ]  # emojis for the progress ar
 BAR_SIZE = 10
+ACHIEVEMENTS_SHOWN = 3
