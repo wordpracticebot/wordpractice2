@@ -7,11 +7,28 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 from discord.ext.commands import errors
+from PIL import ImageDraw
 
 import constants
 from achievements import check_all
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
+from static.assets import achievement_base, uni_sans_heavy
+
+MAX_ACHIEVEMENTS_SHOWN = 3
+
+
+def generate_achievement_image(name):
+    img = achievement_base.copy()
+
+    draw = ImageDraw.Draw(img)
+    draw.text((240, 110), name, font=uni_sans_heavy)
+
+    buffer = BytesIO()
+    img.save(buffer, "png")
+    buffer.seek(0)
+
+    return discord.File(fp=buffer, filename="image.png")
 
 
 class Events(commands.Cog):
@@ -183,9 +200,21 @@ class Events(commands.Cog):
             else:
                 done_checking = True
 
-        print(names)
-
         if user.to_mongo() != (user_data := new_user.to_mongo()):
+            files = [
+                generate_achievement_image(n) for n in names[:MAX_ACHIEVEMENTS_SHOWN]
+            ]
+
+            if len(names) > MAX_ACHIEVEMENTS_SHOWN:
+                await ctx.respond(
+                    f"and {len(names) - MAX_ACHIEVEMENTS_SHOWN} more...",
+                    files=files,
+                    ephemeral=True,
+                )
+            else:
+                await ctx.respond(files=files, ephemeral=True)
+
+            # Replacing the user data with the new state
             await self.bot.mongo.replace_user_data(ctx.author, user_data)
 
 
