@@ -9,7 +9,6 @@ python = "^3.9"
 umongo = {extras = ["motor"], version = "^3.0.1"}
 motor = "^2.5.1"
 dnspython = "^2.1.0"
-rapidfuzz = "^1.8.3"
 certifi = "^2021.10.8"
 humanfriendly = "^10.0"
 black = "^21.11b1"

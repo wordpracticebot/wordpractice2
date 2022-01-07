@@ -9,13 +9,11 @@ from discord.ext import commands
 from discord.ext.commands import errors
 from PIL import ImageDraw
 
-import constants
 from achievements import check_all
+from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
 from static.assets import achievement_base, uni_sans_heavy
-
-MAX_ACHIEVEMENTS_SHOWN = 3
 
 
 def generate_achievement_image(name):
@@ -122,7 +120,7 @@ class Events(commands.Cog):
                 pass
 
     async def handle_unexpected_error(self, ctx, error):
-        view = create_link_view({"Support Server": constants.SUPPORT_SERVER})
+        view = create_link_view({"Support Server": SUPPORT_SERVER})
 
         await self.send_error(
             ctx,
@@ -201,13 +199,11 @@ class Events(commands.Cog):
                 done_checking = True
 
         if user.to_mongo() != (user_data := new_user.to_mongo()):
-            files = [
-                generate_achievement_image(n) for n in names[:MAX_ACHIEVEMENTS_SHOWN]
-            ]
+            files = [generate_achievement_image(n) for n in names[:ACHIEVEMENTS_SHOWN]]
 
-            if len(names) > MAX_ACHIEVEMENTS_SHOWN:
+            if len(names) > ACHIEVEMENTS_SHOWN:
                 await ctx.respond(
-                    f"and {len(names) - MAX_ACHIEVEMENTS_SHOWN} more...",
+                    f"and {len(names) - ACHIEVEMENTS_SHOWN} more...",
                     files=files,
                     ephemeral=True,
                 )

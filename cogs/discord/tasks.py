@@ -2,7 +2,7 @@ from typing import Union
 
 from discord.ext import commands, tasks
 
-import constants
+from constants import LB_LENGTH
 
 
 class Tasks(commands.Cog):
@@ -22,7 +22,7 @@ class Tasks(commands.Cog):
                     }
                 },
                 {"$sort": {"count": -1}},
-                {"$limit": constants.LB_LENGTH},
+                {"$limit": LB_LENGTH},
             ]
         )
         return [i async for i in cursor]

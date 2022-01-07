@@ -18,7 +18,6 @@ class CustomEmbed(discord.Embed):
 
         super().__init__(**kwargs)
 
-    # TODO: add proper hints
     def get_random_hint(self):
         return random.choice(hints)
 
@@ -67,7 +66,7 @@ class PageView(BaseView):
         return self.ctx.bot.embed()
 
     async def update_buttons(self):
-        pass
+        ...
 
     async def update_message(self, interaction):
         embed = await self.create_page()
@@ -166,7 +165,7 @@ class ViewFromDict(PageView):
         await interaction.message.edit(embed=embed, view=self)
 
     async def create_page(self):
-        pass
+        ...
 
     async def update_buttons(self, page):
         if self.page is not None:

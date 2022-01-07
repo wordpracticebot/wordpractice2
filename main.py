@@ -10,8 +10,8 @@ from collections import namedtuple
 
 import discord
 
-import constants
 from bot import WordPractice
+from constants import DEBUG_GUILD
 
 Config = namedtuple(
     "Config",
@@ -51,7 +51,7 @@ def main():
         allowed_mentions=allowed_mentions,
         chunk_guilds_at_startup=False,
         case_insensitive=True,
-        debug_guild=constants.DEBUG_GUILD,
+        debug_guild=DEBUG_GUILD,
         intents=intents,
     )
 

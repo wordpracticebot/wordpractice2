@@ -57,6 +57,7 @@ class User(Document):
 
     # Statistics
     words = IntegerField(default=0)
+    coins = IntegerField(default=0)
     last24 = ListField(ListField(IntegerField), default=[[0], [0]])
 
     # Season

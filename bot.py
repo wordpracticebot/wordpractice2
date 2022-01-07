@@ -13,7 +13,7 @@ from discord import InteractionType
 from discord.ext import commands
 
 import cogs
-import constants
+from constants import ERROR_CLR, PERMISSONS, PRIMARY_CLR, SUPPORT_SERVER
 from helpers.ui import BaseView, CustomEmbed
 
 # TODO: use max concurrency for typing test
@@ -84,11 +84,11 @@ class WordPractice(commands.AutoShardedBot):
         self.load_exts()
 
     def embed(self, **kwargs):
-        color = kwargs.pop("color", constants.PRIMARY_CLR)
+        color = kwargs.pop("color", PRIMARY_CLR)
         return CustomEmbed(self, color=color, **kwargs)
 
     def error_embed(self, **kwargs):
-        color = kwargs.pop("color", constants.ERROR_CLR)
+        color = kwargs.pop("color", ERROR_CLR)
         return CustomEmbed(self, color=color, **kwargs)
 
     @property
@@ -115,7 +115,7 @@ class WordPractice(commands.AutoShardedBot):
     def create_invite_link(self):
         return discord.utils.oauth_url(
             client_id=self.user.id,
-            permissions=discord.Permissions(permissions=constants.PERMISSONS),
+            permissions=discord.Permissions(permissions=PERMISSONS),
             scopes=("bot", "applications.commands"),
         )
 
@@ -140,7 +140,7 @@ class WordPractice(commands.AutoShardedBot):
                 item = discord.ui.Button(
                     style=discord.ButtonStyle.link,
                     label="Click here!",
-                    url=constants.SUPPORT_SERVER,
+                    url=SUPPORT_SERVER,
                 )
                 view.add_item(item=item)
 
