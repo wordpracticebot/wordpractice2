@@ -91,7 +91,7 @@ class AchievementsView(ViewFromDict):
                 name=a.name
                 + (f" `[{tier + 1}/{len(names)}]`" if tier is not None else ""),
                 value=(
-                    f">>> {a.desc}\n**Reward:** {a.reward}\n" f"{bar} `{p[0]}/{p[1]}`"
+                    f">>> {a.desc}\n**Reward:** {a.reward}\n{bar} `{p[0]}/{p[1]}`"
                 ),
                 inline=False,
             )

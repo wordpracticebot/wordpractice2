@@ -27,3 +27,7 @@ PROGRESS = [
 ]  # emojis for the progress ar
 BAR_SIZE = 10
 ACHIEVEMENTS_SHOWN = 3
+
+# Typing test
+MAX_RACE_JOIN = 10
+TEST_RANGE = (1, 100)

@@ -1,23 +1,18 @@
-from discord.commands import Option, SlashCommandGroup
+import json
+import random
+from itertools import cycle, islice
+
+from discord.commands import SlashCommandGroup
 from discord.ext import commands
 
 import word_list
+from constants import MAX_RACE_JOIN, TEST_RANGE
+from helpers.converters import quote_amt, word_amt
 
-MAX_RACE_JOIN = 10
-TEST_RANGE = (1, 100)
 
-# Arguments
-word_amt = lambda: Option(
-    int,
-    f"Choose a word amount from {TEST_RANGE[0]}-{TEST_RANGE[1]}",
-    required=True,
-)
-quote_amt = lambda: Option(
-    str,
-    "Choose a quote length",
-    choices=list(word_list.quotes["lengths"].keys()),
-    required=True,
-)
+def load_test_file(name):
+    with open(f"./word_list/{name}", "r") as f:
+        return json.load(f)
 
 
 class Typing(commands.Cog):
@@ -35,22 +30,22 @@ class Typing(commands.Cog):
     @tt_group.command()
     async def dictionary(self, ctx, length: word_amt()):
         """Take a dictionary typing test"""
-        await self.handle_dictionary_input(ctx, length)
+        quote = await self.handle_dictionary_input(ctx, length)
 
     @tt_group.command()
     async def quote(self, ctx, length: quote_amt()):
         """Take a quote typing test"""
-        await self.handle_quote_input(ctx, length)
+        quote = await self.handle_quote_input(ctx, length)
 
     @race_group.command()
     async def dictionary(self, ctx, length: word_amt()):
         """Take a multiplayer dictionary typing test"""
-        await self.handle_dictionary_input(ctx, length)
+        quote = await self.handle_dictionary_input(ctx, length)
 
     @race_group.command()
     async def quote(self, ctx, length: quote_amt()):
         """Take a multiplayer quote typing test"""
-        await self.handle_quote_input(ctx, length)
+        quote = await self.handle_quote_input(ctx, length)
 
     async def handle_dictionary_input(self, ctx, length: int):
         if length not in range(*TEST_RANGE):
@@ -58,11 +53,21 @@ class Typing(commands.Cog):
                 f"The typing test must be between {TEST_RANGE[0]} and {TEST_RANGE[1]} words"
             )
 
-        # TODO: generate quote
+        user = await self.bot.mongo.fetch_user(ctx.author)
+
+        words = load_test_file(word_list.languages[user.lang]["levels"][user.level])
+
+        return random.sample(words, length)
 
     async def handle_quote_input(self, ctx, length: str):
-        # TODO: generate quote
-        pass
+        test_range = word_list.quotes["lengths"][length]
+
+        quotes = load_test_file("quotes.json")
+
+        start = random.randint(0, len(quotes) - 1)
+
+        # Selecting consecutive items from list of sentences
+        return list(islice(cycle(quotes), start, start + random.randint(*test_range)))
 
 
 def setup(bot):

@@ -122,6 +122,11 @@ class Customization(commands.Cog):
             raise commands.BadArgument("Pacer speed must be between 10 and 300")
 
     @commands.slash_command()
+    async def equip(self, ctx):
+        """Equip a badge that you own"""
+        pass
+
+    @commands.slash_command()
     async def link(
         self,
         ctx,

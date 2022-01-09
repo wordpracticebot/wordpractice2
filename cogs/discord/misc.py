@@ -27,7 +27,6 @@ class Misc(commands.Cog):
     @commands.slash_command()
     async def help(self, ctx):
         """List of commands"""
-        pass
 
     @commands.slash_command()
     async def stats(self, ctx):
@@ -96,8 +95,8 @@ class Misc(commands.Cog):
         bar = get_bar(p[0] / p[1])
 
         embed.add_field(
-            name="** **\nVoting Achievement Progress",
-            value=f"{bar} `{p[0]}/{p[1]}`",
+            name="** **\nVote Achievement Progress",
+            value=f">>> **Reward:** {a.reward}\n{bar} `{p[0]}/{p[1]}`",
             inline=False,
         )
 

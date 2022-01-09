@@ -166,6 +166,9 @@ class WordPractice(commands.AutoShardedBot):
         hook = discord.Webhook.from_url(self.config.IMPORTANT_LOG, session=self.session)
         return hook
 
+    async def on_ready(self):
+        print("Ready!")
+
     async def close(self):
         await super().close()
         await self.session.close()

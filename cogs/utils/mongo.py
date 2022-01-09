@@ -92,6 +92,7 @@ class User(Document):
     # Settings
     theme = ListField(StringField, default=["#ffffff", "#000000"])
     lang = StringField(default="english")
+    level = StringField(default="easy")
     links = DictField(StringField(), StringField(), default={})
     pacer = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"
 
