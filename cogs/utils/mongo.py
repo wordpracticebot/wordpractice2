@@ -77,8 +77,8 @@ class User(Document):
     badges = ListField(StringField, default=[])
     status = StringField(default="")
 
-    # Streak
-    streak = IntegerField(default=0)
+    # Streak of playing
+    streak = IntegerField(default=0)  # days
     last_streak = DateTimeField(default=datetime.min)
 
     # Voting
@@ -94,6 +94,10 @@ class User(Document):
     lang = StringField(default="english")
     links = DictField(StringField(), StringField(), default={})
     pacer = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"
+
+    @property
+    def username(self):
+        return f"{self.name}#{self.discriminator}"
 
 
 class Mongo(commands.Cog):

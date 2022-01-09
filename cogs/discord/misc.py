@@ -2,6 +2,8 @@ import time
 
 from discord.ext import commands
 
+import icons
+from achievements import categories, get_achievement_tier, get_bar
 from helpers.ui import create_link_view
 
 
@@ -69,7 +71,44 @@ class Misc(commands.Cog):
     @commands.slash_command()
     async def vote(self, ctx):
         """Get the voting link for the bot"""
-        pass
+
+        user = await self.bot.mongo.fetch_user(ctx.author)
+
+        embed = self.bot.embed(
+            title="Vote for wordPractice",
+            description="Every 12 hours, you can vote for wordPractice to receive rewards",
+        )
+
+        embed.add_field(
+            name="Rewards per Vote", value=f"{icons.coin} 1000 coins", inline=False
+        )
+
+        # Voting achievement progress
+        all_achievements = categories["Endurance"].challenges[1]
+
+        names = [i.name for i in all_achievements]
+        tier = get_achievement_tier(user, names)
+
+        a = all_achievements[tier]
+
+        p = a.progress(user)
+
+        bar = get_bar(p[0] / p[1])
+
+        embed.add_field(
+            name="** **\nVoting Achievement Progress",
+            value=f"{bar} `{p[0]}/{p[1]}`",
+            inline=False,
+        )
+
+        view = create_link_view(
+            {
+                "Top.gg": "https://top.gg/bot/743183681182498906/vote",
+                "DBL": "https://discordbotlist.com/bots/wordpractice/upvote",
+            }
+        )
+
+        await ctx.respond(embed=embed, view=view)
 
 
 def setup(bot):

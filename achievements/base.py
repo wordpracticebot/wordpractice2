@@ -19,7 +19,7 @@ class Achievement:
         self.reward = reward
 
     def progress(self, user) -> int:
-        return int(self.name in user.achievements)
+        return int(self.name in user.achievements), 1
 
     def has_callback(self):
         return callable(getattr(self.__class__, "callback", False))

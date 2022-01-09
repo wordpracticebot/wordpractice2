@@ -24,7 +24,7 @@ class Speed(Achievement):
         return self.changer if highest_speed(user) >= self.wpm else False
 
     def progress(self, user):
-        return highest_speed(user) / self.wpm
+        return highest_speed(user), self.wpm
 
 
 speed = Category(

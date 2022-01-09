@@ -17,7 +17,7 @@ class Badges(Achievement):
         return self.changer if len(user.badges) >= self.amt else False
 
     def progress(self, user):
-        return len(user.badges) / self.amt
+        return len(user.badges), self.amt
 
 
 badges = Category(

@@ -1,8 +1,7 @@
 import discord
 from discord.ext import commands
 
-from achievements import categories
-from constants import BAR_SIZE, PROGRESS
+from achievements import categories, get_achievement_tier, get_bar
 from helpers.converters import opt_user
 from helpers.ui import PageView, ViewFromDict
 
@@ -67,19 +66,6 @@ class AchievementsView(ViewFromDict):
 
         self.user = user  # user data
 
-    @staticmethod
-    def get_bar(p):
-        bar = ""
-        for i in range(BAR_SIZE):
-            if i == 0:
-                bar += PROGRESS[0][int(p != 0)]
-            elif i == BAR_SIZE - 1:
-                bar += PROGRESS[2][int(p >= BAR_SIZE)]
-            else:
-                bar += PROGRESS[1][2 if i == p else int(i > p)]
-
-        return bar
-
     async def create_page(self):
         c = self.the_dict[self.page]
 
@@ -87,37 +73,27 @@ class AchievementsView(ViewFromDict):
 
         embed = self.ctx.bot.embed(title=f"{self.page}", description=c.desc)
 
-        spacing = " " * 5
-
         for a in c.challenges:
             tier = None
             # Tiers
             if isinstance(a, list):
                 names = [m.name for m in a]
 
-                user_a = set(self.user.achievements)
-
-                if names[-1] in user_a or names[-2] in user_a:
-                    tier = len(names) - 1
-                if user_a.isdisjoint(names):
-                    tier = 0
-                else:
-                    # getting the highest achievement in tier that user has
-                    tier = sorted([names.index(x) for x in set(names) & user_a])[-1] + 1
+                tier = get_achievement_tier(self.user, names)
 
                 a = a[tier]
 
-            progress = a.progress(self.user)
+            p = a.progress(self.user)
 
-            bar = self.get_bar(int(progress * BAR_SIZE))
+            bar = get_bar(p[0] / p[1])
 
             embed.add_field(
                 name=a.name
                 + (f" `[{tier + 1}/{len(names)}]`" if tier is not None else ""),
                 value=(
-                    f">>> {a.desc}\n**Reward:** {a.reward}{spacing}\n"
-                    f"{bar} `{min(round(progress*100, 2), 100)}%`"
+                    f">>> {a.desc}\n**Reward:** {a.reward}\n" f"{bar} `{p[0]}/{p[1]}`"
                 ),
+                inline=False,
             )
 
         return embed
