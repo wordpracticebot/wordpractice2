@@ -1,10 +1,11 @@
-<p align="center">
+<div align="center">
     <img src="https://i.imgur.com/zuEi84v.png" alt="Logo" width="200" height="200">
-    <h1 align="center">wordPractice v2</h1>
-    <p align="center">Practice your typing skills while having fun, compete with typists from around the world.</p>
-</p>
-
-[![Discord](https://img.shields.io/discord/742960643312713738?logo=discord&style=for-the-badge)](https://discord.gg/wordpractice)
+    <h1 >wordPractice v2</h1>
+    <p >Practice your typing skills while having fun, compete with typists from around the world.</p>
+    <a href="https://discord.gg/wordpractice">
+        <img src="https://img.shields.io/discord/742960643312713738?logo=discord&style=for-the-badge"></img>
+    </a>
+</div>
 
 # How to run
 
