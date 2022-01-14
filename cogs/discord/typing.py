@@ -69,6 +69,12 @@ class Typing(commands.Cog):
         # Selecting consecutive items from list of sentences
         return list(islice(cycle(quotes), start, start + random.randint(*test_range)))
 
+    async def do_typing_test(self, quote):
+        pass
+
+    async def do_race(self, quote):
+        pass
+
 
 def setup(bot):
     bot.add_cog(Typing(bot))

@@ -1,2 +1,2 @@
 # General
-coin = ":coin:"
+xp = ":coin:"

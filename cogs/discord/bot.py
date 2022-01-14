@@ -90,9 +90,7 @@ class AchievementsView(ViewFromDict):
             embed.add_field(
                 name=a.name
                 + (f" `[{tier + 1}/{len(names)}]`" if tier is not None else ""),
-                value=(
-                    f">>> {a.desc}\n**Reward:** {a.reward}\n{bar} `{p[0]}/{p[1]}`"
-                ),
+                value=(f">>> {a.desc}\n**Reward:** {a.reward}\n{bar} `{p[0]}/{p[1]}`"),
                 inline=False,
             )
 

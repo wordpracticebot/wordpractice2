@@ -16,7 +16,9 @@ class ThemeSelect(discord.ui.Select):
             min_values=1,
             max_values=1,
             options=[
-                discord.SelectOption(label=name, emoji=value["icon"])
+                discord.SelectOption(
+                    label=name, emoji=discord.PartialEmoji.from_str(value["icon"])
+                )
                 for name, value in themes.default.items()
             ],
             row=1,

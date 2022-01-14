@@ -1,6 +1,10 @@
-# wordPractice v2
+<p align="center">
+    <img src="https://i.imgur.com/zuEi84v.png" alt="Logo" width="200" height="200">
+    <h1 align="center">wordPractice v2</h1>
+    <p align="center">Practice your typing skills while having fun, compete with typists from around the world.</p>
+</p>
 
-Practice your typing skills while having fun, compete with typists from around the world.
+[![Discord](https://img.shields.io/discord/742960643312713738?logo=discord&style=for-the-badge)](https://discord.gg/wordpractice)
 
 # How to run
 
@@ -13,6 +17,8 @@ Practice your typing skills while having fun, compete with typists from around t
 > 1. Create a `.env` file in the root directory of the repository.
 >
 > 2. Copy the content from `.env.example` into `.env` and fill it with the necessary information.
+>
+> 3. Configure any variables in `constants.py` and `icons.py`
 
 ### 3. Running
 

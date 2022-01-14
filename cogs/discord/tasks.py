@@ -27,6 +27,16 @@ class Tasks(commands.Cog):
         )
         return [i async for i in cursor]
 
+    async def reset_24_hour_stats(self):
+        pass
+
+    async def recompile_leaderboards(self):
+        pass
+
+    @tasks.loop(hours=24)
+    async def daily_start(self):
+        pass
+
 
 def setup(bot):
     bot.add_cog(Tasks(bot))

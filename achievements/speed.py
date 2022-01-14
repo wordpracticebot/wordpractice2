@@ -10,7 +10,7 @@ def highest_speed(user):
 
 class Speed(Achievement):
     def __init__(self, name, wpm):
-        super().__init__(name, f"Type {wpm} wpm", "Get some coins")
+        super().__init__(name, f"Type {wpm} wpm", "Get some xp")
 
         self.wpm = wpm
 

@@ -1,6 +1,7 @@
 import time
 
 from discord.ext import commands
+from datetime import datetime
 
 import icons
 from achievements import categories, get_achievement_tier, get_bar
@@ -79,7 +80,7 @@ class Misc(commands.Cog):
         )
 
         embed.add_field(
-            name="Rewards per Vote", value=f"{icons.coin} 1000 coins", inline=False
+            name="Rewards per Vote", value=f"{icons.xp} 1000 xp", inline=False
         )
 
         # Voting achievement progress

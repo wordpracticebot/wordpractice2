@@ -3,7 +3,7 @@ from .base import Achievement, Category
 
 class Badges(Achievement):
     def __init__(self, name, amt):
-        super().__init__(name, f"Earn {amt} badges", "Get some coins")
+        super().__init__(name, f"Earn {amt} badges", "Get some xp")
 
         self.amt = amt
 

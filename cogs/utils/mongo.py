@@ -43,7 +43,7 @@ class Score(EmbeddedDocument):
     # Quote
     quote = ListField(StringField, required=True)
 
-    # coin earnings
+    # xp earnings
     earnings = IntegerField(required=True)
     timestamp = DateTimeField(required=True)
 
@@ -54,26 +54,29 @@ class User(Document):
     name = StringField(required=True)
     discriminator = IntegerField(required=True)
     avatar = StringField(default=None)
+    created_at = DateTimeField(default=datetime.now())
 
     # Statistics
     words = IntegerField(default=0)
-    coins = IntegerField(default=0)
-    last24 = ListField(ListField(IntegerField), default=[[0], [0]])
+    last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
 
     # Season
     xp = IntegerField(default=0)
 
+    # Typing
     highspeed = DictField(
         StringField(),
         EmbeddedField(Score),
         default={},
     )
     verified = FloatField(default=0.0)
+
+    # Other statistics
     scores = ListField(EmbeddedField(Score), default=[])
     achievements = DictField(StringField(), DateTimeField, default=[])  # id: timestamp
+    medals = ListField(IntegerField, default=[0, 0, 0, 0])
 
     # Cosmetics
-    medals = ListField(IntegerField, default=[0, 0, 0, 0])
     badges = ListField(StringField, default=[])
     status = StringField(default="")
 
