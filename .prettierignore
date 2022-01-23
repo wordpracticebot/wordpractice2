@@ -6,3 +6,4 @@ italian_280k.json
 themes.json
 
 *.py
+docker-image.yml
