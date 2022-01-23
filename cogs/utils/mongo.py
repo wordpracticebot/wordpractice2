@@ -20,6 +20,8 @@ from umongo.fields import (
 )
 from umongo.frameworks import MotorAsyncIOInstance
 
+from constants import VOTING_SITES
+
 
 class Infraction(EmbeddedDocument):
     moderator = StringField(required=True)  # NAME#DISCRIMINATOR (ID)
@@ -86,7 +88,12 @@ class User(Document):
 
     # Voting
     votes = IntegerField(default=0)
-    last_voted = DateTimeField(default=datetime.min)
+
+    last_voted = DictField(
+        StringField(),
+        DateTimeField(),
+        default={name: datetime.min for name in VOTING_SITES.keys()},
+    )
 
     # Infractions
     infractions = ListField(EmbeddedField(Infraction), default=[])

@@ -160,6 +160,10 @@ class ViewFromDict(PageView):
     def order(self):
         return list(self.the_dict.keys())
 
+    @property
+    def button(self):
+        return DictButton
+
     async def update_message(self, interaction):
         embed = await self.create_page()
         await interaction.message.edit(embed=embed, view=self)
@@ -183,7 +187,7 @@ class ViewFromDict(PageView):
         start_index = 0
         # Generating the buttons
         for i, name in enumerate(self.order):
-            button = DictButton(label=name, style=discord.ButtonStyle.primary)
+            button = self.button(label=name)
 
             if i == start_index:
                 self.page = name
@@ -199,7 +203,7 @@ def create_link_view(links: dict[str, str]):
     """
     links: {NAME: URL}
     """
-    view = BaseView()
+    view = discord.ui.View()
 
     for name, url in links.items():
         view.add_item(discord.ui.Button(label=name, url=url))

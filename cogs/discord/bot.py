@@ -3,7 +3,7 @@ from discord.ext import commands
 
 from achievements import categories, get_achievement_tier, get_bar
 from helpers.converters import opt_user
-from helpers.ui import PageView, ViewFromDict
+from helpers.ui import DictButton, PageView, ViewFromDict
 
 
 class ProfileView(PageView):
@@ -60,11 +60,31 @@ class ProfileView(PageView):
             await self.update_all(interaction, 1)
 
 
+class AchievementsButton(DictButton):
+    def __init__(self, label, user):
+        style = (
+            discord.ButtonStyle.success
+            if categories[label].is_completed(user)
+            else discord.ButtonStyle.danger
+        )
+
+        super().__init__(label=label, style=style)
+
+    def toggle_success(self):
+        self.disabled = True
+
+    def toggle_regular(self):
+        self.disabled = False
+
+
 class AchievementsView(ViewFromDict):
-    def __init__(self, ctx, the_dict, user):
-        super().__init__(ctx, the_dict)
+    def __init__(self, ctx, user):
+        super().__init__(ctx, categories)
 
         self.user = user  # user data
+
+    def button(self, label):
+        return AchievementsButton(label, self.user)
 
     async def create_page(self):
         c = self.the_dict[self.page]
@@ -147,7 +167,7 @@ class User(commands.Cog):
         """See all the achievements"""
         user_data = await self.bot.mongo.fetch_user(ctx.author)
 
-        view = AchievementsView(ctx, categories, user_data)
+        view = AchievementsView(ctx, user_data)
 
         await view.start()
 

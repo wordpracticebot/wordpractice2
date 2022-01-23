@@ -1,4 +1,5 @@
-from constants import BAR_SIZE, PROGRESS
+from constants import BAR_SIZE
+from icons import progress_bar
 
 from .badges import badges
 from .beginning import beginning
@@ -48,11 +49,11 @@ def get_bar(progress):
     bar = ""
     for i in range(BAR_SIZE):
         if i == 0:
-            bar += PROGRESS[0][int(p != 0)]
+            bar += progress_bar[0][int(p != 0)]
         elif i == BAR_SIZE - 1:
-            bar += PROGRESS[2][int(p >= BAR_SIZE)]
+            bar += progress_bar[2][int(p >= BAR_SIZE)]
         else:
-            bar += PROGRESS[1][2 if i == p else int(i > p)]
+            bar += progress_bar[1][2 if i == p else int(i > p)]
     return bar
 
 

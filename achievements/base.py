@@ -29,3 +29,11 @@ class Category:
     def __init__(self, desc: str, challenges: list):
         self.desc = desc
         self.challenges = challenges
+
+    def is_completed(self, user):
+        return all(
+            (lambda m: m[0] >= m[1])(
+                (e if not isinstance(e, list) else e[-1]).progress(user)
+            )
+            for e in self.challenges
+        )

@@ -2,6 +2,7 @@
 
 # BADGE_NAME: EMOJI
 default = {
+    # Default badges for daily reward
     "grey": "",
     "orange": "",
     "lightblue": "",
@@ -56,7 +57,7 @@ default = {
     "surfboard": "",
     "umbrella": "",
     "watermelon": "",
-    "Hat": "",
+    "hat": "",
     "goldpot": "",
     "wateringcan": "",
     "sunscreen": "",

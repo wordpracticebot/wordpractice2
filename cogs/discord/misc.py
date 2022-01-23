@@ -1,10 +1,12 @@
 import time
+from datetime import datetime, timedelta
 
+import discord
 from discord.ext import commands
-from datetime import datetime
 
 import icons
 from achievements import categories, get_achievement_tier, get_bar
+from constants import VOTING_SITES
 from helpers.ui import create_link_view
 
 
@@ -74,14 +76,9 @@ class Misc(commands.Cog):
 
         user = await self.bot.mongo.fetch_user(ctx.author)
 
-        embed = self.bot.embed(
-            title="Vote for wordPractice",
-            description="Every 12 hours, you can vote for wordPractice to receive rewards",
-        )
+        embed = self.bot.embed(title="Vote for wordPractice", add_footer=False)
 
-        embed.add_field(
-            name="Rewards per Vote", value=f"{icons.xp} 1000 xp", inline=False
-        )
+        embed.add_field(name="Rewards", value=f"{icons.xp} 1000 xp", inline=False)
 
         # Voting achievement progress
         all_achievements = categories["Endurance"].challenges[1]
@@ -96,17 +93,28 @@ class Misc(commands.Cog):
         bar = get_bar(p[0] / p[1])
 
         embed.add_field(
-            name="** **\nVote Achievement Progress",
+            name="Vote Achievement Progress",
             value=f">>> **Reward:** {a.reward}\n{bar} `{p[0]}/{p[1]}`",
             inline=False,
         )
 
-        view = create_link_view(
-            {
-                "Top.gg": "https://top.gg/bot/743183681182498906/vote",
-                "DBL": "https://discordbotlist.com/bots/wordpractice/upvote",
-            }
-        )
+        view = discord.ui.View()
+
+        for name, value in VOTING_SITES.items():
+            next_vote = timedelta(hours=value["time"]) + user.last_voted[name]
+
+            if datetime.now() >= next_vote:
+                button = discord.ui.Button(label=name, url=value["link"])
+            else:
+                time_until = datetime.now() - next_vote
+
+                button = discord.ui.Button(
+                    label=f"{name} - {max(time_until.seconds // 3600, 1)}h",
+                    style=discord.ButtonStyle.gray,
+                    disabled=True,
+                )
+
+            view.add_item(button)
 
         await ctx.respond(embed=embed, view=view)
 
