@@ -20,7 +20,7 @@ from umongo.fields import (
 )
 from umongo.frameworks import MotorAsyncIOInstance
 
-from constants import VOTING_SITES
+from constants import VOTING_SITES, DEFAULT_THEME
 
 
 class Infraction(EmbeddedDocument):
@@ -100,8 +100,8 @@ class User(Document):
     banned = BooleanField(default=False)
 
     # Settings
-    theme = ListField(StringField, default=["#ffffff", "#000000"])
-    lang = StringField(default="english")
+    theme = ListField(StringField, default=DEFAULT_THEME)
+    language = StringField(default="english")
     level = StringField(default="easy")
     links = DictField(StringField(), StringField(), default={})
     pacer = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"

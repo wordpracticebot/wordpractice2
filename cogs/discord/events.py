@@ -44,7 +44,7 @@ class Events(commands.Cog):
             else ""
         )
 
-        embed = self.bot.embed(
+        embed = ctx.embed(
             description=(
                 f"**User:** {ctx.author} ({ctx.author.id})\n"
                 f"**Server:** {ctx.guild} ({ctx.guild.id})\n"
@@ -58,7 +58,7 @@ class Events(commands.Cog):
 
     @staticmethod
     async def send_error(ctx, title, desc, view=None):
-        embed = ctx.bot.error_embed(title=title, description=desc)
+        embed = ctx.error_embed(title=title, description=desc)
 
         if view is None:
             await ctx.respond(embed=embed)
@@ -137,7 +137,7 @@ class Events(commands.Cog):
             else ""
         )
 
-        embed = self.bot.error_embed(
+        embed = self.error_embed(
             title="Unexpected Error",
             description=(
                 f"**User:** {ctx.author} ({ctx.author.id})\n"

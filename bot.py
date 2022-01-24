@@ -13,7 +13,7 @@ from discord import InteractionType
 from discord.ext import commands
 
 import cogs
-from constants import ERROR_CLR, PERMISSONS, PRIMARY_CLR, SUPPORT_SERVER
+from constants import ERROR_CLR, PERMISSONS, PRIMARY_CLR, SUPPORT_SERVER, DEFAULT_THEME
 from helpers.ui import BaseView, CustomEmbed
 
 # TODO: use max concurrency for typing test
@@ -40,6 +40,21 @@ def get_exts():
             continue
 
         yield module.name
+
+
+class CustomContext(discord.commands.ApplicationContext):
+    def __init__(self, bot, interaction, theme):
+        super().__init__(bot, interaction)
+
+        self.theme = theme
+
+    def embed(self, **kwargs):
+        color = kwargs.pop("color", self.theme)
+        return CustomEmbed(self, color=color, **kwargs)
+
+    @property
+    def error_embed(self):
+        return self.bot.error_embed
 
 
 class WordPractice(commands.AutoShardedBot):
@@ -83,14 +98,6 @@ class WordPractice(commands.AutoShardedBot):
 
         self.load_exts()
 
-    def embed(self, **kwargs):
-        color = kwargs.pop("color", PRIMARY_CLR)
-        return CustomEmbed(self, color=color, **kwargs)
-
-    def error_embed(self, **kwargs):
-        color = kwargs.pop("color", ERROR_CLR)
-        return CustomEmbed(self, color=color, **kwargs)
-
     @property
     def mongo(self):
         return self.get_cog("Mongo")
@@ -99,8 +106,25 @@ class WordPractice(commands.AutoShardedBot):
     def log(self):
         return self.get_cog("Logging").log
 
+    def error_embed(self, **kwargs):
+        color = kwargs.pop("color", ERROR_CLR)
+        return CustomEmbed(self, color=color, **kwargs)
+
     async def on_shard_ready(self, shard_id):
         self.log.info(f"Shard {shard_id} ready")
+
+    async def get_application_context(self, interaction, cls=None):
+        user = await self.mongo.fetch_user(interaction.user)
+
+        theme = (
+            int(user.theme[1].replace("#", "0x"), 16)
+            if user and user.theme != DEFAULT_THEME
+            else PRIMARY_CLR
+        )
+
+        if cls is None:
+            cls = CustomContext
+        return cls(self, interaction, theme)
 
     def load_exts(self):
         # Finding files in cogs folder that end with .py
@@ -130,7 +154,9 @@ class WordPractice(commands.AutoShardedBot):
 
             # Checking if the user is banned
             if user.banned:
-                embed = self.error_embed(
+                ctx = await self.get_application_context(interaction)
+
+                embed = ctx.error_embed(
                     title="You are banned",
                     description="Join the support server and create a ticket for a ban appeal",
                     add_footer=False,
@@ -143,8 +169,6 @@ class WordPractice(commands.AutoShardedBot):
                     url=SUPPORT_SERVER,
                 )
                 view.add_item(item=item)
-
-                ctx = await self.get_application_context(interaction)
 
                 return await ctx.respond(embed=embed, view=view, ephemeral=True)
 

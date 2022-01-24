@@ -7,6 +7,7 @@ PERMISSONS = 412317248576
 SUPPORT_SERVER = "https://discord.gg/wordpractice"
 PRIVACY_POLICY = ""
 UPDATE_24_HOUR = 5  # minutes
+DEFAULT_THEME = ["#ffffff", "#000000"]
 
 # Testing
 DEBUG_GUILD = 903449744196661270

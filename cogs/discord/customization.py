@@ -97,7 +97,17 @@ class Customization(commands.Cog):
                 "That is not a valid difficulty", options=list(choices.keys())
             )
 
-        await ctx.respond(f"language: {name} {difficulty}")
+        embed = ctx.embed(
+            title=f"Language changed to {name.capitalize()} {difficulty.capitalize()}",
+            add_footer=False,
+        )
+
+        await ctx.respond(embed=embed)
+
+        # Updating the language after to be more responsive
+        await self.bot.mongo.update_user(
+            ctx.author, {"$set": {"language": name, "level": difficulty}}
+        )
 
     @pacer_group.command()
     async def pb(self, ctx):
@@ -126,6 +136,12 @@ class Customization(commands.Cog):
     @commands.slash_command()
     async def equip(self, ctx):
         """Equip a badge that you own"""
+        # Going to use a drop down menu
+        pass
+
+    @commands.slash_command()
+    async def settings(self, ctx):
+        """View all your settings"""
         pass
 
     @commands.slash_command()

@@ -23,7 +23,7 @@ class Misc(commands.Cog):
         # Discord API latency
         latency = round(self.bot.latency * 1000, 3)
 
-        embed = self.bot.embed(title=f"Pong! {latency} ms", add_footer=False)
+        embed = ctx.embed(title=f"Pong! {latency} ms", add_footer=False)
 
         await ctx.respond(embed=embed)
 
@@ -34,7 +34,7 @@ class Misc(commands.Cog):
     @commands.slash_command()
     async def stats(self, ctx):
         """Various statistics related to the bot"""
-        embed = self.bot.embed(title="Bot Stats")
+        embed = ctx.embed(title="Bot Stats")
 
         uptime = time.time() - self.bot.start_time
 
@@ -76,9 +76,11 @@ class Misc(commands.Cog):
 
         user = await self.bot.mongo.fetch_user(ctx.author)
 
-        embed = self.bot.embed(title="Vote for wordPractice", add_footer=False)
+        embed = ctx.embed(title="Vote for wordPractice", add_footer=False)
 
-        embed.add_field(name="Rewards", value=f"{icons.xp} 1000 xp", inline=False)
+        embed.add_field(
+            name="Rewards per Vote", value=f"{icons.xp} 1000 xp", inline=False
+        )
 
         # Voting achievement progress
         all_achievements = categories["Endurance"].challenges[1]
@@ -93,7 +95,7 @@ class Misc(commands.Cog):
         bar = get_bar(p[0] / p[1])
 
         embed.add_field(
-            name="Vote Achievement Progress",
+            name="** **\nVote Achievement Progress",
             value=f">>> **Reward:** {a.reward}\n{bar} `{p[0]}/{p[1]}`",
             inline=False,
         )
@@ -106,7 +108,7 @@ class Misc(commands.Cog):
             if datetime.now() >= next_vote:
                 button = discord.ui.Button(label=name, url=value["link"])
             else:
-                time_until = datetime.now() - next_vote
+                time_until = next_vote - datetime.now()
 
                 button = discord.ui.Button(
                     label=f"{name} - {max(time_until.seconds // 3600, 1)}h",

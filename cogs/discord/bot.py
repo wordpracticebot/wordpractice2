@@ -14,12 +14,12 @@ class ProfileView(PageView):
         self.user = user
 
     async def create_stats_page(self):
-        embed = self.ctx.bot.embed(title="stats page", description="hello")
+        embed = self.ctx.embed(title="stats page", description="hello")
 
         return embed
 
     async def create_account_page(self):
-        embed = self.ctx.bot.embed(title="account page", description="hello")
+        embed = self.ctx.embed(title="account page", description="hello")
 
         return embed
 
@@ -91,7 +91,7 @@ class AchievementsView(ViewFromDict):
 
         tier = None
 
-        embed = self.ctx.bot.embed(title=f"{self.page}", description=c.desc)
+        embed = self.ctx.embed(title=f"{self.page}", description=c.desc)
 
         for a in c.challenges:
             tier = None
@@ -170,6 +170,11 @@ class User(commands.Cog):
         view = AchievementsView(ctx, user_data)
 
         await view.start()
+
+    @commands.slash_command()
+    async def challenges(self, ctx):
+        """View the daily challenge and your progress on it"""
+        pass
 
 
 def setup(bot):

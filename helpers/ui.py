@@ -63,7 +63,7 @@ class PageView(BaseView):
         await self.response.edit_original_message(view=self)
 
     async def create_page(self):
-        return self.ctx.bot.embed()
+        return self.ctx.embed()
 
     async def update_buttons(self):
         ...
