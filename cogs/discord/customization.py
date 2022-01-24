@@ -41,6 +41,7 @@ class ThemeSelect(discord.ui.Select):
             self.ctx.bot,
             title="Theme Selected",
             color=int(theme_value[1].replace("#", "0x"), 16),
+            add_footer=False,
         )
 
         # TODO: generate a preview image
@@ -98,7 +99,7 @@ class Customization(commands.Cog):
             )
 
         embed = ctx.embed(
-            title=f"Language changed to {name.capitalize()} {difficulty.capitalize()}",
+            title=f":white_check_mark: Language changed to: `{name.capitalize()} {difficulty.capitalize()}`",
             add_footer=False,
         )
 
@@ -109,15 +110,35 @@ class Customization(commands.Cog):
             ctx.author, {"$set": {"language": name, "level": difficulty}}
         )
 
+    async def handle_update_pacer(self, ctx, name, value):
+        embed = ctx.embed(title=f"Updated pacer to: `{name}`", add_footer=False)
+        await ctx.respond(embed=embed)
+
+        # not inefficient because the user document is most likely cached from checking for ban
+        user = await self.mongo.fetch_user(ctx.author)
+
+        if user.pacer != value:
+            await ctx.bot.mongo.update_user(ctx.author, {"$set": {"pacer": value}})
+
     @pacer_group.command()
     async def pb(self, ctx):
         """Set your typing test pacer to your personal best"""
-        pass
+        await self.handle_update_pacer(ctx, "Personal Best", "pb")
 
     @pacer_group.command()
     async def average(self, ctx):
         """Set your typing test pacer to your average speed"""
-        pass
+        await self.handle_update_pacer(ctx, "Average", "avg")
+
+    @pacer_group.command()
+    async def rawaverage(self, ctx):
+        """Set your typing test pacer to your raw average speed"""
+        await self.handle_update_pacer(ctx, "Raw Average", "rawavg")
+
+    @pacer_group.command()
+    async def off(self, ctx):
+        """Turn off your typing test pacer"""
+        await self.handle_update_pacer(ctx, "Off", "")
 
     @pacer_group.command()
     async def custom(
@@ -132,6 +153,8 @@ class Customization(commands.Cog):
         """Set your typing test pacer to a custom speed"""
         if speed not in range(10, 300):
             raise commands.BadArgument("Pacer speed must be between 10 and 300")
+
+        await self.handle_update_pacer(ctx, f"{speed} wpm", str(speed))
 
     @commands.slash_command()
     async def equip(self, ctx):

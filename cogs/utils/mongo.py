@@ -20,7 +20,7 @@ from umongo.fields import (
 )
 from umongo.frameworks import MotorAsyncIOInstance
 
-from constants import VOTING_SITES, DEFAULT_THEME
+from constants import DEFAULT_THEME, VOTING_SITES
 
 
 class Infraction(EmbeddedDocument):

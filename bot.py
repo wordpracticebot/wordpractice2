@@ -13,7 +13,7 @@ from discord import InteractionType
 from discord.ext import commands
 
 import cogs
-from constants import ERROR_CLR, PERMISSONS, PRIMARY_CLR, SUPPORT_SERVER, DEFAULT_THEME
+from constants import DEFAULT_THEME, ERROR_CLR, PERMISSONS, PRIMARY_CLR, SUPPORT_SERVER
 from helpers.ui import BaseView, CustomEmbed
 
 # TODO: use max concurrency for typing test

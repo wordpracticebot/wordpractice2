@@ -137,7 +137,7 @@ class Events(commands.Cog):
             else ""
         )
 
-        embed = self.error_embed(
+        embed = ctx.error_embed(
             title="Unexpected Error",
             description=(
                 f"**User:** {ctx.author} ({ctx.author.id})\n"
