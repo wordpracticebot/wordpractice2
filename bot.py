@@ -5,7 +5,6 @@ import pkgutil
 import sys
 import time
 import traceback
-from collections import Counter
 
 import aiohttp
 import discord
@@ -13,7 +12,7 @@ from discord import InteractionType
 from discord.ext import commands
 
 import cogs
-from constants import DEFAULT_THEME, ERROR_CLR, PERMISSONS, PRIMARY_CLR, SUPPORT_SERVER
+from constants import ERROR_CLR, PERMISSONS, SUPPORT_SERVER
 from helpers.ui import BaseView, CustomEmbed
 
 # TODO: use max concurrency for typing test
@@ -83,11 +82,7 @@ class WordPractice(commands.AutoShardedBot):
         )
         self.session = aiohttp.ClientSession(loop=self.loop)
 
-        # Spam protection
-        self.spam_control = commands.CooldownMapping.from_cooldown(
-            8, 10.0, commands.BucketType.user
-        )
-        self.spam_counter = Counter()
+        self.cooldowns = {}
 
         # Cache
         self.user_cache = {}
@@ -116,11 +111,7 @@ class WordPractice(commands.AutoShardedBot):
     async def get_application_context(self, interaction, cls=None):
         user = await self.mongo.fetch_user(interaction.user)
 
-        theme = (
-            int(user.theme[1].replace("#", "0x"), 16)
-            if user and user.theme != DEFAULT_THEME
-            else PRIMARY_CLR
-        )
+        theme = int(user.theme[1].replace("#", "0x"), 16)
 
         if cls is None:
             cls = CustomContext

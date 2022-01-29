@@ -4,6 +4,7 @@ from discord.ext import commands
 from achievements import categories, get_achievement_tier, get_bar
 from helpers.converters import opt_user
 from helpers.ui import DictButton, PageView, ViewFromDict
+from helpers.checks import cooldown
 
 
 class ProfileView(PageView):
@@ -138,6 +139,7 @@ class User(commands.Cog):
 
         return user
 
+    @cooldown(10, 5)
     @commands.slash_command()
     async def profile(self, ctx, user: opt_user()):
         """View user statistics"""

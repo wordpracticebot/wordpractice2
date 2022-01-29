@@ -1,8 +1,10 @@
+import asyncio
+from datetime import datetime, timedelta
 from typing import Union
 
 from discord.ext import commands, tasks
 
-from constants import LB_LENGTH
+from constants import COMPILE_INTERVAL, LB_LENGTH, UPDATE_24_HOUR_INTERVAL
 
 
 class Tasks(commands.Cog):
@@ -36,6 +38,35 @@ class Tasks(commands.Cog):
     @tasks.loop(hours=24)
     async def daily_start(self):
         pass
+
+    @tasks.loop(minutes=UPDATE_24_HOUR_INTERVAL)
+    async def update_24_hour(self):
+        pass
+
+    @tasks.loop(minutes=COMPILE_INTERVAL)
+    async def update_leaderboards(self):
+        pass
+
+    @tasks.loop(minutes=30)
+    async def post_guild_count(self):
+        pass
+
+    @tasks.loop(hours=24)
+    async def restart_day(self):
+        pass
+
+    # Makes sure that the task only gets executed at the end of the day
+    @restart_day.before_loop
+    async def before_my_task(self):
+        await self.bot.wait_until_ready()
+
+        now = datetime.utcnow()
+
+        future = datetime(now.year, now.month, now.day, 23, 59)
+        if now.hour >= 23 and now.minute > 59:
+            future += timedelta(days=1)
+
+        await asyncio.sleep((future - now).seconds)
 
 
 def setup(bot):

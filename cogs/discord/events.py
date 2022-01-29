@@ -67,12 +67,10 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
-        error = error.original
-
         if isinstance(error, errors.UserInputError):
             await self.handle_user_input_error(ctx, error)
 
-        elif isinstance(error, errors.CheckFailure):
+        elif isinstance(error, discord.commands.CheckFailure):
             await self.handle_check_failure(ctx, error)
 
         elif isinstance(error, errors.MaxConcurrencyReached):
@@ -116,7 +114,7 @@ class Events(commands.Cog):
                     "Permission Error",
                     "I do not have the correct server permissons",
                 )
-            except:  # base exception :eyes:
+            except:  # bare exception :eyes:
                 pass
 
     async def handle_unexpected_error(self, ctx, error):

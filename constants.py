@@ -1,3 +1,5 @@
+from static.themes import default
+
 # Embed colours
 PRIMARY_CLR = 0x3FB09F
 ERROR_CLR = 0xFF5858
@@ -7,14 +9,15 @@ PERMISSONS = 412317248576
 SUPPORT_SERVER = "https://discord.gg/wordpractice"
 PRIVACY_POLICY = ""
 UPDATE_24_HOUR = 5  # minutes
-DEFAULT_THEME = ["#ffffff", "#000000"]
+DEFAULT_THEME = default["Discord Dark Theme"]["colours"]
 
 # Testing
 DEBUG_GUILD = 903449744196661270
 
 # Leaderboards
 LB_LENGTH = 500
-UPDATE_INTERVAL = 5  # minutes
+COMPILE_INTERVAL = 5  # minutes
+UPDATE_24_HOUR_INTERVAL = 5  # minutes
 
 # Achievements
 BAR_SIZE = 10
@@ -35,3 +38,7 @@ VOTING_SITES = {
         "link": "https://discordbotlist.com/bots/wordpractice/upvote",
     },
 }
+
+# Premium
+PREMIUM_LAUNCHED = True
+PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link

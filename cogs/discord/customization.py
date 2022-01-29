@@ -99,7 +99,7 @@ class Customization(commands.Cog):
             )
 
         embed = ctx.embed(
-            title=f":white_check_mark: Language changed to: `{name.capitalize()} {difficulty.capitalize()}`",
+            title=f"Language changed to: `{name.capitalize()} {difficulty.capitalize()}`",
             add_footer=False,
         )
 
