@@ -1,7 +1,7 @@
 import copy
 import time
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 
 import discord
@@ -159,16 +159,33 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command(self, ctx):
+        # Logging the interaction
         await self.log_interaction(ctx)
 
     @commands.Cog.listener()
     async def on_application_command_completion(self, ctx):
         user = await self.bot.mongo.fetch_user(ctx.author, create=True)
-
         new_user = copy.deepcopy(user)
 
-        names = []
+        now = datetime.now()
 
+        days_between = (
+            now - new_user.last_streak.replace(hour=now.hour, minute=now.minute)
+        ).days
+
+        # Updating the user's playing streak
+
+        if days_between > 1:
+            new_user.streak = 1
+        elif days_between == 1:
+            new_user.streak += 1
+            if new_user.streak > new_user.highest_streak:
+                new_user.highest_streak = new_user.streak
+
+        if days_between > 0:
+            new_user.last_streak = now
+
+        names = []
         done_checking = False
 
         while done_checking is False:

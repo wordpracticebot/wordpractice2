@@ -84,7 +84,8 @@ class User(Document):
 
     # Streak of playing
     streak = IntegerField(default=0)  # days
-    last_streak = DateTimeField(default=datetime.min)
+    highest_streak = IntegerField(default=0)
+    last_streak = DateTimeField(default=datetime.now())  # not last bot usage time
 
     # Voting
     votes = IntegerField(default=0)
