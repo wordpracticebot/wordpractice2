@@ -1,7 +1,6 @@
 import copy
 import time
-import traceback
-from datetime import datetime, timedelta
+from datetime import datetime
 from io import BytesIO
 
 import discord
@@ -14,6 +13,7 @@ from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
 from static.assets import achievement_base, uni_sans_heavy
+import icons
 
 
 def generate_achievement_image(name):
@@ -67,14 +67,14 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
+
+        if isinstance(error, discord.commands.CheckFailure):
+            return await self.handle_check_failure(ctx, error)
+
+        error = error.original
+
         if isinstance(error, errors.UserInputError):
             await self.handle_user_input_error(ctx, error)
-
-        elif isinstance(error, discord.commands.CheckFailure):
-            await self.handle_check_failure(ctx, error)
-
-        elif isinstance(error, errors.MaxConcurrencyReached):
-            return
 
         else:
             await self.handle_unexpected_error(ctx, error)
@@ -122,8 +122,8 @@ class Events(commands.Cog):
 
         await self.send_error(
             ctx,
-            "Unexpected Error",
-            "Please report this through our support server so we can fix it.",
+            f"{icons.caution} Unexpected Error",
+            "Report this through our support server so we can fix it.",
             view,
         )
 
@@ -143,19 +143,9 @@ class Events(commands.Cog):
                 f"**Command:** {ctx.command.name} {options}\n"
                 f"**Timestamp:** <t:{timestamp}:R>"
             ),
-            add_footer=False,
         )
 
-        msg = "".join(
-            traceback.format_exception(type(error), error, error.__traceback__)
-        )
-
-        buffer = BytesIO(msg.encode("utf-8"))
-        file = discord.File(buffer, filename="text.txt")
-
-        await self.bot.impt_wh.send(embed=embed, file=file)
-
-        print(msg)
+        await self.bot.log_the_error(embed, error)
 
     @commands.Cog.listener()
     async def on_application_command(self, ctx):

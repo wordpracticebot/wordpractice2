@@ -5,6 +5,7 @@ import pkgutil
 import sys
 import time
 import traceback
+from io import BytesIO
 
 import aiohttp
 import discord
@@ -14,6 +15,7 @@ from discord.ext import commands
 import cogs
 from constants import ERROR_CLR, PERMISSONS, SUPPORT_SERVER
 from helpers.ui import BaseView, CustomEmbed
+import icons
 
 # TODO: use max concurrency for typing test
 # TODO: check if user is banned when giving roles
@@ -103,12 +105,13 @@ class WordPractice(commands.AutoShardedBot):
 
     def error_embed(self, **kwargs):
         color = kwargs.pop("color", ERROR_CLR)
-        return CustomEmbed(self, color=color, **kwargs)
+        return CustomEmbed(self, color=color, add_footer=False, **kwargs)
 
     async def on_shard_ready(self, shard_id):
         self.log.info(f"Shard {shard_id} ready")
 
     async def get_application_context(self, interaction, cls=None):
+        # user account must have been made already so no create
         user = await self.mongo.fetch_user(interaction.user)
 
         theme = int(user.theme[1].replace("#", "0x"), 16)
@@ -134,8 +137,50 @@ class WordPractice(commands.AutoShardedBot):
             scopes=("bot", "applications.commands"),
         )
 
+    async def log_the_error(self, embed, error):
+        msg = "".join(
+            traceback.format_exception(type(error), error, error.__traceback__)
+        )
+
+        buffer = BytesIO(msg.encode("utf-8"))
+        file = discord.File(buffer, filename="text.txt")
+
+        await self.impt_wh.send(embed=embed, file=file)
+
+        print(msg)
+
+    async def handle_ctx_unexpected_error(self, inter, error):
+        timestamp = int(time.time())
+
+        embed = CustomEmbed(
+            self,
+            title="Unexpected Error (getting ctx)",
+            description=(
+                f"**Server*:** {inter.guild} ({inter.guild.id})\n"
+                f"**User:** {inter.user} ({inter.user.id})\n"
+                f"**Done:** {inter.response.is_done()}\n"
+                f"**Timestamp:** <t:{timestamp}:R>"
+            ),
+            color=ERROR_CLR,
+            add_footer=False,
+        )
+
+        # Loggin the error first just in case something is wrong
+        await self.log_the_error(embed, error)
+
+        embed = CustomEmbed(
+            self,
+            title=f"{icons.caution} Unexpected Error",
+            description="Report this through our support server so we can fix it.",
+            color=ERROR_CLR,
+            add_footer=False,
+        )
+
+        await inter.response.send_message(embed=embed)
+
     async def on_interaction(self, interaction):
         if interaction.type is InteractionType.application_command:
+
             # TODO: add ratelimiting when pycord adds cooldowns for slash commands
 
             user = await self.mongo.fetch_user(interaction.user, create=True)
@@ -150,9 +195,8 @@ class WordPractice(commands.AutoShardedBot):
                 embed = ctx.error_embed(
                     title="You are banned",
                     description="Join the support server and create a ticket for a ban appeal",
-                    add_footer=False,
                 )
-                view = BaseView(personal=True)
+                view = BaseView(ctx, personal=True)
 
                 item = discord.ui.Button(
                     style=discord.ButtonStyle.link,
@@ -162,24 +206,20 @@ class WordPractice(commands.AutoShardedBot):
                 view.add_item(item=item)
 
                 return await ctx.respond(embed=embed, view=view, ephemeral=True)
-
         # Processing command
         await self.process_application_commands(interaction)
 
     @discord.utils.cached_property
     def cmd_wh(self):
-        hook = discord.Webhook.from_url(self.config.COMMAND_LOG, session=self.session)
-        return hook
+        return discord.Webhook.from_url(self.config.COMMAND_LOG, session=self.session)
 
     @discord.utils.cached_property
     def test_wh(self):
-        hook = discord.Webhook.from_url(self.config.TEST_LOG, session=self.session)
-        return hook
+        return discord.Webhook.from_url(self.config.TEST_LOG, session=self.session)
 
     @discord.utils.cached_property
     def impt_wh(self):
-        hook = discord.Webhook.from_url(self.config.IMPORTANT_LOG, session=self.session)
-        return hook
+        return discord.Webhook.from_url(self.config.IMPORTANT_LOG, session=self.session)
 
     async def on_ready(self):
         print("Ready!")

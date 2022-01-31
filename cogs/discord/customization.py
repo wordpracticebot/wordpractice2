@@ -73,7 +73,7 @@ class Customization(commands.Cog):
     @theme_group.command()
     async def premade(self, ctx):
         """Choose a premade theme for your typing test"""
-        view = BaseView(personal=True)
+        view = BaseView(ctx, personal=True)
         view.add_item(ThemeSelect(ctx))
 
         await ctx.respond(content="** **", view=view)

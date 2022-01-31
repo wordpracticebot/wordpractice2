@@ -1,5 +1,7 @@
 import time
+
 from discord.ext import commands
+
 from constants import PREMIUM_LAUNCHED, PREMIUM_LINK
 from helpers.ui import create_link_view
 
@@ -20,7 +22,6 @@ def cooldown(regular: int, premium: int):
                 embed = ctx.error_embed(
                     title="Command On Cooldown",
                     description=f"Try again in **{round(abs(time.time() - cooldown), 2)}** seconds",
-                    add_footer=False,
                 )
 
                 if PREMIUM_LAUNCHED and user["premium"] is False and regular > premium:

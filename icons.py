@@ -1,7 +1,11 @@
 # fmt: off
 
-# General
+# Bot
 xp = "<:xp:934865195438854155>"
+
+# General
+caution = ":warning:"
+
 
 progress_bar = [
     ["<:b6:925835167497601024>", "<:b1:925835167271125003>"],

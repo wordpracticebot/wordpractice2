@@ -147,7 +147,7 @@ class Mongo(commands.Cog):
         if u is not None:
             u = self.User.build_from_mongo(pickle.loads(u))
 
-        if u is not None and create is False:
+        if create is False:
             return u
 
         if u is None:
@@ -169,7 +169,7 @@ class Mongo(commands.Cog):
                     self.bot.user_cache[user.id] = pickle.dumps(u.to_mongo())
 
                 else:
-                    self.bot.user_cache[user.id] = None
+                    self.bot.user_cache[user_id] = None
                     return None
 
                 return u
@@ -250,7 +250,6 @@ class Mongo(commands.Cog):
                 f"**Reason:** {reason}\n"
                 f"**Timestamp:** <t:{timestamp}:R>"
             ),
-            add_footer=False,
         )
 
         await self.bot.impt_wh.send(embed=embed)

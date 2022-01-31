@@ -2,9 +2,9 @@ import discord
 from discord.ext import commands
 
 from achievements import categories, get_achievement_tier, get_bar
+from helpers.checks import cooldown
 from helpers.converters import opt_user
 from helpers.ui import DictButton, PageView, ViewFromDict
-from helpers.checks import cooldown
 
 
 class ProfileView(PageView):
@@ -21,6 +21,7 @@ class ProfileView(PageView):
 
     async def create_account_page(self):
         embed = self.ctx.embed(title="account page", description="hello")
+        print(0 / 0)
 
         return embed
 
@@ -127,7 +128,7 @@ class User(commands.Cog):
     async def user_check(self, ctx, user):
         """Handles the user inputted and fetches user"""
         if isinstance(user, (discord.User, discord.Member)) and user.bot:
-            raise commands.BadArgument("That user is a bot")
+            raise commands.BadArgument("That user is a bot :robot:")
 
         if user is None:
             user = ctx.author

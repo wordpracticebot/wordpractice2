@@ -1,20 +1,35 @@
 import random
+import time
 
 import discord
 
+from constants import ERROR_CLR, SUPPORT_SERVER
+import icons
 from static.hints import hints
 
 
+def create_link_view(links: dict[str, str]):
+    """
+    links: {NAME: URL}
+    """
+    view = discord.ui.View()
+
+    for name, url in links.items():
+        view.add_item(discord.ui.Button(label=name, url=url))
+
+    return view
+
+
 class CustomEmbed(discord.Embed):
-    def __init__(self, bot, add_footer=True, **kwargs):
+    def __init__(self, ctx, add_footer=True, **kwargs):
         if add_footer:
             self._footer = {}
 
             hint = self.get_random_hint()
 
             self._footer["text"] = f"Hint: {hint}"
-            if bot.user.avatar:
-                self._footer["icon_url"] = bot.user.avatar.url
+            if ctx.bot.user.display_avatar:
+                self._footer["icon_url"] = ctx.bot.user.display_avatar.url
 
         super().__init__(**kwargs)
 
@@ -23,9 +38,10 @@ class CustomEmbed(discord.Embed):
 
 
 class BaseView(discord.ui.View):
-    def __init__(self, personal=True):
+    def __init__(self, ctx, personal=True):
         super().__init__()
 
+        self.ctx = ctx
         self.personal = personal
 
     async def interaction_check(self, interaction):
@@ -39,23 +55,43 @@ class BaseView(discord.ui.View):
         )
         return False
 
-    async def on_error(self, error, item, interaction):
-        if interaction.response.is_done():
-            await interaction.followup.send("An unknown error happened", ephemeral=True)
-        else:
-            await interaction.response.send_message(
-                "An unknown error happened", ephemeral=True
-            )
+    async def on_error(self, error, item, inter):
+        ctx = self.ctx
 
-        # TODO: remove this in production + log error
-        raise error
+        self = create_link_view({"Support Server": SUPPORT_SERVER})
+
+        embed = ctx.error_embed(
+            title=f"{icons.caution} Unexpected Error",
+            description="Report this through our support server so we can fix it.",
+        )
+
+        if inter.response.is_done():
+            await inter.followup.send(embed=embed, view=self, ephemeral=True)
+        else:
+            await inter.response.send_message(embed=embed, view=self, ephemeral=True)
+
+        timestamp = int(time.time())
+
+        embed = ctx.embed(
+            title="Unexpected Error (in interaction)",
+            description=(
+                f"**Server*:** {inter.guild} ({inter.guild.id})\n"
+                f"**User:** {inter.user} ({inter.user.id})\n"
+                f"**Done:** {inter.response.is_done()}\n"
+                f"**Timestamp:** <t:{timestamp}:R>"
+            ),
+            color=ERROR_CLR,
+            add_footer=False,
+        )
+
+        await ctx.bot.log_the_error(embed, error)
 
 
 class PageView(BaseView):
     def __init__(self, ctx):
         self.ctx = ctx
 
-        super().__init__()
+        super().__init__(ctx)
 
     async def on_timeout(self):
         for child in self.children:
@@ -197,15 +233,3 @@ class ViewFromDict(PageView):
 
         embed = await self.create_page()
         self.response = await self.ctx.respond(embed=embed, view=self)
-
-
-def create_link_view(links: dict[str, str]):
-    """
-    links: {NAME: URL}
-    """
-    view = discord.ui.View()
-
-    for name, url in links.items():
-        view.add_item(discord.ui.Button(label=name, url=url))
-
-    return view
