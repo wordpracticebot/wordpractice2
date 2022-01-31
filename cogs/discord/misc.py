@@ -105,10 +105,10 @@ class Misc(commands.Cog):
         for name, value in VOTING_SITES.items():
             next_vote = timedelta(hours=value["time"]) + user.last_voted[name]
 
-            if datetime.now() >= next_vote:
+            if datetime.utcnow() >= next_vote:
                 button = discord.ui.Button(label=name, url=value["link"])
             else:
-                time_until = next_vote - datetime.now()
+                time_until = next_vote - datetime.utcnow()
 
                 button = discord.ui.Button(
                     label=f"{name} - {max(time_until.seconds // 3600, 1)}h",

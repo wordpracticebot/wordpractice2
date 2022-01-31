@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime, timedelta
 from typing import Union
+import time
 
 from discord.ext import commands, tasks
 
@@ -35,13 +36,19 @@ class Tasks(commands.Cog):
     async def recompile_leaderboards(self):
         pass
 
-    @tasks.loop(hours=24)
-    async def daily_start(self):
-        pass
-
     @tasks.loop(minutes=UPDATE_24_HOUR_INTERVAL)
     async def update_24_hour(self):
-        pass
+        every = 1440 / UPDATE_24_HOUR_INTERVAL - 1
+
+        await self.bot.mongo.db.user.update_many(
+            {f"24hour.0.{every}": {"$exists": True}},
+            {"$pop": {"last24.0": -1}, "$set": {f"last24.0.{every}": 0}},
+        )
+
+        await self.bot.mongo.db.user.update_many(
+            {f"24hour.1.{every}": {"$exists": True}},
+            {"$pop": {"last24.1": -1}, "$set": {f"last24.1.{every}": 0}},
+        )
 
     @tasks.loop(minutes=COMPILE_INTERVAL)
     async def update_leaderboards(self):
@@ -52,11 +59,22 @@ class Tasks(commands.Cog):
         pass
 
     @tasks.loop(hours=24)
-    async def restart_day(self):
+    async def daily_restart(self):
+        # Creating a new daily challenge
+
+        # Removing excess items if user hasn't typed in last 24 hours
         pass
 
+    # Clearing cache
+    @tasks.loop(minutes=10)
+    async def clear_cooldowns(self):
+        # Removes cooldowns that have already expired
+        for c in self.bot.cooldowns.copy():
+            if time.time() > self.bot.cooldowns[c]:
+                del self.bot.cooldowns[c]
+
     # Makes sure that the task only gets executed at the end of the day
-    @restart_day.before_loop
+    @daily_restart.before_loop
     async def before_my_task(self):
         await self.bot.wait_until_ready()
 

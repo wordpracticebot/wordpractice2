@@ -167,7 +167,7 @@ class Events(commands.Cog):
         user = await self.bot.mongo.fetch_user(ctx.author, create=True)
         new_user = copy.deepcopy(user)
 
-        now = datetime.now()
+        now = datetime.utcnow()
 
         days_between = (
             now - new_user.last_streak.replace(hour=now.hour, minute=now.minute)
@@ -196,7 +196,7 @@ class Events(commands.Cog):
                 new_names.append(a.name)
 
                 # adding achievemnt to document
-                new_user.achievements[a.name] = datetime.now()
+                new_user.achievements[a.name] = datetime.utcnow()
 
                 if a.reward is None:
                     continue

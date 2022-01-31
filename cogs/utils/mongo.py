@@ -24,7 +24,8 @@ from constants import DEFAULT_THEME, VOTING_SITES
 
 
 class Infraction(EmbeddedDocument):
-    moderator = StringField(required=True)  # NAME#DISCRIMINATOR (ID)
+    moderator_name = StringField(required=True)  # NAME#DISCRIMINATOR
+    moderator_id = IntegerField(require=True)
     reason = StringField(required=True)
     timestamp = DateTimeField(required=True)
 
@@ -56,7 +57,7 @@ class User(Document):
     name = StringField(required=True)
     discriminator = IntegerField(required=True)
     avatar = StringField(default=None)
-    created_at = DateTimeField(default=datetime.now())
+    created_at = DateTimeField(default=datetime.utcnow())
 
     # Statistics
     words = IntegerField(default=0)
@@ -76,7 +77,9 @@ class User(Document):
     # Other statistics
     scores = ListField(EmbeddedField(Score), default=[])
     achievements = DictField(StringField(), DateTimeField, default=[])  # id: timestamp
-    medals = ListField(IntegerField, default=[0, 0, 0, 0])
+    medals = ListField(
+        IntegerField, default=[0, 0, 0, 0]
+    )  # [first, second, third, top 10]
 
     # Cosmetics
     badges = ListField(StringField, default=[])
@@ -85,7 +88,7 @@ class User(Document):
     # Streak of playing
     streak = IntegerField(default=0)  # days
     highest_streak = IntegerField(default=0)
-    last_streak = DateTimeField(default=datetime.now())  # not last bot usage time
+    last_streak = DateTimeField(default=datetime.utcnow())  # not last bot usage time
 
     # Voting
     votes = IntegerField(default=0)
@@ -226,9 +229,10 @@ class Mongo(commands.Cog):
 
     async def ban_user(self, user, moderator: str, reason: str):
         inf = self.Infraction(
-            moderator=moderator,
+            moderator_name=moderator,
+            moderator_id=self.bot.user.id,
             reason=reason,
-            timestamp=datetime.now(),
+            timestamp=datetime.utcnow(),
         )
 
         await self.update_user(
