@@ -4,7 +4,9 @@
 xp = "<:xp:934865195438854155>"
 
 # General
-caution = ":warning:"
+success = ":white_check_mark:"
+caution = ":caution:"
+danger = ":no_entry:"
 
 
 progress_bar = [

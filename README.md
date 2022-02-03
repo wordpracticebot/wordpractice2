@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="https://i.imgur.com/zuEi84v.png" alt="Logo" width="200" height="200">
+    <img src="https://i.imgur.com/zuEi84v.png" alt="Logo" width="256" height="256">
     <h1 >wordPractice v2</h1>
     <p >Practice your typing skills while having fun, compete with typists from around the world.</p>
     <a href="https://discord.gg/wordpractice">

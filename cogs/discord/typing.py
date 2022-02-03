@@ -2,6 +2,7 @@ import json
 import random
 from itertools import cycle, islice
 
+import discord
 from discord.commands import SlashCommandGroup
 from discord.ext import commands
 
@@ -46,6 +47,11 @@ class Typing(commands.Cog):
     async def quote(self, ctx, length: quote_amt()):
         """Take a multiplayer quote typing test"""
         quote = await self.handle_quote_input(ctx, length)
+
+    @commands.user_command(name="Typing Challenge")
+    async def race_challenge(self, ctx, member: discord.Member):
+        # TODO: send a dropdown to choose race
+        pass
 
     async def handle_dictionary_input(self, ctx, length: int):
         if length not in range(*TEST_RANGE):

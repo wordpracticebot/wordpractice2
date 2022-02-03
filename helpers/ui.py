@@ -3,8 +3,8 @@ import time
 
 import discord
 
-from constants import ERROR_CLR, SUPPORT_SERVER
 import icons
+from constants import ERROR_CLR, SUPPORT_SERVER
 from static.hints import hints
 
 
@@ -61,7 +61,7 @@ class BaseView(discord.ui.View):
         self = create_link_view({"Support Server": SUPPORT_SERVER})
 
         embed = ctx.error_embed(
-            title=f"{icons.caution} Unexpected Error",
+            title=f"{icons.danger} Unexpected Error",
             description="Report this through our support server so we can fix it.",
         )
 
@@ -73,9 +73,9 @@ class BaseView(discord.ui.View):
         timestamp = int(time.time())
 
         embed = ctx.embed(
-            title="Unexpected Error (in interaction)",
+            title="Unexpected Error (in view)",
             description=(
-                f"**Server*:** {inter.guild} ({inter.guild.id})\n"
+                f"**Server:** {inter.guild} ({inter.guild.id})\n"
                 f"**User:** {inter.user} ({inter.user.id})\n"
                 f"**Done:** {inter.response.is_done()}\n"
                 f"**Timestamp:** <t:{timestamp}:R>"

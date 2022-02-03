@@ -9,7 +9,7 @@ PERMISSONS = 412317248576
 SUPPORT_SERVER = "https://discord.gg/wordpractice"
 PRIVACY_POLICY = ""
 UPDATE_24_HOUR = 5  # minutes
-DEFAULT_THEME = default["Discord Dark Theme"]["colours"]
+DEFAULT_THEME = default["Material"]["colours"]
 
 # Testing
 DEBUG_GUILD = 903449744196661270

@@ -12,13 +12,19 @@ class Tasks(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+        self.update_24_hour()
+        self.update_leadcerboards()
+        self.post_guild_count()
+        self.daily_restart()
+        self.clear_cooldowns()
+
     async def get_sorted_lb(self, query: Union[list, dict]) -> list:
         cursor = self.bot.mongo.db.user.aggregate(
             [
                 {
                     "$project": {
                         "_id": 1,
-                        "username": 1,
+                        "name": 1,
                         "discriminator": 1,
                         "status": 1,
                         "count": query,
@@ -30,29 +36,77 @@ class Tasks(commands.Cog):
         )
         return [i async for i in cursor]
 
-    async def reset_24_hour_stats(self):
-        pass
-
-    async def recompile_leaderboards(self):
-        pass
+    async def reset_extra_24_hour_stats(self):
+        await self.bot.mongo.db.user.update_many(
+            {
+                {"last24.0": [0] * 96},
+            },
+            {"$set": {"last24.0": [0]}},
+        )
+        await self.bot.mongo.db.user.update_many(
+            {
+                {"last24.1": [0] * 96},
+            },
+            {"$set": {"last24.1": [0]}},
+        )
 
     @tasks.loop(minutes=UPDATE_24_HOUR_INTERVAL)
     async def update_24_hour(self):
         every = 1440 / UPDATE_24_HOUR_INTERVAL - 1
 
         await self.bot.mongo.db.user.update_many(
-            {f"24hour.0.{every}": {"$exists": True}},
+            {f"last24.0.{every}": {"$exists": True}},
             {"$pop": {"last24.0": -1}, "$set": {f"last24.0.{every}": 0}},
         )
 
         await self.bot.mongo.db.user.update_many(
-            {f"24hour.1.{every}": {"$exists": True}},
+            {f"last24.1.{every}": {"$exists": True}},
             {"$pop": {"last24.1": -1}, "$set": {f"last24.1.{every}": 0}},
         )
 
     @tasks.loop(minutes=COMPILE_INTERVAL)
     async def update_leaderboards(self):
-        pass
+        lbs = []
+
+        # 24 hour leaderboards
+        lbs.append(
+            [
+                await self.get_sorted_lb(
+                    {"$sum": {"$arrayElemAt": ["$last24", 0]}}
+                ),  # words
+                await self.get_sorted_lb(
+                    {"$sum": {"$arrayElemAt": ["$last24", 1]}}
+                ),  # xp
+            ]
+        )
+
+        # season leaderboards
+        lbs.append(
+            [
+                await self.get_sorted_lb({"$sum": "$xp"}),
+            ]
+        )
+
+        # alltime leaderboards
+        lbs.append(
+            [
+                await self.get_sorted_lb({"$sum": "$coins"}),
+                await self.get_sorted_lb({"$sum": "$words"}),
+            ]
+        )
+
+        # highspeed leaderboard
+        # TODO: add a 24 hour leaderboard
+        lbs.append(
+            [
+                await self.get_sorted_lb({"$sum": "$highspeed.short.wpm"}),
+                await self.get_sorted_lb({"$sum": "$highspeed.medium.wpm"}),
+                await self.get_sorted_lb({"$sum": "$highspeed.long.wpm"}),
+            ]
+        )
+
+        self.bot.lbs = lbs
+        self.bot.last_lb_update = time.time()
 
     @tasks.loop(minutes=30)
     async def post_guild_count(self):
@@ -60,10 +114,10 @@ class Tasks(commands.Cog):
 
     @tasks.loop(hours=24)
     async def daily_restart(self):
-        # Creating a new daily challenge
+        # TODO: Creating a new daily challenge
 
         # Removing excess items if user hasn't typed in last 24 hours
-        pass
+        await self.reset_extra_24_hour_stats()
 
     # Clearing cache
     @tasks.loop(minutes=10)

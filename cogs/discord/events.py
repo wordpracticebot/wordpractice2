@@ -8,12 +8,12 @@ from discord.ext import commands
 from discord.ext.commands import errors
 from PIL import ImageDraw
 
+import icons
 from achievements import check_all
 from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
 from static.assets import achievement_base, uni_sans_heavy
-import icons
 
 
 def generate_achievement_image(name):
@@ -38,17 +38,11 @@ class Events(commands.Cog):
 
         timestamp = int(time.time())
 
-        options = (
-            " ".join(f"[{o.name}]" for o in ctx.command.options)
-            if ctx.command.options
-            else ""
-        )
-
         embed = ctx.embed(
             description=(
                 f"**User:** {ctx.author} ({ctx.author.id})\n"
                 f"**Server:** {ctx.guild} ({ctx.guild.id})\n"
-                f"**Command:** {ctx.command.name} {options}\n"
+                f"**Command:** {ctx.command.name}\n"
                 f"**Timestamp:** <t:{timestamp}:R>"
             ),
             add_footer=False,
@@ -58,7 +52,7 @@ class Events(commands.Cog):
 
     @staticmethod
     async def send_error(ctx, title, desc, view=None):
-        embed = ctx.error_embed(title=title, description=desc)
+        embed = ctx.error_embed(title=f"{icons.caution} {title}", description=desc)
 
         if view is None:
             await ctx.respond(embed=embed)
@@ -122,25 +116,19 @@ class Events(commands.Cog):
 
         await self.send_error(
             ctx,
-            f"{icons.caution} Unexpected Error",
+            f"{icons.danger} Unexpected Error",
             "Report this through our support server so we can fix it.",
             view,
         )
 
         timestamp = int(time.time())
 
-        options = (
-            " ".join(f"[{o.name}]" for o in ctx.command.options)
-            if ctx.command.options
-            else ""
-        )
-
         embed = ctx.error_embed(
             title="Unexpected Error",
             description=(
                 f"**User:** {ctx.author} ({ctx.author.id})\n"
                 f"**Server:** {ctx.guild} ({ctx.guild.id})\n"
-                f"**Command:** {ctx.command.name} {options}\n"
+                f"**Command:** {ctx.command.name}\n"
                 f"**Timestamp:** <t:{timestamp}:R>"
             ),
         )

@@ -21,7 +21,6 @@ class ProfileView(PageView):
 
     async def create_account_page(self):
         embed = self.ctx.embed(title="account page", description="hello")
-        print(0 / 0)
 
         return embed
 
@@ -140,10 +139,18 @@ class User(commands.Cog):
 
         return user
 
-    @cooldown(10, 5)
+    @cooldown(8, 2)
     @commands.slash_command()
     async def profile(self, ctx, user: opt_user()):
         """View user statistics"""
+        await self.handle_profile_cmd(ctx, user)
+
+    @cooldown(8, 2)
+    @commands.user_command(name="Typing Profile")
+    async def profile(self, ctx, member: discord.Member):
+        await self.handle_profile_cmd(ctx, member)
+
+    async def handle_profile_cmd(self, ctx, user):
         user = await self.user_check(ctx, user)
 
         view = ProfileView(ctx, user)

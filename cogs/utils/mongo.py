@@ -60,6 +60,7 @@ class User(Document):
     created_at = DateTimeField(default=datetime.utcnow())
 
     # Statistics
+    coins = IntegerField(default=0)
     words = IntegerField(default=0)
     last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
 

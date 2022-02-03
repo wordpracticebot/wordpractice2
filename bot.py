@@ -13,9 +13,9 @@ from discord import InteractionType
 from discord.ext import commands
 
 import cogs
+import icons
 from constants import ERROR_CLR, PERMISSONS, SUPPORT_SERVER
 from helpers.ui import BaseView, CustomEmbed
-import icons
 
 # TODO: use max concurrency for typing test
 # TODO: check if user is banned when giving roles
@@ -148,35 +148,6 @@ class WordPractice(commands.AutoShardedBot):
         await self.impt_wh.send(embed=embed, file=file)
 
         print(msg)
-
-    async def handle_ctx_unexpected_error(self, inter, error):
-        timestamp = int(time.time())
-
-        embed = CustomEmbed(
-            self,
-            title="Unexpected Error (getting ctx)",
-            description=(
-                f"**Server*:** {inter.guild} ({inter.guild.id})\n"
-                f"**User:** {inter.user} ({inter.user.id})\n"
-                f"**Done:** {inter.response.is_done()}\n"
-                f"**Timestamp:** <t:{timestamp}:R>"
-            ),
-            color=ERROR_CLR,
-            add_footer=False,
-        )
-
-        # Loggin the error first just in case something is wrong
-        await self.log_the_error(embed, error)
-
-        embed = CustomEmbed(
-            self,
-            title=f"{icons.caution} Unexpected Error",
-            description="Report this through our support server so we can fix it.",
-            color=ERROR_CLR,
-            add_footer=False,
-        )
-
-        await inter.response.send_message(embed=embed)
 
     async def on_interaction(self, interaction):
         if interaction.type is InteractionType.application_command:
