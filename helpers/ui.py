@@ -4,7 +4,7 @@ import time
 import discord
 
 import icons
-from constants import ERROR_CLR, SUPPORT_SERVER
+from constants import ERROR_CLR, SUPPORT_SERVER_INVITE
 from static.hints import hints
 
 
@@ -51,14 +51,14 @@ class BaseView(discord.ui.View):
             return True
 
         await interaction.response.send_message(
-            "You are not the author of this command", ephemeral=True
+            "You are not the author of this command!", ephemeral=True
         )
         return False
 
     async def on_error(self, error, item, inter):
         ctx = self.ctx
 
-        self = create_link_view({"Support Server": SUPPORT_SERVER})
+        self = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
 
         embed = ctx.error_embed(
             title=f"{icons.danger} Unexpected Error",

@@ -1,7 +1,10 @@
+import math
+
 import discord
 from discord.commands import Option, SlashCommandGroup
 from discord.ext import commands
 
+import icons
 import word_list
 from helpers.converters import rqd_colour
 from helpers.errors import ImproperArgument
@@ -65,10 +68,47 @@ class Customization(commands.Cog):
     theme_group = SlashCommandGroup("theme", "Change the typing test theme")
     pacer_group = SlashCommandGroup("pacer", "Set a pacer for your typing test")
 
+    # Calculates perceptual distance between two colours
+    # Formula from: https://gist.github.com/ryancat/9972419b2a78f329ce3aebb7f1a09152
+    def get_perceptual_distance(self, c1, c2):
+        c1 = math.sqrt(c1[1] * c1[1] + c1[2] * c1[2])
+        c2 = math.sqrt(c2[1] * c2[1] + c2[2] * c2[2])
+
+        delta_c = c1 - c2
+        delta_h = (c1[1] - c2[1]) ** 2 + (c1[2] - c2[2]) ** 2 - delta_c * delta_c
+        delta_h = 0 if delta_h < 0 else math.sqrt(delta_h)
+
+        sc = 1.0 + 0.045 * c1
+        sh = 1.0 + 0.015 * c1
+
+        delta_lklsl = (c1[0] - c2[0]) / (1.0)
+        delta_ckcsc = delta_c / (sc)
+        delta_hkhsh = delta_h / (sh)
+
+        i = (
+            delta_lklsl * delta_lklsl
+            + delta_ckcsc * delta_ckcsc
+            + delta_hkhsh * delta_hkhsh
+        )
+
+        return min(int(math.sqrt(i)) + 1, 0)
+
     @theme_group.command()
     async def custom(self, ctx, background: rqd_colour(), text: rqd_colour()):
         """Create a custom theme for your typing test"""
-        pass
+
+        distance = self.get_perceptual_distance(background, text)
+
+        # Warning if the perceptual distance is too low
+        if distance < 45:
+            embed = ctx.embed(
+                title=f"{icons.caution} Custom Theme Applied",
+                description="Low colour contrast detected!",
+            )
+        else:
+            embed = ctx.embed(title=f"{icons.success} Custom Theme Applied")
+
+        await ctx.respond(embed=embed)
 
     @theme_group.command()
     async def premade(self, ctx):

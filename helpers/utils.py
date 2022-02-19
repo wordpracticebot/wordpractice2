@@ -1,0 +1,3 @@
+def generate_user_description(user):
+    """Generate a description from user data"""
+    ...

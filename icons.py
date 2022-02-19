@@ -5,7 +5,7 @@ xp = "<:xp:934865195438854155>"
 
 # General
 success = ":white_check_mark:"
-caution = ":caution:"
+caution = ":warning:"
 danger = ":no_entry:"
 
 

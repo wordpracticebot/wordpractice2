@@ -4,61 +4,85 @@ from discord.ext import commands
 from achievements import categories, get_achievement_tier, get_bar
 from helpers.checks import cooldown
 from helpers.converters import opt_user
-from helpers.ui import DictButton, PageView, ViewFromDict
+from helpers.ui import BaseView, DictButton, ViewFromDict
 
 
-class ProfileView(PageView):
+class ProfileView(BaseView):
     def __init__(self, ctx, user):
         super().__init__(ctx)
 
-        self.page = 0
         self.user = user
-
-    async def create_stats_page(self):
-        embed = self.ctx.embed(title="stats page", description="hello")
-
-        return embed
-
-    async def create_account_page(self):
-        embed = self.ctx.embed(title="account page", description="hello")
-
-        return embed
+        self.callbacks = self.get_embed_callbacks()
+        self.page = list(self.callbacks.keys())[0]
 
     async def update_message(self, interaction):
-        embed = await self.create_page()
+        embed = self.get_embed()
         await interaction.message.edit(embed=embed, view=self)
 
-    async def create_page(self):
-        if self.page == 0:
-            embed = await self.create_stats_page()
-        elif self.page == 1:
-            embed = await self.create_account_page()
+    def get_embed(self):
+        return self.callbacks[self.page][1]()
 
+    def general_page(self):
+        embed = self.ctx.embed(title="stats page", description="hello")
         return embed
 
-    async def update_buttons(self, page):
-        self.children[self.page].style = discord.ButtonStyle.primary
-        self.children[page].style = discord.ButtonStyle.success
+    def create_achievements_page(self):
+        embed = self.ctx.embed(title="achievements page", description="hello")
+        return embed
 
-        self.page = page
+    def create_stats_page(self):
+        embed = self.ctx.embed(title="stats page", description="hello")
+        return embed
 
-    async def update_all(self, interaction, page):
-        await self.update_buttons(page)
-        await self.update_message(interaction)
+    def create_typing_page(self):
+        embed = self.ctx.embed(title="typing page", description="hello")
+        return embed
+
+    def create_settings_page(self):
+        embed = self.ctx.embed(title="settings page", description="hello")
+        return embed
+
+    def get_embed_callbacks(self):
+        # TODO: add proper icons here
+        return {
+            "General": [":grinning:", self.general_page],
+            "Achievements": [":shield:", self.create_achievements_page],
+            "Statistics": [":bar_chart:", self.create_stats_page],
+            "Typing": [":keyboard:", self.create_typing_page],
+            "Settings": [":gear:", self.create_settings_page],
+        }
 
     async def start(self):
-        embed = await self.create_page()
+        embed = self.get_embed()
+
+        selector = ProfileSelect(self.callbacks)
+
+        self.add_item(item=selector)
+
         self.response = await self.ctx.respond(embed=embed, view=self)
 
-    @discord.ui.button(label="Statistics", style=discord.ButtonStyle.success)
-    async def stats_page(self, button, interaction):
-        if self.page != 0:
-            await self.update_all(interaction, 0)
 
-    @discord.ui.button(label="Account", style=discord.ButtonStyle.primary)
-    async def account_page(self, button, interaction):
-        if self.page != 1:
-            await self.update_all(interaction, 1)
+class ProfileSelect(discord.ui.Select):
+    def __init__(self, callbacks):
+
+        self.callbacks = callbacks
+
+        super().__init__(
+            placeholder="Select a view...",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(label=name)
+                for name, value in self.callbacks.items()
+            ],
+        )
+
+    async def callback(self, interaction):
+        option = self.values[0]
+
+        self.view.page = option
+
+        await self.view.update_message(interaction)
 
 
 class AchievementsButton(DictButton):
@@ -118,7 +142,7 @@ class AchievementsView(ViewFromDict):
         return embed
 
 
-class User(commands.Cog):
+class Bot(commands.Cog):
     """Essential bot commands"""
 
     def __init__(self, bot):
@@ -147,7 +171,7 @@ class User(commands.Cog):
 
     @cooldown(8, 2)
     @commands.user_command(name="Typing Profile")
-    async def profile(self, ctx, member: discord.Member):
+    async def profile_user(self, ctx, member: discord.Member):
         await self.handle_profile_cmd(ctx, member)
 
     async def handle_profile_cmd(self, ctx, user):
@@ -183,9 +207,9 @@ class User(commands.Cog):
 
     @commands.slash_command()
     async def challenges(self, ctx):
-        """View the daily challenge and your progress on it"""
+        """View the daily challenges and your progress on them"""
         pass
 
 
 def setup(bot):
-    bot.add_cog(User(bot))
+    bot.add_cog(Bot(bot))

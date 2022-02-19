@@ -12,11 +12,14 @@ class Tasks(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.update_24_hour()
-        self.update_leadcerboards()
-        self.post_guild_count()
-        self.daily_restart()
-        self.clear_cooldowns()
+        for u in [
+            self.update_leaderboards,
+            self.update_24_hour,
+            self.post_guild_count,
+            self.daily_restart,
+            self.clear_cooldowns,
+        ]:
+            u.start()
 
     async def get_sorted_lb(self, query: Union[list, dict]) -> list:
         cursor = self.bot.mongo.db.user.aggregate(
@@ -54,14 +57,24 @@ class Tasks(commands.Cog):
     async def update_24_hour(self):
         every = 1440 / UPDATE_24_HOUR_INTERVAL - 1
 
+        # Have to update each field in two steps because of update conflict
+
         await self.bot.mongo.db.user.update_many(
             {f"last24.0.{every}": {"$exists": True}},
-            {"$pop": {"last24.0": -1}, "$set": {f"last24.0.{every}": 0}},
+            {"$pop": {"last24.0": -1}},
+        )
+        await self.bot.mongo.db.user.update_many(
+            {f"last24.0.{every}": {"$exists": True}},
+            {"$push": {"last24.0": 0}},
         )
 
         await self.bot.mongo.db.user.update_many(
             {f"last24.1.{every}": {"$exists": True}},
-            {"$pop": {"last24.1": -1}, "$set": {f"last24.1.{every}": 0}},
+            {"$pop": {"last24.1": -1}},
+        )
+        await self.bot.mongo.db.user.update_many(
+            {f"last24.1.{every}": {"$exists": True}},
+            {"$push": {f"last24.1": 0}},
         )
 
     @tasks.loop(minutes=COMPILE_INTERVAL)

@@ -10,7 +10,7 @@ from PIL import ImageDraw
 
 import icons
 from achievements import check_all
-from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER
+from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
 from static.assets import achievement_base, uni_sans_heavy
@@ -51,13 +51,10 @@ class Events(commands.Cog):
         await self.bot.cmd_wh.send(embed=embed)
 
     @staticmethod
-    async def send_error(ctx, title, desc, view=None):
+    async def send_basic_error(ctx, title, desc):
         embed = ctx.error_embed(title=f"{icons.caution} {title}", description=desc)
 
-        if view is None:
-            await ctx.respond(embed=embed)
-        else:
-            await ctx.respond(embed=embed, view=view)
+        await ctx.respond(embed=embed)
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
@@ -81,10 +78,10 @@ class Events(commands.Cog):
                 options = " ".join(f"`{o}`" for o in error.options)
                 message += f"\n\n**Did you mean?**\n{options}"
 
-            await self.send_error(ctx, "Invalid Argument", message)
+            await self.send_basic_error(ctx, "Invalid Argument", message)
 
         else:
-            await self.send_error(
+            await self.send_basic_error(
                 ctx,
                 "Invalid Input",
                 (
@@ -103,7 +100,7 @@ class Events(commands.Cog):
             ),
         ):
             try:
-                await self.send_error(
+                await self.send_basic_error(
                     ctx,
                     "Permission Error",
                     "I do not have the correct server permissons",
@@ -112,14 +109,14 @@ class Events(commands.Cog):
                 pass
 
     async def handle_unexpected_error(self, ctx, error):
-        view = create_link_view({"Support Server": SUPPORT_SERVER})
+        view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
 
-        await self.send_error(
-            ctx,
-            f"{icons.danger} Unexpected Error",
-            "Report this through our support server so we can fix it.",
-            view,
+        embed = ctx.error_embed(
+            title=f"{icons.danger} Unexpected Error",
+            description="Report this through our support server so we can fix it.",
         )
+
+        await ctx.respond(embed=embed, view=view)
 
         timestamp = int(time.time())
 
@@ -192,16 +189,21 @@ class Events(commands.Cog):
                 done_checking = True
 
         if user.to_mongo() != (user_data := new_user.to_mongo()):
-            files = [generate_achievement_image(n) for n in names[:ACHIEVEMENTS_SHOWN]]
 
-            if len(names) > ACHIEVEMENTS_SHOWN:
-                await ctx.respond(
-                    f"and {len(names) - ACHIEVEMENTS_SHOWN} more...",
-                    files=files,
-                    ephemeral=True,
-                )
-            else:
-                await ctx.respond(files=files, ephemeral=True)
+            # Checking if new achievements have been added
+            if user.achievements != new_user.achievements:
+                files = [
+                    generate_achievement_image(n) for n in names[:ACHIEVEMENTS_SHOWN]
+                ]
+
+                if len(names) > ACHIEVEMENTS_SHOWN:
+                    await ctx.respond(
+                        f"and {len(names) - ACHIEVEMENTS_SHOWN} more...",
+                        files=files,
+                        ephemeral=True,
+                    )
+                else:
+                    await ctx.respond(files=files, ephemeral=True)
 
             # Replacing the user data with the new state
             await self.bot.mongo.replace_user_data(ctx.author, user_data)

@@ -6,7 +6,8 @@ ERROR_CLR = 0xFF5858
 
 # General settings
 PERMISSONS = 412317248576
-SUPPORT_SERVER = "https://discord.gg/wordpractice"
+SUPPORT_SERVER_INVITE = "https://discord.gg/wordpractice"
+SUPPORT_SERVER_ID = 742960643312713738
 PRIVACY_POLICY = ""
 UPDATE_24_HOUR = 5  # minutes
 DEFAULT_THEME = default["Material"]["colours"]

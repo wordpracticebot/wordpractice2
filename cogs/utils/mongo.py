@@ -19,6 +19,7 @@ from umongo.fields import (
     StringField,
 )
 from umongo.frameworks import MotorAsyncIOInstance
+from helpers.utils import generate_user_description
 
 from constants import DEFAULT_THEME, VOTING_SITES
 
@@ -58,6 +59,7 @@ class User(Document):
     discriminator = IntegerField(required=True)
     avatar = StringField(default=None)
     created_at = DateTimeField(default=datetime.utcnow())
+    views = IntegerField(default=0)  # TODO: update views
 
     # Statistics
     coins = IntegerField(default=0)
@@ -117,6 +119,14 @@ class User(Document):
     def username(self):
         return f"{self.name}#{self.discriminator}"
 
+    @property
+    def display_name(self):
+        return f"{self.username} {self.status}"
+
+    @property
+    def description(self):
+        return generate_user_description(self)
+
 
 class Mongo(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -124,6 +134,7 @@ class Mongo(commands.Cog):
         self.db = AsyncIOMotorClient(bot.config.DATABASE_URI, io_loop=bot.loop)[
             bot.config.DATABASE_NAME
         ]
+
         instance = MotorAsyncIOInstance(self.db)
 
         g = globals()

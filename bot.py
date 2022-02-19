@@ -13,8 +13,7 @@ from discord import InteractionType
 from discord.ext import commands
 
 import cogs
-import icons
-from constants import ERROR_CLR, PERMISSONS, SUPPORT_SERVER
+from constants import ERROR_CLR, PERMISSONS, SUPPORT_SERVER_INVITE
 from helpers.ui import BaseView, CustomEmbed
 
 # TODO: use max concurrency for typing test
@@ -172,7 +171,7 @@ class WordPractice(commands.AutoShardedBot):
                 item = discord.ui.Button(
                     style=discord.ButtonStyle.link,
                     label="Click here!",
-                    url=SUPPORT_SERVER,
+                    url=SUPPORT_SERVER_INVITE,
                 )
                 view.add_item(item=item)
 
