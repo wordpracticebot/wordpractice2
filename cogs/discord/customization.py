@@ -62,6 +62,9 @@ def get_difficulty_choices(name):
 class Customization(commands.Cog):
     """Customization commands"""
 
+    emoji = "\N{GEAR}"
+    order = 3
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -75,13 +78,13 @@ class Customization(commands.Cog):
         c2 = math.sqrt(c2[1] * c2[1] + c2[2] * c2[2])
 
         delta_c = c1 - c2
-        delta_h = (c1[1] - c2[1]) ** 2 + (c1[2] - c2[2]) ** 2 - delta_c * delta_c
+        delta_h = (c1 - c2) ** 2 + (c1 - c2) ** 2 - delta_c * delta_c
         delta_h = 0 if delta_h < 0 else math.sqrt(delta_h)
 
         sc = 1.0 + 0.045 * c1
         sh = 1.0 + 0.015 * c1
 
-        delta_lklsl = (c1[0] - c2[0]) / (1.0)
+        delta_lklsl = (c1 - c2) / (1.0)
         delta_ckcsc = delta_c / (sc)
         delta_hkhsh = delta_h / (sh)
 
@@ -91,7 +94,7 @@ class Customization(commands.Cog):
             + delta_hkhsh * delta_hkhsh
         )
 
-        return min(int(math.sqrt(i)) + 1, 0)
+        return max(int(math.sqrt(i)) + 1, 0)
 
     @theme_group.command()
     async def custom(self, ctx, background: rqd_colour(), text: rqd_colour()):
@@ -104,9 +107,12 @@ class Customization(commands.Cog):
             embed = ctx.embed(
                 title=f"{icons.caution} Custom Theme Applied",
                 description="Low colour contrast detected!",
+                add_footer=False,
             )
         else:
-            embed = ctx.embed(title=f"{icons.success} Custom Theme Applied")
+            embed = ctx.embed(
+                title=f"{icons.success} Custom Theme Applied", add_footer=False
+            )
 
         await ctx.respond(embed=embed)
 

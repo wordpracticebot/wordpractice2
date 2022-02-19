@@ -19,6 +19,9 @@ def load_test_file(name):
 class Typing(commands.Cog):
     """Typing test related commands"""
 
+    emoji = "\N{KEYBOARD}"
+    order = 2
+
     def __init__(self, bot):
         self.bot = bot
 

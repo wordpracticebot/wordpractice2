@@ -9,7 +9,7 @@ PERMISSONS = 412317248576
 SUPPORT_SERVER_INVITE = "https://discord.gg/wordpractice"
 SUPPORT_SERVER_ID = 742960643312713738
 PRIVACY_POLICY = ""
-UPDATE_24_HOUR = 5  # minutes
+DEFAULT_VIEW_TIMEOUT = 20  # seconds
 DEFAULT_THEME = default["Material"]["colours"]
 
 # Testing

@@ -109,7 +109,7 @@ class Tasks(commands.Cog):
         )
 
         # highspeed leaderboard
-        # TODO: add a 24 hour leaderboard
+        # TODO: add a 24 hour leaderboard for highscores
         lbs.append(
             [
                 await self.get_sorted_lb({"$sum": "$highspeed.short.wpm"}),

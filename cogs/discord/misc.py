@@ -1,9 +1,10 @@
 import time
 from datetime import datetime, timedelta
+from textwrap import TextWrapper
 
 import discord
-from discord.ext import commands
 from discord.commands import SlashCommand, SlashCommandGroup
+from discord.ext import commands
 
 import icons
 from achievements import categories, get_achievement_tier, get_bar
@@ -13,10 +14,14 @@ from helpers.ui import BaseView, create_link_view
 
 def _add_commands(embed, cmds):
     """Formats commands fields and adds them to embeds"""
+
+    wrapper = TextWrapper(width=55)
+
     for cmd in cmds:
         embed.add_field(
             name=f"/{cmd.name}",
-            value=cmd.description or "No command description",
+            value="\n".join(wrapper.wrap(text=cmd.description))
+            or "No command description",
             inline=False,
         )
 
@@ -63,7 +68,12 @@ class CategorySelect(discord.ui.Select):
             value="Welcome",
         )
 
-        for _, cog in self.cogs.values():
+        for _, cog in sorted(
+            self.cogs.values(),
+            key=lambda c: getattr(
+                c[1], "order", 1000
+            ),  # 1000 is just an arbitrary high number so the category appears at the end if no order is specified
+        ):
             self.add_option(
                 label=cog.qualified_name,
                 description=cog.description or "No category description",
@@ -141,6 +151,9 @@ class HelpView(BaseView):
 
 class Misc(commands.Cog):
     """Miscellaneous commands"""
+
+    emoji = "\N{CARD FILE BOX}"
+    order = 4
 
     def __init__(self, bot):
         self.bot = bot

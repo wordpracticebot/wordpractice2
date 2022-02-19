@@ -14,7 +14,7 @@ RGB_STRING = re.compile(
 
 
 class HexOrRGB(commands.Converter):
-    async def convert(self, colour: str):
+    async def convert(self, ctx, colour: str):
         try:
             return ImageColor.getrgb(colour)
         except ValueError:

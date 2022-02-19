@@ -4,6 +4,9 @@ from discord.ext import commands
 class Server(commands.Cog):
     """Commands for the community server"""
 
+    emoji = "\N{CLOUD}"
+    order = 5
+
     def __init__(self, bot):
         self.bot = bot
 

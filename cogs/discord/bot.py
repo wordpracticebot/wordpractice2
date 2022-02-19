@@ -139,6 +139,9 @@ class AchievementsView(ViewFromDict):
 class Bot(commands.Cog):
     """Essential bot commands"""
 
+    emoji = "\N{ROBOT FACE}"
+    order = 1
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -187,7 +190,7 @@ class Bot(commands.Cog):
 
     @commands.slash_command()
     async def highscore(self, ctx):
-        """See the fastest users in any category"""
+        """See the fastest users in any typing category"""
         pass
 
     @commands.slash_command()

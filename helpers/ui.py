@@ -4,7 +4,7 @@ import time
 import discord
 
 import icons
-from constants import ERROR_CLR, SUPPORT_SERVER_INVITE
+from constants import DEFAULT_VIEW_TIMEOUT, ERROR_CLR, SUPPORT_SERVER_INVITE
 from static.hints import hints
 
 
@@ -38,16 +38,19 @@ class CustomEmbed(discord.Embed):
 
 
 class BaseView(discord.ui.View):
-    def __init__(self, ctx, personal=True):
-        super().__init__(timeout=10)
+    def __init__(self, ctx, timeout=DEFAULT_VIEW_TIMEOUT, personal=True):
+        super().__init__(timeout=timeout)
 
         self.ctx = ctx
         self.personal = personal
 
     async def on_timeout(self):
-        for child in self.children:
-            child.disabled = True
-        await self.ctx.interaction.edit_original_message(view=self)
+        msg = self.ctx.interaction.message
+
+        if msg is not None:
+            for child in self.children:
+                child.disabled = True
+            await msg.edit(view=self)
 
     async def interaction_check(self, interaction):
         if self.personal is False or (
