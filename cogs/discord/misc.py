@@ -136,7 +136,7 @@ class HelpView(BaseView):
 
         self.add_item(item=selector)
 
-        self.response = await self.ctx.respond(embed=embed, view=self)
+        await self.ctx.respond(embed=embed, view=self)
 
 
 class Misc(commands.Cog):

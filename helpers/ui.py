@@ -39,13 +39,18 @@ class CustomEmbed(discord.Embed):
 
 class BaseView(discord.ui.View):
     def __init__(self, ctx, personal=True):
-        super().__init__()
+        super().__init__(timeout=10)
 
         self.ctx = ctx
         self.personal = personal
 
+    async def on_timeout(self):
+        for child in self.children:
+            child.disabled = True
+        await self.ctx.interaction.edit_original_message(view=self)
+
     async def interaction_check(self, interaction):
-        if self.personal or (
+        if self.personal is False or (
             interaction.user and interaction.user.id == self.ctx.author.id
         ):
             return True
@@ -93,11 +98,6 @@ class PageView(BaseView):
 
         super().__init__(ctx)
 
-    async def on_timeout(self):
-        for child in self.children:
-            child.disabled = True
-        await self.response.edit_original_message(view=self)
-
     async def create_page(self):
         return self.ctx.embed()
 
@@ -115,7 +115,7 @@ class PageView(BaseView):
     async def start(self):
         embed = await self.create_page()
         await self.update_buttons()
-        self.response = await self.ctx.respond(embed=embed, view=self)
+        await self.ctx.respond(embed=embed, view=self)
 
 
 class ScrollView(PageView):
@@ -232,4 +232,4 @@ class ViewFromDict(PageView):
             self.add_item(button)
 
         embed = await self.create_page()
-        self.response = await self.ctx.respond(embed=embed, view=self)
+        await self.ctx.respond(embed=embed, view=self)

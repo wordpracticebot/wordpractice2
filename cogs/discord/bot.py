@@ -38,18 +38,12 @@ class ProfileView(BaseView):
         embed = self.ctx.embed(title="typing page", description="hello")
         return embed
 
-    def create_settings_page(self):
-        embed = self.ctx.embed(title="settings page", description="hello")
-        return embed
-
     def get_embed_callbacks(self):
-        # TODO: add proper icons here
         return {
-            "General": [":grinning:", self.general_page],
-            "Achievements": [":shield:", self.create_achievements_page],
-            "Statistics": [":bar_chart:", self.create_stats_page],
-            "Typing": [":keyboard:", self.create_typing_page],
-            "Settings": [":gear:", self.create_settings_page],
+            "General": ["\N{GRINNING FACE}", self.general_page],
+            "Achievements": ["\N{SHIELD}", self.create_achievements_page],
+            "Statistics": ["\N{BAR CHART}", self.create_stats_page],
+            "Typing": ["\N{KEYBOARD}", self.create_typing_page],
         }
 
     async def start(self):
@@ -59,7 +53,7 @@ class ProfileView(BaseView):
 
         self.add_item(item=selector)
 
-        self.response = await self.ctx.respond(embed=embed, view=self)
+        await self.ctx.respond(embed=embed, view=self)
 
 
 class ProfileSelect(discord.ui.Select):
@@ -68,11 +62,11 @@ class ProfileSelect(discord.ui.Select):
         self.callbacks = callbacks
 
         super().__init__(
-            placeholder="Select a view...",
+            placeholder="Select a category...",
             min_values=1,
             max_values=1,
             options=[
-                discord.SelectOption(label=name)
+                discord.SelectOption(label=name, emoji=value[0])
                 for name, value in self.callbacks.items()
             ],
         )
