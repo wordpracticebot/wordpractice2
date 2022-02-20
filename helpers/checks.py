@@ -25,7 +25,7 @@ def cooldown(regular: int, premium: int):
                 )
 
                 if PREMIUM_LAUNCHED and user["premium"] is False and regular > premium:
-                    embed.description += f"\n\n[Premium members]({PREMIUM_LINK}) only need wait **{premium}s** instead of **{regular}s**!"
+                    embed.description += f"\n\n[Premium members]({PREMIUM_LINK}) only wait **{premium}s** instead of **{regular}s**!"
 
                     view = create_link_view({"Get Premium": PREMIUM_LINK})
                 else:

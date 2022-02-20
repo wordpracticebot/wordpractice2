@@ -20,22 +20,32 @@ class ProfileView(BaseView):
         await interaction.message.edit(embed=embed, view=self)
 
     def get_embed(self):
-        return self.callbacks[self.page][1]()
+        base_embed = self.get_base_embed(self.page)
 
-    def general_page(self):
-        embed = self.ctx.embed(title="stats page", description="hello")
+        return self.callbacks[self.page][1](base_embed)
+
+    def get_base_embed(self, page_name):
+        status = self.user.status or ""
+
+        embed = self.ctx.embed(
+            title=f"{self.user.username}'s Profile {status}", add_footer=False
+        )
+        embed.set_author(
+            name=f"{self.user.username} | {page_name}",
+            icon_url=self.user.avatar_url,
+        )
         return embed
 
-    def create_achievements_page(self):
-        embed = self.ctx.embed(title="achievements page", description="hello")
+    def general_page(self, embed):
         return embed
 
-    def create_stats_page(self):
-        embed = self.ctx.embed(title="stats page", description="hello")
+    def create_achievements_page(self, embed):
         return embed
 
-    def create_typing_page(self):
-        embed = self.ctx.embed(title="typing page", description="hello")
+    def create_stats_page(self, embed):
+        return embed
+
+    def create_typing_page(self, embed):
         return embed
 
     def get_embed_callbacks(self):

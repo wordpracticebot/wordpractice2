@@ -134,6 +134,10 @@ class User(Document):
         return self.name[:15]
 
     @property
+    def avatar_url(self):
+        return f"https://cdn.discordapp.com/avatars/{self.id}/{self.avatar}"
+
+    @property
     def username(self):
         return f"{self.name}#{self.discriminator}"
 
@@ -177,13 +181,13 @@ class Mongo(commands.Cog):
         if u is not None:
             u = self.User.build_from_mongo(pickle.loads(u))
 
-        if create is False:
-            return u
-
         if u is None:
             u = await self.User.find_one({"id": user_id})
             if u is None:
                 if not isinstance(user, int) and not user.bot:
+                    if create is False:
+                        return u
+
                     u = self.User(
                         id=user.id,
                         name=user.name,
