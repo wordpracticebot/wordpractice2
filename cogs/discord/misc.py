@@ -93,7 +93,7 @@ class CategorySelect(discord.ui.Select):
 class HelpView(BaseView):
     async def create_page(self, option):
         if option == "Welcome":
-            # TODO: add more information about commands like typing test
+            # TODO: add more information about how to start (maybe create a youtube video)
             embed = self.ctx.embed(
                 title="Help",
                 description="Welcome to wordPractice!",
@@ -102,8 +102,8 @@ class HelpView(BaseView):
             embed.add_field(
                 name="What is wordPractice?",
                 value=(
-                    "wordPractice most feature dense typing test Discord Bot. It allows\n"
-                    "you to practice your typing skills while having fun!"
+                    "I'm the most feature dense typing test Discord Bot. I allow\n"
+                    "you to practice your typing skills while having fun!\n"
                 ),
                 inline=False,
             )
@@ -113,6 +113,11 @@ class HelpView(BaseView):
                     "If you need any help or just want to talk about typing,\n"
                     f"join our community discord server at\n{SUPPORT_SERVER_INVITE}"
                 ),
+                inline=False,
+            )
+            embed.add_field(
+                name="** **",
+                value="Use the dropdown below to learn more about my commands.",
                 inline=False,
             )
             return embed
@@ -172,7 +177,9 @@ class Misc(commands.Cog):
     @commands.slash_command(name="help")
     async def _help(self, ctx):
         """Help with bot usage and list of ocmmands"""
-        view = HelpView(ctx)
+        view = HelpView(
+            ctx, timeout=30
+        )  # longer timeout gives time for people to run the commands
         await view.start()
 
     @commands.slash_command()

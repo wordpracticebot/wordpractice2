@@ -137,7 +137,7 @@ class AchievementsView(ViewFromDict):
 
 
 class Bot(commands.Cog):
-    """Essential bot commands"""
+    """Core bot commands"""
 
     emoji = "\N{ROBOT FACE}"
     order = 1

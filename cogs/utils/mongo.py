@@ -8,9 +8,16 @@ import pymongo
 from discord.ext import commands
 from motor.motor_asyncio import AsyncIOMotorClient
 from umongo import Document, EmbeddedDocument
-from umongo.fields import (BooleanField, DateTimeField, DictField,
-                           EmbeddedField, FloatField, IntegerField, ListField,
-                           StringField)
+from umongo.fields import (
+    BooleanField,
+    DateTimeField,
+    DictField,
+    EmbeddedField,
+    FloatField,
+    IntegerField,
+    ListField,
+    StringField,
+)
 from umongo.frameworks import MotorAsyncIOInstance
 
 from constants import DEFAULT_THEME, VOTING_SITES
@@ -107,6 +114,10 @@ class User(Document):
     level = StringField(default="easy")
     links = DictField(StringField(), StringField(), default={})
     pacer = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"
+
+    @property
+    def min_name(self):
+        return self.name[:15]
 
     @property
     def username(self):

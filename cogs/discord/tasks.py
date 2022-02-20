@@ -41,15 +41,11 @@ class Tasks(commands.Cog):
 
     async def reset_extra_24_hour_stats(self):
         await self.bot.mongo.db.user.update_many(
-            {
-                {"last24.0": [0] * 96},
-            },
+            {"last24.0": [0] * 96},
             {"$set": {"last24.0": [0]}},
         )
         await self.bot.mongo.db.user.update_many(
-            {
-                {"last24.1": [0] * 96},
-            },
+            {"last24.1": [0] * 96},
             {"$set": {"last24.1": [0]}},
         )
 

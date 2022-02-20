@@ -1,4 +1,9 @@
 from PIL import Image, ImageFont
 
-uni_sans_heavy = ImageFont.truetype("./static/assets/fonts/uni_sans_heavy_caps.ttf", 42)
-achievement_base = Image.open("./static/assets/img/achievement_base.png")
+path = "./static/assets"
+
+# Fonts
+uni_sans_heavy = ImageFont.truetype(f"{path}/fonts/uni_sans_heavy_caps.ttf", 42)
+
+# Images
+achievement_base = Image.open(f"{path}/img/achievement_base.png")

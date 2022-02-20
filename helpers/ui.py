@@ -45,11 +45,15 @@ class BaseView(discord.ui.View):
         self.personal = personal
 
     async def on_timeout(self):
-        msg = self.ctx.interaction.message
+        if self.children:
+            msg = (
+                self.ctx.interaction.message
+                or await self.ctx.interaction.original_message()
+            )
 
-        if msg is not None:
             for child in self.children:
                 child.disabled = True
+
             await msg.edit(view=self)
 
     async def interaction_check(self, interaction):
