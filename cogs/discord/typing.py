@@ -1,15 +1,15 @@
 import json
 import random
-from humanfriendly import format_timespan
 from itertools import cycle, islice
 
 import discord
 from discord.commands import SlashCommandGroup
 from discord.ext import commands, tasks
+from humanfriendly import format_timespan
 
 import icons
 import word_list
-from constants import MAX_RACE_JOIN, TEST_RANGE, RACE_EXPIRE_TIME
+from constants import MAX_RACE_JOIN, RACE_EXPIRE_TIME, TEST_RANGE
 from helpers.converters import quote_amt, word_amt
 from helpers.ui import BaseView
 
@@ -29,9 +29,6 @@ class RaceMember:
         # User's database document
         self.data = None
 
-        # If the user has tried joining the race again (prevents spam)
-        self.tried_joining_again = False
-
         # The test score (mongo.Score)
         self.result = None
 
@@ -44,6 +41,14 @@ class RaceJoinButton(discord.ui.Button):
         await self.view.add_racer(interaction)
 
 
+class RaceLeaveButton(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="Leave", style=discord.ButtonStyle.danger)
+
+    async def callback(self, interaction):
+        await self.view.remove_racer(interaction)
+
+
 class RaceJoinView(BaseView):
     def __init__(self, ctx, *test_data):
         super().__init__(ctx, timeout=None, personal=False)
@@ -51,8 +56,45 @@ class RaceJoinView(BaseView):
         self.test_data = test_data
         self.racers = {}  # id: user object (for preserve uniqueness)
 
-        # If the leader has been warned about another user joining yet
-        self.other_user_warn = False
+        # Cooldown for joining the race (prevents spamming join and leave)
+        self.race_join_cooldown = commands.CooldownMapping.from_cooldown(
+            1, 10, commands.BucketType.member
+        )
+
+    async def remove_racer(self, interaction):
+        user = interaction.user
+
+        # If the author leaves, the race is ended
+        is_author = user.id == self.ctx.author.id
+
+        msg = (
+            self.ctx.interaction.message
+            or await self.ctx.interaction.original_message()
+        )
+
+        if is_author:
+            embed = self.ctx.error_embed(
+                title=f"{icons.caution} Race Ended",
+                description="The race leader left the race",
+            )
+
+            await msg.edit(embed=embed, view=None)
+            return self.stop()
+
+        if user.id not in self.racers:
+            return await interaction.response.send_message(
+                "You are not in the race!", ephemeral=True
+            )
+
+        del self.racers[user.id]
+
+        embed = self.get_race_join_embed()
+
+        await msg.edit(embed=embed, view=self)
+
+        return await interaction.response.send_message(
+            "You left the race", ephemeral=True
+        )
 
     async def add_racer(self, interaction):
         if len(self.racers) == MAX_RACE_JOIN:
@@ -61,12 +103,6 @@ class RaceJoinView(BaseView):
         user = interaction.user
 
         if user.id in self.racers:
-            # Checking if the user has already been told that they are in the race
-            if self.racers[user.id].tried_joining_again:
-                return
-
-            self.racers[user.id].tried_joining_again = True
-
             return await interaction.response.send_message(
                 "You are already in this race!", ephemeral=True
             )
@@ -80,27 +116,41 @@ class RaceJoinView(BaseView):
         is_author = user.id == self.ctx.author.id
 
         if is_author and len(self.racers) == 0:
-            if self.other_user_warn:
-                return
-
-            self.other_user_warn = True
             return await interaction.response.send_message(
                 "You cannot start this race until another user joins!", ephemeral=True
             )
-
-        self.racers[user.id] = RaceMember(user)
-
-        embed = self.get_race_join_embed(is_author)
 
         if is_author:
             if self.children:
                 for child in self.children:
                     child.disabled = True
 
+        else:
+            bucket = self.race_join_cooldown.get_bucket(interaction.message)
+
+            retry_after = bucket.update_rate_limit()
+
+            if retry_after:
+                timespan = format_timespan(retry_after)
+
+                return await interaction.response.send_message(
+                    f"Sorry you are being rate limited, try again in {timespan}",
+                    ephemeral=True,
+                )
+
+        self.racers[user.id] = RaceMember(user)
+        embed = self.get_race_join_embed(is_author)
+
         await msg.edit(embed=embed, view=self)
 
         if is_author:
-            await Typing.do_race(self.ctx, *self.test_data)
+            self.stop()
+            await Typing.do_race(self.ctx, self.racers, *self.test_data)
+
+        else:
+            return await interaction.response.send_message(
+                "You joined the race", ephemeral=True
+            )
 
     @property
     def total_racers(self):
@@ -140,7 +190,10 @@ class RaceJoinView(BaseView):
         embed = self.get_race_join_embed()
 
         race_join_button = RaceJoinButton()
+        race_leave_button = RaceLeaveButton()
+
         self.add_item(race_join_button)
+        self.add_item(race_leave_button)
 
         await self.ctx.respond(embed=embed, view=self)
 
@@ -217,9 +270,6 @@ class Typing(commands.Cog):
         # Selecting consecutive items from list of sentences
         return list(islice(cycle(quotes), start, start + random.randint(*test_range)))
 
-    async def do_typing_test(self, ctx, is_dict, quote):
-        pass
-
     async def show_race_start(self, ctx, is_dict, quote):
         # Storing is_dict and quote in RaceJoinView because do_race method will be called inside it
         view = RaceJoinView(ctx, is_dict, quote)
@@ -228,12 +278,16 @@ class Typing(commands.Cog):
         # TODO: add as context tutorial
         # await ctx.respond("Start the race by joining it", ephemeral=True)
 
+    async def do_typing_test(self, ctx, is_dict, quote):
+        pass
+
     @staticmethod
-    async def do_race(ctx, is_dict, quote):
+    async def do_race(ctx, racers, is_dict, quote):
         """
+        racers: dict
         is_dict: bool (if it's a dictionary race)
+        quote: list
         """
-        print("Starting the race!!!!!")
 
 
 def setup(bot):

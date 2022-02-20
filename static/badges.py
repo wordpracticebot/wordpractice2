@@ -1,6 +1,10 @@
+"""
+The badge system has a unique identifier for each badge. 
+Only the identifier is stored in the user document
+"""
+
 # fmt: off
 
-# BADGE_NAME: EMOJI
 default = {
     # Default badges for daily reward
     "grey": "",
@@ -75,3 +79,12 @@ default = {
     "stocking": "",
     "ornament": "",
 }
+# fmt: on
+
+
+def get_badge_from_id(badge_id: str):
+    return default.get(badge_id)
+
+
+def get_badges_from_ids(badge_ids: list):
+    return [b for badge in badge_ids if (b := default.get(badge)) is not None]

@@ -212,7 +212,12 @@ class Misc(commands.Cog):
     async def invite(self, ctx):
         """Get the invite link for the bot"""
 
-        view = create_link_view({"Invite Bot": self.bot.create_invite_link()})
+        view = create_link_view(
+            {
+                "Invite Bot": self.bot.create_invite_link(),
+                "Community Server": SUPPORT_SERVER_INVITE,
+            }
+        )
 
         await ctx.respond("Here you go!", view=view)
 

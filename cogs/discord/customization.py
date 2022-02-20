@@ -161,7 +161,7 @@ class Customization(commands.Cog):
         await ctx.respond(embed=embed)
 
         # not inefficient because the user document is most likely cached from checking for ban
-        user = await self.mongo.fetch_user(ctx.author)
+        user = await ctx.bot.mongo.fetch_user(ctx.author)
 
         if user.pacer != value:
             await ctx.bot.mongo.update_user(ctx.author, {"$set": {"pacer": value}})

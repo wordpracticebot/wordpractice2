@@ -156,7 +156,7 @@ class Bot(commands.Cog):
         user = await self.bot.mongo.fetch_user(user)
 
         if user is None:
-            raise commands.BadArgument("User not found")
+            raise commands.BadArgument("User not in database")
 
         return user
 

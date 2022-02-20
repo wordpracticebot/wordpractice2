@@ -22,6 +22,7 @@ from umongo.frameworks import MotorAsyncIOInstance
 
 from constants import DEFAULT_THEME, VOTING_SITES
 from helpers.utils import generate_user_description
+from static.badges import get_badge_from_id, get_badges_from_ids
 
 
 class Infraction(EmbeddedDocument):
@@ -90,8 +91,8 @@ class User(Document):
     )  # [first, second, third, top 10]
 
     # Cosmetics
-    badges = ListField(StringField, default=[])
-    status = StringField(default="")
+    _badges = ListField(StringField, default=[], attribute="badges")
+    _status = StringField(default="", attribute="status")
 
     # Streak of playing
     streak = IntegerField(default=0)  # days
@@ -119,6 +120,14 @@ class User(Document):
     level = StringField(default="easy")
     links = DictField(StringField(), StringField(), default={})
     pacer = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"
+
+    @property
+    def status(self):
+        return get_badge_from_id(self._status)
+
+    @property
+    def badges(self):
+        return get_badges_from_ids(self._badges)
 
     @property
     def min_name(self):
