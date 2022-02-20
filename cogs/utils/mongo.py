@@ -61,6 +61,11 @@ class User(Document):
     created_at = DateTimeField(default=datetime.utcnow())
     views = IntegerField(default=0)  # TODO: update views
 
+    # list of commands that the user has run before (for context tutorials)
+    # includes subcommands from groups
+    # TODO: update every time a command is run
+    cmds_run = StringField(default=[])
+
     # Statistics
     coins = IntegerField(default=0)
     words = IntegerField(default=0)

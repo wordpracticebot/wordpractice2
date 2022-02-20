@@ -26,6 +26,7 @@ ACHIEVEMENTS_SHOWN = 4
 
 # Typing test
 MAX_RACE_JOIN = 10
+RACE_EXPIRE_TIME = 120  # seconds
 TEST_RANGE = (1, 100)
 
 # Voting
