@@ -8,16 +8,9 @@ import pymongo
 from discord.ext import commands
 from motor.motor_asyncio import AsyncIOMotorClient
 from umongo import Document, EmbeddedDocument
-from umongo.fields import (
-    BooleanField,
-    DateTimeField,
-    DictField,
-    EmbeddedField,
-    FloatField,
-    IntegerField,
-    ListField,
-    StringField,
-)
+from umongo.fields import (BooleanField, DateTimeField, DictField,
+                           EmbeddedField, FloatField, IntegerField, ListField,
+                           StringField)
 from umongo.frameworks import MotorAsyncIOInstance
 
 from constants import DEFAULT_THEME, VOTING_SITES

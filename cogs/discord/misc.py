@@ -8,7 +8,12 @@ from discord.ext import commands
 
 import icons
 from achievements import categories, get_achievement_tier, get_bar
-from constants import SUPPORT_SERVER_INVITE, VOTING_SITES
+from constants import (
+    SUPPORT_SERVER_INVITE,
+    VOTING_SITES,
+    PRIVACY_POLICY_LINK,
+    RULES_LINK,
+)
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
 
@@ -179,7 +184,7 @@ class Misc(commands.Cog):
 
     @commands.slash_command(name="help")
     async def _help(self, ctx):
-        """Help with bot usage and list of ocmmands"""
+        """Help with bot usage and list of commands"""
         view = HelpView(
             ctx, timeout=30
         )  # longer timeout gives time for people to run the commands
@@ -210,7 +215,32 @@ class Misc(commands.Cog):
     @commands.slash_command()
     async def privacy(self, ctx):
         """View the privacy policy"""
-        pass
+        embed = ctx.embed(
+            title="Privacy Policy",
+            description=f"If you have any questions, join our [support server]({SUPPORT_SERVER_INVITE})",
+        )
+        view = create_link_view(
+            {
+                "Privacy Policy": PRIVACY_POLICY_LINK,
+            }
+        )
+
+        await ctx.respond(embed=embed, view=view)
+
+    @commands.slash_command()
+    async def rules(self, ctx):
+        """View the rules"""
+        embed = ctx.embed(
+            title="Rules",
+            description=f"If you have any questions, join our [support server]({SUPPORT_SERVER_INVITE})",
+        )
+        view = create_link_view(
+            {
+                "Rules": RULES_LINK,
+            }
+        )
+
+        await ctx.respond(embed=embed, view=view)
 
     @commands.slash_command()
     async def invite(self, ctx):
@@ -224,11 +254,6 @@ class Misc(commands.Cog):
         )
 
         await ctx.respond("Here you go!", view=view)
-
-    @commands.slash_command()
-    async def rules(self, ctx):
-        """View the rules"""
-        pass
 
     @commands.slash_command()
     async def vote(self, ctx):

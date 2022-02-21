@@ -7,7 +7,11 @@ ERROR_CLR = 0xFF5858
 # General settings
 PERMISSONS = 412317248576
 SUPPORT_SERVER_INVITE = "https://discord.gg/wordpractice"
-PRIVACY_POLICY = ""
+
+# TODO: add the correct privacy policy and rule links
+PRIVACY_POLICY_LINK = "https://www.google.com"
+RULES_LINK = "https://www.google.com"
+
 DEFAULT_VIEW_TIMEOUT = 20  # seconds
 DEFAULT_THEME = default["Material"]["colours"]
 AUTO_MODERATOR_NAME = "Thomas Worker 99"  # :)

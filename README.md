@@ -29,7 +29,7 @@
 >
 > ### Development
 >
-> [Python 3.9.7](https://www.python.org/downloads/release/python-397/) is recommended.
+> **Python 3.9+ is required**
 >
 > 1. Install [Poetry](https://python-poetry.org/) using `pip install poetry`
 > 2. Install the necessary dependencies using `poetry install`

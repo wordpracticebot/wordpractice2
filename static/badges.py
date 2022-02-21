@@ -6,14 +6,12 @@ Only the identifier is stored in the user document
 # fmt: off
 
 default = {
-    # Default badges for daily reward
     "grey": "",
     "orange": "",
     "lightblue": "",
     "purple": "",
     "red": "",
     "blue": "",
-
     "soldtogaming": "",
     "blackfridaytag": "",
     "tree": "",
