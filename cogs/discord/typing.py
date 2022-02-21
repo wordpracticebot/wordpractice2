@@ -58,7 +58,7 @@ class RaceJoinView(BaseView):
 
         # Cooldown for joining the race (prevents spamming join and leave)
         self.race_join_cooldown = commands.CooldownMapping.from_cooldown(
-            1, 10, commands.BucketType.member
+            1, 10, commands.BucketType.user
         )
 
     async def remove_racer(self, interaction):

@@ -23,6 +23,7 @@ Config = namedtuple(
         "COMMAND_LOG",
         "TEST_LOG",
         "IMPORTANT_LOG",
+        "ERROR_LOG",
     ],
 )
 
@@ -37,6 +38,7 @@ def main():
         COMMAND_LOG=os.environ["COMMAND_LOG"],
         TEST_LOG=os.environ["TEST_LOG"],
         IMPORTANT_LOG=os.environ["IMPORTANT_LOG"],
+        ERROR_LOG=os.environ["ERROR_LOG"],
     )
 
     intents = discord.Intents.default()

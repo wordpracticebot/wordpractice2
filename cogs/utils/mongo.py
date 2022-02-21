@@ -21,7 +21,7 @@ from umongo.fields import (
 from umongo.frameworks import MotorAsyncIOInstance
 
 from constants import DEFAULT_THEME, VOTING_SITES
-from helpers.utils import generate_user_description
+from helpers.user import generate_user_description
 from static.badges import get_badge_from_id, get_badges_from_ids
 
 
@@ -274,6 +274,8 @@ class Mongo(commands.Cog):
         )
 
         timestamp = round(time.time())
+
+        # TODO: dm the user that they are banned
 
         # Logging ban
         embed = self.bot.error_embed(

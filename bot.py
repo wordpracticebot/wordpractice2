@@ -87,6 +87,7 @@ class WordPractice(commands.AutoShardedBot):
 
         # Cache
         self.user_cache = {}
+        self.cmds_run = {}  # user_id: list[cmds]
         self.lbs = []
 
         self.start_time = time.time()
@@ -144,15 +145,12 @@ class WordPractice(commands.AutoShardedBot):
         buffer = BytesIO(msg.encode("utf-8"))
         file = discord.File(buffer, filename="text.txt")
 
-        await self.impt_wh.send(embed=embed, file=file)
+        await self.error_wh.send(embed=embed, file=file)
 
         print(msg)
 
     async def on_interaction(self, interaction):
         if interaction.type is InteractionType.application_command:
-
-            # TODO: add ratelimiting when pycord adds cooldowns for slash commands
-
             user = await self.mongo.fetch_user(interaction.user, create=True)
 
             if user is None:
@@ -190,6 +188,10 @@ class WordPractice(commands.AutoShardedBot):
     @discord.utils.cached_property
     def impt_wh(self):
         return discord.Webhook.from_url(self.config.IMPORTANT_LOG, session=self.session)
+
+    @discord.utils.cached_property
+    def error_wh(self):
+        return discord.Webhook.from_url(self.config.ERROR_LOG, session=self.session)
 
     async def on_ready(self):
         print("Ready!")
