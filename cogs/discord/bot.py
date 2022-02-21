@@ -170,13 +170,13 @@ class Bot(commands.Cog):
 
         return user
 
-    @cooldown(8, 2)
+    @cooldown(7, 2)
     @commands.slash_command()
     async def profile(self, ctx, user: opt_user()):
         """View user statistics"""
         await self.handle_profile_cmd(ctx, user)
 
-    @cooldown(8, 2)
+    @cooldown(7, 2)
     @commands.user_command(name="Typing Profile")
     async def profile_user(self, ctx, member: discord.Member):
         await self.handle_profile_cmd(ctx, member)
@@ -188,21 +188,25 @@ class Bot(commands.Cog):
 
         await view.start()
 
+    @cooldown(5, 2)
     @commands.slash_command()
     async def graph(self, ctx, user: opt_user()):
         """See a graph of a user's typing scores"""
         user = await self.user_check(ctx, user)
 
+    @cooldown(6, 2)
     @commands.slash_command()
     async def leaderboard(self, ctx):
         """See the top users in any category"""
         pass
 
+    @cooldown(6, 2)
     @commands.slash_command()
     async def highscore(self, ctx):
         """See the fastest users in any typing category"""
         pass
 
+    @cooldown(5, 2)
     @commands.slash_command()
     async def achievements(self, ctx):
         """See all the achievements"""
@@ -212,6 +216,7 @@ class Bot(commands.Cog):
 
         await view.start()
 
+    @cooldown(5, 2)
     @commands.slash_command()
     async def challenges(self, ctx):
         """View the daily challenges and your progress on them"""

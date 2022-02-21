@@ -10,6 +10,7 @@ from humanfriendly import format_timespan
 import icons
 import word_list
 from constants import MAX_RACE_JOIN, RACE_EXPIRE_TIME, TEST_RANGE
+from helpers.checks import cooldown
 from helpers.converters import quote_amt, word_amt
 from helpers.ui import BaseView
 
@@ -215,6 +216,7 @@ class Typing(commands.Cog):
         f"Take a multiplayer typing test. Up to {MAX_RACE_JOIN} other users can join your race.",
     )
 
+    @cooldown(5, 1)
     @tt_group.command()
     async def dictionary(self, ctx, length: word_amt()):
         """Take a dictionary typing test"""
@@ -222,6 +224,7 @@ class Typing(commands.Cog):
 
         await self.do_typing_test(ctx, True, quote)
 
+    @cooldown(5, 1)
     @tt_group.command()
     async def quote(self, ctx, length: quote_amt()):
         """Take a quote typing test"""
@@ -229,6 +232,7 @@ class Typing(commands.Cog):
 
         await self.do_typing_test(ctx, False, quote)
 
+    @cooldown(6, 2)
     @race_group.command()
     async def dictionary(self, ctx, length: word_amt()):
         """Take a multiplayer dictionary typing test"""
@@ -236,6 +240,7 @@ class Typing(commands.Cog):
 
         await self.show_race_start(ctx, True, quote)
 
+    @cooldown(6, 2)
     @race_group.command()
     async def quote(self, ctx, length: quote_amt()):
         """Take a multiplayer quote typing test"""
@@ -243,6 +248,7 @@ class Typing(commands.Cog):
 
         await self.show_race_start(ctx, False, quote)
 
+    @cooldown(6, 2)
     @commands.user_command(name="Typing Challenge")
     async def race_challenge(self, ctx, member: discord.Member):
         # TODO: send a dropdown to choose race

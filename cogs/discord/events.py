@@ -14,11 +14,9 @@ from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
 from helpers.user import get_user_cmds_run
+from helpers.utils import format_slash_command
+from helpers.checks import reset_cooldown
 from static.assets import achievement_base, uni_sans_heavy
-
-
-def format_slash_command(command: discord.SlashCommand):
-    return (f"{command.parent.name} " if command.parent else "") + command.name
 
 
 def generate_achievement_image(name):
@@ -64,7 +62,6 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
-
         if isinstance(error, discord.commands.CheckFailure):
             return await self.handle_check_failure(ctx, error)
 

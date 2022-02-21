@@ -13,7 +13,7 @@ from discord import InteractionType
 from discord.ext import commands
 
 import cogs
-from constants import ERROR_CLR, PRIMARY_CLR, PERMISSONS, SUPPORT_SERVER_INVITE
+from constants import ERROR_CLR, PERMISSONS, PRIMARY_CLR, SUPPORT_SERVER_INVITE
 from helpers.ui import BaseView, CustomEmbed
 
 # TODO: use max concurrency for typing test
@@ -46,6 +46,7 @@ class CustomContext(discord.commands.ApplicationContext):
         super().__init__(bot, interaction)
 
         self.theme = theme
+        self.testing = False  # if set to true, cooldowns are avoided
 
     def embed(self, **kwargs):
         color = kwargs.pop("color", self.theme)

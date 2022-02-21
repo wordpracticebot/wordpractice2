@@ -6,6 +6,7 @@ from discord.ext import commands
 
 import icons
 import word_list
+from helpers.checks import cooldown
 from helpers.converters import rqd_colour
 from helpers.errors import ImproperArgument
 from helpers.ui import BaseView, CustomEmbed
@@ -96,6 +97,7 @@ class Customization(commands.Cog):
 
         return max(int(math.sqrt(i)) + 1, 0)
 
+    @cooldown(8, 3)
     @theme_group.command()
     async def custom(self, ctx, background: rqd_colour(), text: rqd_colour()):
         """Create a custom theme for your typing test"""
@@ -116,6 +118,7 @@ class Customization(commands.Cog):
 
         await ctx.respond(embed=embed)
 
+    @cooldown(8, 3)
     @theme_group.command()
     async def premade(self, ctx):
         """Choose a premade theme for your typing test"""
@@ -124,6 +127,7 @@ class Customization(commands.Cog):
 
         await ctx.respond(content="** **", view=view)
 
+    @cooldown(8, 3)
     @commands.slash_command()
     async def language(
         self,
@@ -166,26 +170,31 @@ class Customization(commands.Cog):
         if user.pacer != value:
             await ctx.bot.mongo.update_user(ctx.author, {"$set": {"pacer": value}})
 
+    @cooldown(8, 3)
     @pacer_group.command()
     async def pb(self, ctx):
         """Set your typing test pacer to your personal best"""
         await self.handle_update_pacer(ctx, "Personal Best", "pb")
 
+    @cooldown(8, 3)
     @pacer_group.command()
     async def average(self, ctx):
         """Set your typing test pacer to your average speed"""
         await self.handle_update_pacer(ctx, "Average", "avg")
 
+    @cooldown(8, 3)
     @pacer_group.command()
     async def rawaverage(self, ctx):
         """Set your typing test pacer to your raw average speed"""
         await self.handle_update_pacer(ctx, "Raw Average", "rawavg")
 
+    @cooldown(8, 3)
     @pacer_group.command()
     async def off(self, ctx):
         """Turn off your typing test pacer"""
         await self.handle_update_pacer(ctx, "Off", "")
 
+    @cooldown(8, 3)
     @pacer_group.command()
     async def custom(
         self,
@@ -202,17 +211,20 @@ class Customization(commands.Cog):
 
         await self.handle_update_pacer(ctx, f"{speed} wpm", str(speed))
 
+    @cooldown(8, 3)
     @commands.slash_command()
     async def equip(self, ctx):
         """Equip a badge that you own"""
         # Going to use a drop down menu
         pass
 
+    @cooldown(5, 2)
     @commands.slash_command()
     async def settings(self, ctx):
         """View all your settings"""
         pass
 
+    @cooldown(8, 3)
     @commands.slash_command()
     async def link(
         self,
@@ -220,7 +232,7 @@ class Customization(commands.Cog):
         website: Option(
             str,
             "Choose a typing website",
-            choices=["nitro type", "10fastfingers", "typeracer"],
+            choices=["Nitro Type", "10FastFingers", "Typeracer"],
             required=True,
         ),
         username: Option(str, "Enter your username / id", required=True),

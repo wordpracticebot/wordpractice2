@@ -4,12 +4,16 @@ from discord.ext import commands
 
 from constants import PREMIUM_LAUNCHED, PREMIUM_LINK
 from helpers.ui import create_link_view
+from helpers.utils import format_slash_command
 
 
 def cooldown(regular: int, premium: int):
     async def predicate(ctx):
+        if ctx.testing:
+            return True
+
         # Cooldown key
-        c = (ctx.author.id, ctx.command.name)
+        c = (ctx.author.id, format_slash_command(ctx.command))
 
         # Checking if there is a cooldown
         cooldown = ctx.bot.cooldowns.get(c)

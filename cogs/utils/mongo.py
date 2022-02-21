@@ -111,7 +111,6 @@ class User(Document):
     infractions = ListField(EmbeddedField(Infraction), default=[])
     banned = BooleanField(default=False)
     premium = BooleanField(default=False)
-    moderator = BooleanField(default=False)
 
     # Settings
     theme = ListField(StringField, default=DEFAULT_THEME)
