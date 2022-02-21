@@ -10,6 +10,7 @@ import icons
 from achievements import categories, get_achievement_tier, get_bar
 from constants import SUPPORT_SERVER_INVITE, VOTING_SITES
 from helpers.ui import BaseView, create_link_view
+from helpers.user import get_user_cmds_run
 
 
 def _add_commands(embed, cmds):

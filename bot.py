@@ -13,12 +13,11 @@ from discord import InteractionType
 from discord.ext import commands
 
 import cogs
-from constants import ERROR_CLR, PERMISSONS, SUPPORT_SERVER_INVITE
+from constants import ERROR_CLR, PRIMARY_CLR, PERMISSONS, SUPPORT_SERVER_INVITE
 from helpers.ui import BaseView, CustomEmbed
 
 # TODO: use max concurrency for typing test
 # TODO: check if user is banned when giving roles
-# TODO: build typing test gifs more efficiently
 # TODO: customize pacer type (horizonal, vertical)
 
 
@@ -56,6 +55,10 @@ class CustomContext(discord.commands.ApplicationContext):
     def error_embed(self):
         return self.bot.error_embed
 
+    @property
+    def default_embed(self):
+        return self.bot.default_embed
+
 
 class WordPractice(commands.AutoShardedBot):
     def __init__(self, config, **kwargs):
@@ -87,7 +90,7 @@ class WordPractice(commands.AutoShardedBot):
 
         # Cache
         self.user_cache = {}
-        self.cmds_run = {}  # user_id: list[cmds]
+        self.cmds_run = {}  # user_id: set{cmds}
         self.lbs = []
 
         self.start_time = time.time()
@@ -105,6 +108,10 @@ class WordPractice(commands.AutoShardedBot):
 
     def error_embed(self, **kwargs):
         color = kwargs.pop("color", ERROR_CLR)
+        return CustomEmbed(self, color=color, add_footer=False, **kwargs)
+
+    def default_embed(self, **kwargs):
+        color = kwargs.pop("color", PRIMARY_CLR)
         return CustomEmbed(self, color=color, add_footer=False, **kwargs)
 
     async def on_shard_ready(self, shard_id):

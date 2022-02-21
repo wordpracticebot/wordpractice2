@@ -13,7 +13,12 @@ from achievements import check_all
 from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
+from helpers.user import get_user_cmds_run
 from static.assets import achievement_base, uni_sans_heavy
+
+
+def format_slash_command(command: discord.SlashCommand):
+    return (f"{command.parent.name} " if command.parent else "") + command.name
 
 
 def generate_achievement_image(name):
@@ -38,14 +43,15 @@ class Events(commands.Cog):
 
         timestamp = int(time.time())
 
-        embed = ctx.embed(
+        command = format_slash_command(ctx.command)
+
+        embed = ctx.default_embed(
             description=(
                 f"**User:** {ctx.author} ({ctx.author.id})\n"
                 f"**Server:** {ctx.guild} ({ctx.guild.id})\n"
-                f"**Command:** {ctx.command.name}\n"
+                f"**Command:** {command}\n"
                 f"**Timestamp:** <t:{timestamp}:R>"
             ),
-            add_footer=False,
         )
 
         await self.bot.cmd_wh.send(embed=embed)
@@ -120,12 +126,14 @@ class Events(commands.Cog):
 
         timestamp = int(time.time())
 
+        command = format_slash_command(ctx.command)
+
         embed = ctx.error_embed(
             title="Unexpected Error",
             description=(
                 f"**User:** {ctx.author} ({ctx.author.id})\n"
                 f"**Server:** {ctx.guild} ({ctx.guild.id})\n"
-                f"**Command:** {ctx.command.name}\n"
+                f"**Command:** {command}\n"
                 f"**Timestamp:** <t:{timestamp}:R>"
             ),
         )
@@ -187,6 +195,22 @@ class Events(commands.Cog):
                 names += new_names
             else:
                 done_checking = True
+
+        # Updating the user's executed commands
+
+        cmd_name = format_slash_command(ctx.command)
+
+        cmds = get_user_cmds_run(self.bot, new_user)
+
+        if cmd_name not in cmds:
+            new_cache_cmds = self.bot.cmds_run.get(ctx.author.id, set()) | {cmd_name}
+
+            # Updating in database if the user document was going to be updated anyways or there are 3 or more commands not saved in database
+            if user.to_mongo() != new_user.to_mongo() or len(new_cache_cmds) >= 3:
+                new_user.cmds_run = list(set(new_user.cmds_run) | new_cache_cmds)
+
+            else:
+                self.bot.cmds_run[ctx.author.id] = new_cache_cmds
 
         if user.to_mongo() != (user_data := new_user.to_mongo()):
 

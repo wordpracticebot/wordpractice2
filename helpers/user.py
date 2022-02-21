@@ -4,5 +4,5 @@ def generate_user_description(user):
     return f"Nothing much is known about {user.min_name}"
 
 
-def get_user_cmds_run(bot, user):
-    return bot.cmds_run.get(user.id, []) + user.id
+def get_user_cmds_run(bot, user) -> set:
+    return bot.cmds_run.get(user.id, set()) | set(user.cmds_run)

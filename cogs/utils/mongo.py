@@ -64,8 +64,7 @@ class User(Document):
 
     # list of commands that the user has run before (for context tutorials)
     # includes subcommands from groups
-    # TODO: update every time a command is run
-    cmds_run = StringField(default=[])
+    cmds_run = ListField(StringField, default=[])
 
     # Statistics
     coins = IntegerField(default=0)
