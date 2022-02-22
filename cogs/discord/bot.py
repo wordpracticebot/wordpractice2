@@ -2,9 +2,81 @@ import discord
 from discord.ext import commands
 
 from achievements import categories, get_achievement_tier, get_bar
+from constants import LB_LENGTH, UPDATE_24_HOUR_INTERVAL
 from helpers.checks import cooldown
 from helpers.converters import opt_user
-from helpers.ui import BaseView, DictButton, ViewFromDict
+from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
+
+LB_OPTIONS = [
+    {
+        "label": "Alltime",
+        "emoji": "\N{EARTH GLOBE AMERICAS}",
+        "desc": "Coins, Words Typed",
+        "options": ["Coins", "Words Typed"],
+        "default": 1,
+    },
+    {
+        "label": "Monthly Season",
+        "emoji": "\N{SPORTS MEDAL}",
+        "desc": "XP",
+        "options": ["XP"],
+        "default": 0,
+    },
+    {
+        "label": "24 Hour",
+        "emoji": "\N{CLOCK FACE ONE OCLOCK}",
+        "desc": "XP, Words Typed",
+        "options": ["XP", "Words Typed"],
+        "default": 0,
+    },
+    {
+        "label": "High Score",
+        "emoji": "\N{RUNNER}",
+        "desc": "Short, Medium and Long Test",
+        "options": ["Short", "Medium", "Long"],
+        "default": 1,
+    },
+]
+
+
+class LeaderboardSelect(discord.ui.Select):
+    def __init__(self):
+        super().__init__(
+            placeholder="Select a category...",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    label=n["label"],
+                    emoji=n["emoji"],
+                    description=n["desc"],
+                    value=str(i),
+                )
+                for i, n in enumerate(LB_OPTIONS)
+            ],
+            row=0,
+        )
+
+    async def callback(self, interaction):
+        pass
+
+
+class LeaderboardView(ScrollView):
+    def __init__(self, ctx, user):
+        super().__init__(ctx, int(LB_LENGTH / 10), False)
+
+        self.user = user
+        self.category = 1  # Starting on season category
+
+    async def create_page(self):
+        return self.ctx.embed(title=f"Page {self.page}")
+
+    async def start(self):
+        selector = LeaderboardSelect()
+
+        self.add_item(selector)
+
+        await super().start()
 
 
 class ProfileView(BaseView):
@@ -198,13 +270,11 @@ class Bot(commands.Cog):
     @commands.slash_command()
     async def leaderboard(self, ctx):
         """See the top users in any category"""
-        pass
 
-    @cooldown(6, 2)
-    @commands.slash_command()
-    async def highscore(self, ctx):
-        """See the fastest users in any typing category"""
-        pass
+        user = await self.bot.mongo.fetch_user(ctx.author)
+
+        view = LeaderboardView(ctx, user)
+        await view.start()
 
     @cooldown(5, 2)
     @commands.slash_command()

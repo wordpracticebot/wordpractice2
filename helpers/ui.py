@@ -153,25 +153,41 @@ class ScrollView(PageView):
         self.scroll_to_front.disabled = first_page
         self.scroll_to_back.disabled = last_page
 
-    @discord.ui.button(emoji="⏪", style=discord.ButtonStyle.grey)
+    @discord.ui.button(
+        emoji=discord.PartialEmoji.from_str(icons.fast_left_arrow),
+        style=discord.ButtonStyle.grey,
+        row=1,
+    )
     async def scroll_to_front(self, button, interaction):
         if self.page != 0:
             self.page = 0
             await self.update_all(interaction)
 
-    @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.grey)
+    @discord.ui.button(
+        emoji=discord.PartialEmoji.from_str(icons.left_arrow),
+        style=discord.ButtonStyle.grey,
+        row=1,
+    )
     async def scroll_forward(self, button, interaction):
         if self.page != 0:
             self.page -= 1
             await self.update_all(interaction)
 
-    @discord.ui.button(emoji="▶️", style=discord.ButtonStyle.grey)
+    @discord.ui.button(
+        emoji=discord.PartialEmoji.from_str(icons.right_arrow),
+        style=discord.ButtonStyle.grey,
+        row=1,
+    )
     async def scroll_backward(self, button, interaction):
         if self.page != self.max_page:
             self.page += 1
             await self.update_all(interaction)
 
-    @discord.ui.button(emoji="⏩", style=discord.ButtonStyle.grey)
+    @discord.ui.button(
+        emoji=discord.PartialEmoji.from_str(icons.fast_right_arrow),
+        style=discord.ButtonStyle.grey,
+        row=1,
+    )
     async def scroll_to_back(self, button, interaction):
         button.disabled = True
         if self.page != self.max_page:

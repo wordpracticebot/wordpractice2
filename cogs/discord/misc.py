@@ -8,12 +8,8 @@ from discord.ext import commands
 
 import icons
 from achievements import categories, get_achievement_tier, get_bar
-from constants import (
-    SUPPORT_SERVER_INVITE,
-    VOTING_SITES,
-    PRIVACY_POLICY_LINK,
-    RULES_LINK,
-)
+from constants import (PRIVACY_POLICY_LINK, RULES_LINK, SUPPORT_SERVER_INVITE,
+                       VOTING_SITES)
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
 

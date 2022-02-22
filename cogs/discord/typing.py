@@ -1,10 +1,12 @@
 import json
 import random
+import textwrap
 from itertools import cycle, islice
 
 import discord
 from discord.commands import SlashCommandGroup
 from discord.ext import commands, tasks
+from discord.utils import escape_markdown
 from humanfriendly import format_timespan
 
 import icons
@@ -153,6 +155,15 @@ class RaceJoinView(BaseView):
                 "You joined the race", ephemeral=True
             )
 
+    def get_formatted_users(self):
+        if len(self.racers) == 0:
+            return "There are no other racers"
+        raw_content = ", ".join(f"{r.user}" for r in self.racers.values())
+
+        content = "\n".join(textwrap.wrap(text=raw_content, width=64))
+
+        return escape_markdown(content)
+
     @property
     def total_racers(self):
         return len(self.racers)
@@ -175,15 +186,21 @@ class RaceJoinView(BaseView):
         await self.ctx.interaction.edit_original_message(embed=embed, view=None)
 
     def get_race_join_embed(self, started=False):
-        embed = self.ctx.embed(
-            title="Typing Test Race",
-            description=f"**{self.total_racers} / {MAX_RACE_JOIN}** Racers\n\n",
-        )
+        embed = self.ctx.embed(title="Typing Test Race", description="** **")
+
+        users = self.get_formatted_users()
 
         if started:
-            embed.description += "You can no longer join the race"
+            extra = "You can no longer join the race"
         else:
-            embed.description += "The race leader can start the race my joining it"
+            extra = "The race leader can start the race by joining it"
+
+        embed.add_field(
+            name=f"Racers ({self.total_racers} / {MAX_RACE_JOIN})",
+            value=f"{users}\n\n{extra}",
+        )
+
+        embed.add_field(name="** **", value="** **")
 
         return embed
 

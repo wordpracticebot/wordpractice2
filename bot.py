@@ -83,7 +83,7 @@ class WordPractice(commands.AutoShardedBot):
         )
 
         self.activity = discord.Activity(
-            type=discord.ActivityType.watching, name=" your wpm 👀 "
+            type=discord.ActivityType.watching, name=" your wpm \N{EYES}\N{THIN SPACE}"
         )
         self.session = aiohttp.ClientSession(loop=self.loop)
 
