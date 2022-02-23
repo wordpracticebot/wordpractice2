@@ -2,6 +2,7 @@ import asyncio
 import importlib
 import inspect
 import pkgutil
+import random
 import sys
 import time
 import traceback
@@ -15,6 +16,7 @@ from discord.ext import commands
 import cogs
 from constants import ERROR_CLR, PERMISSONS, PRIMARY_CLR, SUPPORT_SERVER_INVITE
 from helpers.ui import BaseView, CustomEmbed
+from static.hints import hints
 
 # TODO: use max concurrency for typing test
 # TODO: check if user is banned when giving roles
@@ -48,9 +50,12 @@ class CustomContext(discord.commands.ApplicationContext):
         self.theme = theme
         self.testing = False  # if set to true, cooldowns are avoided
 
+        # Hint is chosen when defining context to ensure a consistent hint throughout each response
+        self.hint = random.choice(hints)
+
     def embed(self, **kwargs):
         color = kwargs.pop("color", self.theme)
-        return CustomEmbed(self, color=color, **kwargs)
+        return CustomEmbed(self, color=color, hint=self.hint, **kwargs)
 
     @property
     def error_embed(self):
@@ -59,6 +64,10 @@ class CustomContext(discord.commands.ApplicationContext):
     @property
     def default_embed(self):
         return self.bot.default_embed
+
+    @property
+    def custom_embed(self):
+        return self.bot.custom_embed
 
 
 class WordPractice(commands.AutoShardedBot):
@@ -114,6 +123,9 @@ class WordPractice(commands.AutoShardedBot):
     def default_embed(self, **kwargs):
         color = kwargs.pop("color", PRIMARY_CLR)
         return CustomEmbed(self, color=color, add_footer=False, **kwargs)
+
+    def custom_embed(self, **kwargs):
+        return CustomEmbed(self, **kwargs)
 
     async def on_shard_ready(self, shard_id):
         self.log.info(f"Shard {shard_id} ready")

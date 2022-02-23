@@ -6,10 +6,11 @@ from discord.ext import commands
 
 import icons
 import word_list
-from helpers.checks import cooldown
-from helpers.converters import rqd_colour
+from helpers.checks import cooldown, user_check
+from helpers.converters import rqd_colour, opt_user
 from helpers.errors import ImproperArgument
-from helpers.ui import BaseView, CustomEmbed
+from helpers.ui import BaseView
+from helpers.user import get_theme_display, get_pacer_display, get_pacer_type_name
 from static import themes
 
 
@@ -41,7 +42,7 @@ class ThemeSelect(discord.ui.Select):
 
         theme_value = themes.default[option]["colours"]
 
-        embed = CustomEmbed(
+        embed = self.ctx.custom_embed(
             self.ctx.bot,
             title="Theme Selected",
             color=int(theme_value[1].replace("#", "0x"), 16),
@@ -116,6 +117,8 @@ class Customization(commands.Cog):
                 title=f"{icons.success} Custom Theme Applied", add_footer=False
             )
 
+        # TODO: actually update the theme in the database
+
         await ctx.respond(embed=embed)
 
     @cooldown(8, 3)
@@ -167,7 +170,7 @@ class Customization(commands.Cog):
         # not inefficient because the user document is most likely cached from checking for ban
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
-        if user.pacer != value:
+        if user.pacer_speed != value:
             await ctx.bot.mongo.update_user(ctx.author, {"$set": {"pacer": value}})
 
     @cooldown(8, 3)
@@ -220,9 +223,47 @@ class Customization(commands.Cog):
 
     @cooldown(5, 2)
     @commands.slash_command()
-    async def settings(self, ctx):
-        """View all your settings"""
-        pass
+    async def settings(
+        self, ctx, user: opt_user()
+    ):  # TODO: fix optional user argument not showing up
+        """View user settings"""
+
+        user = await user_check(ctx, user)
+
+        embed = ctx.embed(
+            title=f"{user.username}'s Settings",
+        )
+
+        theme_name, theme_icon = get_theme_display(user.theme)
+
+        theme_name = theme_name or "Custom"
+
+        embed.add_field(
+            name="Theme",
+            value=f"{theme_icon} {theme_name} ({user.theme[0]} {user.theme[1]})",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="Language",
+            value=f"{user.language.capitalize()} ({user.level.capitalize()})",
+            inline=False,
+        )
+
+        pacer_name = get_pacer_display(user.pacer_speed)
+        pacer_type_name = get_pacer_type_name(user.pacer_type)
+
+        embed.add_field(
+            name="Pacer", value=f"{pacer_name} ({pacer_type_name})", inline=False
+        )
+
+        embed.add_field(
+            name="Premium", value="Yes" if user.premium else "No", inline=False
+        )
+
+        embed.set_thumbnail(url="https://i.imgur.com/2vUD4NF.png")
+
+        await ctx.respond(embed=embed)
 
     @cooldown(8, 3)
     @commands.slash_command()

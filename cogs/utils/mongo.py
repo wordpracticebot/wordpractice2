@@ -6,11 +6,19 @@ from typing import Union
 import discord
 import pymongo
 from discord.ext import commands
+from discord.utils import escape_markdown
 from motor.motor_asyncio import AsyncIOMotorClient
 from umongo import Document, EmbeddedDocument
-from umongo.fields import (BooleanField, DateTimeField, DictField,
-                           EmbeddedField, FloatField, IntegerField, ListField,
-                           StringField)
+from umongo.fields import (
+    BooleanField,
+    DateTimeField,
+    DictField,
+    EmbeddedField,
+    FloatField,
+    IntegerField,
+    ListField,
+    StringField,
+)
 from umongo.frameworks import MotorAsyncIOInstance
 
 from constants import DEFAULT_THEME, VOTING_SITES
@@ -110,11 +118,12 @@ class User(Document):
     language = StringField(default="english")
     level = StringField(default="easy")
     links = DictField(StringField(), StringField(), default={})
-    pacer = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"
+    pacer_speed = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"
+    pacer_type = IntegerField(default=0)  # 0 = horizontal, 1 = vertical
 
     @property
     def status(self):
-        return get_badge_from_id(self._status)
+        return get_badge_from_id(self._status) or ""
 
     @property
     def badges(self):
@@ -130,11 +139,11 @@ class User(Document):
 
     @property
     def username(self):
-        return f"{self.name}#{self.discriminator}"
+        return escape_markdown(f"{self.name}#{self.discriminator}")
 
     @property
     def display_name(self):
-        return f"{self.username} {self.status}"
+        return self.username + f" {self.status}" if self.status else ""
 
     @property
     def description(self):

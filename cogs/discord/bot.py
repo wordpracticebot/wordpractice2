@@ -1,9 +1,10 @@
 import discord
 from discord.ext import commands
+from discord.utils import escape_markdown
 
 from achievements import categories, get_achievement_tier, get_bar
 from constants import LB_LENGTH, UPDATE_24_HOUR_INTERVAL
-from helpers.checks import cooldown
+from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 
@@ -63,7 +64,7 @@ class LeaderboardSelect(discord.ui.Select):
 
 class LeaderboardView(ScrollView):
     def __init__(self, ctx, user):
-        super().__init__(ctx, int(LB_LENGTH / 10), False)
+        super().__init__(ctx, int(LB_LENGTH / 10), row=2, compact=False)
 
         self.user = user
         self.category = 1  # Starting on season category
@@ -71,10 +72,22 @@ class LeaderboardView(ScrollView):
     async def create_page(self):
         return self.ctx.embed(title=f"Page {self.page}")
 
+    async def jump_to_placing(self, button, interaction):
+        pass
+
     async def start(self):
         selector = LeaderboardSelect()
 
+        # Cannot user decorator because it's added before scroll items are added and they are on the same row
+        btn = discord.ui.Button(
+            label="Jump to Placing",
+            style=discord.ButtonStyle.grey,
+            row=2,
+        )
+        btn.callback = self.jump_to_placing
+
         self.add_item(selector)
+        self.add_item(btn)
 
         await super().start()
 
@@ -97,11 +110,7 @@ class ProfileView(BaseView):
         return self.callbacks[self.page][1](base_embed)
 
     def get_base_embed(self, page_name):
-        status = self.user.status or ""
-
-        embed = self.ctx.embed(
-            title=f"{self.user.username}'s Profile {status}", add_footer=False
-        )
+        embed = self.ctx.embed(title=self.user.display_name, add_footer=False)
         embed.set_author(
             name=f"{self.user.username} | {page_name}",
             icon_url=self.user.avatar_url,
@@ -227,21 +236,6 @@ class Bot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def user_check(self, ctx, user):
-        """Handles the user inputted and fetches user"""
-        if isinstance(user, (discord.User, discord.Member)) and user.bot:
-            raise commands.BadArgument("That user is a bot :robot:")
-
-        if user is None:
-            user = ctx.author
-
-        user = await self.bot.mongo.fetch_user(user)
-
-        if user is None:
-            raise commands.BadArgument("User not in database")
-
-        return user
-
     @cooldown(7, 2)
     @commands.slash_command()
     async def profile(self, ctx, user: opt_user()):
@@ -254,7 +248,7 @@ class Bot(commands.Cog):
         await self.handle_profile_cmd(ctx, member)
 
     async def handle_profile_cmd(self, ctx, user):
-        user = await self.user_check(ctx, user)
+        user = await user_check(ctx, user)
 
         view = ProfileView(ctx, user)
 
@@ -264,7 +258,7 @@ class Bot(commands.Cog):
     @commands.slash_command()
     async def graph(self, ctx, user: opt_user()):
         """See a graph of a user's typing scores"""
-        user = await self.user_check(ctx, user)
+        user = await user_check(ctx, user)
 
     @cooldown(6, 2)
     @commands.slash_command()

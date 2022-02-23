@@ -6,6 +6,7 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 from discord.ext.commands import errors
+from discord.utils import escape_markdown
 from PIL import ImageDraw
 
 import icons
@@ -42,10 +43,13 @@ class Events(commands.Cog):
 
         command = format_slash_command(ctx.command)
 
+        name = escape_markdown(str(ctx.author))
+        guild = escape_markdown(str(ctx.guild))
+
         embed = ctx.default_embed(
             description=(
-                f"**User:** {ctx.author} ({ctx.author.id})\n"
-                f"**Server:** {ctx.guild} ({ctx.guild.id})\n"
+                f"**User:** {name} ({ctx.author.id})\n"
+                f"**Server:** {guild} ({ctx.guild.id})\n"
                 f"**Command:** {command}\n"
                 f"**Timestamp:** <t:{timestamp}:R>"
             ),
@@ -124,11 +128,14 @@ class Events(commands.Cog):
 
         command = format_slash_command(ctx.command)
 
+        name = escape_markdown(str(ctx.author))
+        guild = escape_markdown(str(ctx.guild))
+
         embed = ctx.error_embed(
             title="Unexpected Error",
             description=(
-                f"**User:** {ctx.author} ({ctx.author.id})\n"
-                f"**Server:** {ctx.guild} ({ctx.guild.id})\n"
+                f"**User:** {name} ({ctx.author.id})\n"
+                f"**Server:** {guild} ({ctx.guild.id})\n"
                 f"**Command:** {command}\n"
                 f"**Timestamp:** <t:{timestamp}:R>"
             ),

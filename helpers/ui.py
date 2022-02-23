@@ -1,11 +1,9 @@
-import random
 import time
 
 import discord
 
 import icons
 from constants import DEFAULT_VIEW_TIMEOUT, ERROR_CLR, SUPPORT_SERVER_INVITE
-from static.hints import hints
 
 
 def create_link_view(links: dict[str, str]):
@@ -21,20 +19,15 @@ def create_link_view(links: dict[str, str]):
 
 
 class CustomEmbed(discord.Embed):
-    def __init__(self, ctx, add_footer=True, **kwargs):
+    def __init__(self, ctx, hint=None, add_footer=True, **kwargs):
         if add_footer:
             self._footer = {}
-
-            hint = self.get_random_hint()
 
             self._footer["text"] = f"Hint: {hint}"
             if ctx.bot.user.display_avatar:
                 self._footer["icon_url"] = ctx.bot.user.display_avatar.url
 
         super().__init__(**kwargs)
-
-    def get_random_hint(self):
-        return random.choice(hints)
 
 
 class BaseView(discord.ui.View):
@@ -126,19 +119,40 @@ class PageView(BaseView):
 
 
 class ScrollView(PageView):
-    def __init__(self, ctx, max_page: int, compact=True):
+    def __init__(self, ctx, max_page: int, row=0, compact=True):
         super().__init__(ctx)
 
         self.compact = compact
         self.max_page = max_page
         self.page = 0
+        self.row = row
 
-        self.remove_proper_items()
+        self.add_items()
 
-    def remove_proper_items(self):
-        if self.compact:
-            self.remove_item(self.scroll_to_front)
-            self.remove_item(self.scroll_to_back)
+    def add_scroll_btn(self, emoji, callback):
+        btn = discord.ui.Button(
+            emoji=discord.PartialEmoji.from_str(emoji),
+            style=discord.ButtonStyle.grey,
+            row=self.row,
+        )
+        btn.callback = callback
+
+        self.add_item(btn)
+
+        setattr(self, callback.__name__, btn)
+
+        return btn
+
+    def add_items(self):
+        if self.compact is False:
+            self.add_scroll_btn(icons.fast_left_arrow, self.scroll_to_front)
+
+        self.add_scroll_btn(icons.left_arrow, self.scroll_forward)
+
+        self.add_scroll_btn(icons.right_arrow, self.scroll_backward)
+
+        if self.compact is False:
+            self.add_scroll_btn(icons.fast_right_arrow, self.scroll_to_back)
 
     async def update_buttons(self):
         first_page = self.page == 0
@@ -153,43 +167,22 @@ class ScrollView(PageView):
         self.scroll_to_front.disabled = first_page
         self.scroll_to_back.disabled = last_page
 
-    @discord.ui.button(
-        emoji=discord.PartialEmoji.from_str(icons.fast_left_arrow),
-        style=discord.ButtonStyle.grey,
-        row=1,
-    )
-    async def scroll_to_front(self, button, interaction):
+    async def scroll_to_front(self, interaction):
         if self.page != 0:
             self.page = 0
             await self.update_all(interaction)
 
-    @discord.ui.button(
-        emoji=discord.PartialEmoji.from_str(icons.left_arrow),
-        style=discord.ButtonStyle.grey,
-        row=1,
-    )
-    async def scroll_forward(self, button, interaction):
+    async def scroll_forward(self, interaction):
         if self.page != 0:
             self.page -= 1
             await self.update_all(interaction)
 
-    @discord.ui.button(
-        emoji=discord.PartialEmoji.from_str(icons.right_arrow),
-        style=discord.ButtonStyle.grey,
-        row=1,
-    )
-    async def scroll_backward(self, button, interaction):
+    async def scroll_backward(self, interaction):
         if self.page != self.max_page:
             self.page += 1
             await self.update_all(interaction)
 
-    @discord.ui.button(
-        emoji=discord.PartialEmoji.from_str(icons.fast_right_arrow),
-        style=discord.ButtonStyle.grey,
-        row=1,
-    )
-    async def scroll_to_back(self, button, interaction):
-        button.disabled = True
+    async def scroll_to_back(self, interaction):
         if self.page != self.max_page:
             self.page = self.max_page - 1
 

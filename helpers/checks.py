@@ -1,4 +1,5 @@
 import time
+import discord
 
 from discord.ext import commands
 
@@ -53,3 +54,19 @@ def cooldown(regular: int, premium: int):
         return True
 
     return commands.check(predicate)
+
+
+async def user_check(ctx, user):
+    """Handles the user inputted and fetches user"""
+    if isinstance(user, (discord.User, discord.Member)) and user.bot:
+        raise commands.BadArgument("That user is a bot :robot:")
+
+    if user is None:
+        user = ctx.author
+
+    user = await ctx.bot.mongo.fetch_user(user)
+
+    if user is None:
+        raise commands.BadArgument("User not in database")
+
+    return user
