@@ -44,6 +44,9 @@ class BaseView(discord.ui.View):
                 or await self.ctx.interaction.original_message()
             )
 
+            if not msg.components:
+                return
+
             for child in self.children:
                 child.disabled = True
 

@@ -143,7 +143,7 @@ class User(Document):
 
     @property
     def display_name(self):
-        return self.username + f" {self.status}" if self.status else ""
+        return self.username + (f" {self.status}" if self.status else "")
 
     @property
     def description(self):

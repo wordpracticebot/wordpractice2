@@ -17,7 +17,7 @@ from static import themes
 class ThemeSelect(discord.ui.Select):
     def __init__(self, ctx):
         super().__init__(
-            placeholder="Select a theme",
+            placeholder="Select a theme...",
             min_values=1,
             max_values=1,
             options=[
@@ -43,8 +43,7 @@ class ThemeSelect(discord.ui.Select):
         theme_value = themes.default[option]["colours"]
 
         embed = self.ctx.custom_embed(
-            self.ctx.bot,
-            title="Theme Selected",
+            title=f"{icons.success} Theme Selected",
             color=int(theme_value[1].replace("#", "0x"), 16),
             add_footer=False,
         )
@@ -152,7 +151,7 @@ class Customization(commands.Cog):
             )
 
         embed = ctx.embed(
-            title=f"Language changed to: `{name.capitalize()} {difficulty.capitalize()}`",
+            title=f"{icons.success} Language changed to: `{name.capitalize()} {difficulty.capitalize()}`",
             add_footer=False,
         )
 
@@ -164,14 +163,18 @@ class Customization(commands.Cog):
         )
 
     async def handle_update_pacer(self, ctx, name, value):
-        embed = ctx.embed(title=f"Updated pacer to: `{name}`", add_footer=False)
+        embed = ctx.embed(
+            title=f"{icons.success} Updated pacer to: `{name}`", add_footer=False
+        )
         await ctx.respond(embed=embed)
 
         # not inefficient because the user document is most likely cached from checking for ban
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
         if user.pacer_speed != value:
-            await ctx.bot.mongo.update_user(ctx.author, {"$set": {"pacer": value}})
+            await ctx.bot.mongo.update_user(
+                ctx.author, {"$set": {"pacer_speed": value}}
+            )
 
     @cooldown(8, 3)
     @pacer_group.command()
@@ -223,9 +226,7 @@ class Customization(commands.Cog):
 
     @cooldown(5, 2)
     @commands.slash_command()
-    async def settings(
-        self, ctx, user: opt_user()
-    ):  # TODO: fix optional user argument not showing up
+    async def settings(self, ctx, user: opt_user()):
         """View user settings"""
 
         user = await user_check(ctx, user)
@@ -250,12 +251,14 @@ class Customization(commands.Cog):
             inline=False,
         )
 
-        pacer_name = get_pacer_display(user.pacer_speed)
         pacer_type_name = get_pacer_type_name(user.pacer_type)
 
-        embed.add_field(
-            name="Pacer", value=f"{pacer_name} ({pacer_type_name})", inline=False
-        )
+        pacer_name = get_pacer_display(user.pacer_speed)
+
+        if pacer_name != "None":
+            pacer_name += f" ({pacer_type_name})"
+
+        embed.add_field(name="Pacer", value=pacer_name, inline=False)
 
         embed.add_field(
             name="Premium", value="Yes" if user.premium else "No", inline=False
