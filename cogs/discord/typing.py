@@ -15,6 +15,7 @@ from constants import MAX_RACE_JOIN, RACE_EXPIRE_TIME, TEST_RANGE
 from helpers.checks import cooldown
 from helpers.converters import quote_amt, word_amt
 from helpers.ui import BaseView
+from helpers.utils import cmd_run_before
 
 
 def load_test_file(name):
@@ -298,8 +299,11 @@ class Typing(commands.Cog):
         view = RaceJoinView(ctx, is_dict, quote)
         await view.start()
 
-        # TODO: add as context tutorial
-        # await ctx.respond("Start the race by joining it", ephemeral=True)
+        user = await ctx.bot.mongo.fetch_user(ctx.author)
+
+        # Context tutorial
+        if not cmd_run_before(ctx, user):
+            await ctx.respond("Start the race by joining it", ephemeral=True)
 
     async def do_typing_test(self, ctx, is_dict, quote):
         pass

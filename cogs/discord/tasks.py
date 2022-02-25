@@ -105,7 +105,7 @@ class Tasks(commands.Cog):
         )
 
         # highspeed leaderboard
-        # TODO: add a 24 hour leaderboard for highscores
+        # TODO: add a 24 hour leaderboard for test scores
         lbs.append(
             [
                 await self.get_sorted_lb({"$sum": "$highspeed.short.wpm"}),
@@ -123,8 +123,6 @@ class Tasks(commands.Cog):
 
     @tasks.loop(hours=24)
     async def daily_restart(self):
-        # TODO: Creating a new daily challenge
-
         # Removing excess items if user hasn't typed in last 24 hours
         await self.reset_extra_24_hour_stats()
 

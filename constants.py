@@ -51,3 +51,6 @@ VOTING_SITES = {
 # Premium
 PREMIUM_LAUNCHED = True
 PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
+
+# Daily challenges
+CHALLENGE_AMT = 3

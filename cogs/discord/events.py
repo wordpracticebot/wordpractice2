@@ -10,7 +10,7 @@ from discord.utils import escape_markdown
 from PIL import ImageDraw
 
 import icons
-from achievements import check_all
+from achievements import check_all, get_achievement_tier
 from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
@@ -19,6 +19,7 @@ from helpers.utils import format_slash_command
 from static.assets import achievement_base, uni_sans_heavy
 
 
+# TODO: add icons to achievement image
 def generate_achievement_image(name):
     img = achievement_base.copy()
 
@@ -148,6 +149,26 @@ class Events(commands.Cog):
         # Logging the interaction
         await self.log_interaction(ctx)
 
+    def get_files_from_earned(self, earned):
+        files = []
+        extra = 0
+
+        for m in earned.values():
+            raw_names, _ = zip(*m)
+            a, t = m[-1]
+
+            if len(files) < ACHIEVEMENTS_SHOWN:
+                if t is not None and raw_names.count(a) > 1:
+                    a += f" ({t + 1})"
+
+                image = generate_achievement_image(a)
+
+                files.append(image)
+            else:
+                extra += 1
+
+        return files, extra
+
     @commands.Cog.listener()
     async def on_application_command_completion(self, ctx):
         user = await self.bot.mongo.fetch_user(ctx.author, create=True)
@@ -171,18 +192,24 @@ class Events(commands.Cog):
         if days_between > 0:
             new_user.last_streak = now
 
-        names = []
+        a_earned = {}
         done_checking = False
 
         while done_checking is False:
-            new_names = []
+            new_a = False
 
             # Looping through all the finished achievements
-            for a, changer in check_all(new_user):
-                new_names.append(a.name)
+            for (a, changer), tier, identifier in check_all(new_user):
+                a_earned[identifier] = a_earned.get(identifier, []) + [(a.name, tier)]
+                new_a = True
 
-                # adding achievemnt to document
-                new_user.achievements[a.name] = datetime.utcnow()
+                # Adding achievemnt to document
+                insert_tier = 0 if tier is None else tier - 1
+
+                current = new_user.achievements.get(a.name, [])
+                current.insert(insert_tier, datetime.utcnow())
+
+                new_user.achievements[a.name] = current
 
                 if a.reward is None:
                     continue
@@ -194,9 +221,8 @@ class Events(commands.Cog):
                 # Updating the new user state
                 new_user = changer(new_user)
 
-            if new_names != []:
-                names += new_names
-            else:
+            # Continues checking until no new achievements are given in a round (allows chaining achievements)
+            if new_a is False:
                 done_checking = True
 
         # Updating the user's executed commands
@@ -216,16 +242,13 @@ class Events(commands.Cog):
                 self.bot.cmds_run[ctx.author.id] = new_cache_cmds
 
         if user.to_mongo() != (user_data := new_user.to_mongo()):
-
-            # Checking if new achievements have been added
+            # Checking if neaw achievements have been added
             if user.achievements != new_user.achievements:
-                files = [
-                    generate_achievement_image(n) for n in names[:ACHIEVEMENTS_SHOWN]
-                ]
+                files, extra = self.get_files_from_earned(a_earned)
 
-                if len(names) > ACHIEVEMENTS_SHOWN:
+                if extra:
                     await ctx.respond(
-                        f"and {len(names) - ACHIEVEMENTS_SHOWN} more...",
+                        f"and {extra} more...",
                         files=files,
                         ephemeral=True,
                     )
@@ -233,6 +256,7 @@ class Events(commands.Cog):
                     await ctx.respond(files=files, ephemeral=True)
 
             # Replacing the user data with the new state
+            # TODO: potentially dangerous, find better way without updating all fields
             await self.bot.mongo.replace_user_data(ctx.author, user_data)
 
 

@@ -7,10 +7,11 @@ from discord.ext import commands
 import icons
 import word_list
 from helpers.checks import cooldown, user_check
-from helpers.converters import rqd_colour, opt_user
+from helpers.converters import opt_user, rgb_to_hex, rqd_colour
 from helpers.errors import ImproperArgument
 from helpers.ui import BaseView
-from helpers.user import get_theme_display, get_pacer_display, get_pacer_type_name
+from helpers.user import (get_pacer_display, get_pacer_type_name,
+                          get_theme_display)
 from static import themes
 
 
@@ -116,9 +117,13 @@ class Customization(commands.Cog):
                 title=f"{icons.success} Custom Theme Applied", add_footer=False
             )
 
-        # TODO: actually update the theme in the database
+        # TODO: generate a preview image
+
+        colour = [rgb_to_hex(*background), rgb_to_hex(*text)]
 
         await ctx.respond(embed=embed)
+
+        await self.bot.mongo.update_user(ctx.author, {"$set": {"theme": colour}})
 
     @cooldown(8, 3)
     @theme_group.command()

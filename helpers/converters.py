@@ -26,6 +26,10 @@ class HexOrRGB(commands.Converter):
         raise commands.BadArgument(f'"{colour}" is not a valid rgb or hex colour')
 
 
+def rgb_to_hex(r, g, b):
+    return ("{:X}{:X}{:X}").format(r, g, b)
+
+
 # Commonly used arguments using functions to work with groups
 
 # Users

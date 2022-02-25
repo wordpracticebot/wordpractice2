@@ -14,13 +14,13 @@ categories = {
 }
 
 
-def handle_achievement(a, user):
-    if a.name in user.achievements or a.has_callback() is False:
+def handle_achievement(user, a, tier):
+    if tier <= len(user.achievements.get(a.name, [])) or a.has_callback() is False:
         return None
 
     changer = a.callback(user)
 
-    # Checking if the achievement was completed
+    # Checking if the achievement was not completed
     if changer is False:
         return None
 
@@ -28,19 +28,21 @@ def handle_achievement(a, user):
 
 
 def check_all(user: dict):
-    for cv in categories.values():
-        for a in cv.challenges:
+    for iii, cv in enumerate(categories.values()):
+        for ii, a in enumerate(cv.challenges):
             # Handling if it's not a tier
+            is_tier = True
             if not isinstance(a, list):
                 a = [a]
+                is_tier = False
 
-            for n in a:
-                result = handle_achievement(n, user)
+            for i, n in enumerate(a):
+                result = handle_achievement(user, n, i + 1)
 
                 if result is None:
                     continue
 
-                yield result
+                yield result, i if is_tier else None, (iii, ii)
 
 
 def get_bar(progress):
@@ -60,13 +62,10 @@ def get_bar(progress):
 def get_achievement_tier(user, names):
     user_a = set(user.achievements)
 
-    # if the last or 2nd last is completed, the user must be on the last
-    if names[-1] in user_a or names[-2] in user_a:
-        tier = len(names) - 1
     if user_a.isdisjoint(names):
         tier = 0
     else:
-        # getting the highest achievement in tier that user has
-        tier = sorted([names.index(x) for x in set(names) & user_a])[-1] + 1
+        # getting the amount of achievements that the user has in that tier
+        tier = sorted([len(user.achievements[x]) for x in set(names) & user_a])[-1]
 
     return tier

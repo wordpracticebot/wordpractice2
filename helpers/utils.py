@@ -1,9 +1,16 @@
 import random
+
 from discord import SlashCommand
+
+from helpers.user import get_user_cmds_run
 
 
 def format_slash_command(command: SlashCommand):
     return (f"{command.parent.name} " if command.parent else "") + command.name
+
+
+def cmd_run_before(ctx, user):
+    return format_slash_command(ctx.command) in get_user_cmds_run(ctx.bot, user)
 
 
 def weighted_lottery(seed, values, picks):
@@ -22,6 +29,7 @@ def weighted_lottery(seed, values, picks):
 
         chosen.append(c)
 
+        # Removing selected value to prevent duplicates being chosen
         values.pop(items.index(c))
 
     return chosen

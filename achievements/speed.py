@@ -8,6 +8,7 @@ def highest_speed(user):
     return max([s.wpm for s in user.highspeed.values()])
 
 
+# TODO: add proper rewards and descriptions for all achievements
 class Speed(Achievement):
     def __init__(self, name, wpm):
         super().__init__(name, f"Type {wpm} wpm", "Get some xp")

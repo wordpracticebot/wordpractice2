@@ -85,7 +85,9 @@ class User(Document):
 
     # Other statistics
     scores = ListField(EmbeddedField(Score), default=[])
-    achievements = DictField(StringField(), DateTimeField, default=[])  # id: timestamp
+    achievements = DictField(
+        StringField(), ListField(DateTimeField), default=[]
+    )  # id: timestamp
     medals = ListField(
         IntegerField, default=[0, 0, 0, 0]
     )  # [first, second, third, top 10]
@@ -128,10 +130,6 @@ class User(Document):
     @property
     def badges(self):
         return get_badges_from_ids(self._badges)
-
-    @property
-    def min_name(self):
-        return self.name[:15]
 
     @property
     def avatar_url(self):
@@ -183,6 +181,7 @@ class Mongo(commands.Cog):
 
         if u is None:
             u = await self.User.find_one({"id": user_id})
+
             if u is None:
                 if not isinstance(user, int) and not user.bot:
                     if create is False:
@@ -279,7 +278,7 @@ class Mongo(commands.Cog):
 
         # Logging ban
         embed = self.bot.error_embed(
-            title=f"User Banned",
+            title="User Banned",
             description=(
                 f"**User:** {user} ({user.id})\n"
                 f"**Moderator:** {moderator}\n"

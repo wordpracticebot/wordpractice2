@@ -1,6 +1,6 @@
 import time
-import discord
 
+import discord
 from discord.ext import commands
 
 from constants import PREMIUM_LAUNCHED, PREMIUM_LINK

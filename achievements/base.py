@@ -18,7 +18,7 @@ class Achievement:
         self.desc = desc
         self.reward = reward
 
-    def progress(self, user) -> int:
+    def progress(self, user) -> tuple:
         return int(self.name in user.achievements), 1
 
     def has_callback(self):
