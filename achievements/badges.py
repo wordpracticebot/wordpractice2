@@ -25,9 +25,9 @@ badges = Category(
     challenges=[
         [
             Badges("First Badge", 1),
-            Badges("Badge Enthusiast", 10),
-            Badges("Badge Collector", 20),
-            Badges("Badge Hoarder", 30),
+            Badges("Badge Enthusiast", 5),
+            Badges("Badge Collector", 10),
+            Badges("Badge Hoarder", 20),
             Badges("Badge Exporter", 50),
             Badges("Badge Tycoon", 100),
         ]

@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord.utils import escape_markdown
 
 from achievements import categories, get_achievement_tier, get_bar
+from achievements.challenges import get_daily_challenges
 from constants import LB_LENGTH, UPDATE_24_HOUR_INTERVAL
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
@@ -284,7 +285,8 @@ class Bot(commands.Cog):
     @commands.slash_command()
     async def challenges(self, ctx):
         """View the daily challenges and your progress on them"""
-        pass
+        c = get_daily_challenges()
+        # TODO: display daily challenges
 
 
 def setup(bot):

@@ -10,8 +10,8 @@ class Moderator(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # TODO: only enable for users who are moderators
     @commands.slash_command(guild_ids=[SUPPORT_SERVER_ID], default_permission=False)
-    @permissions.has_role(MODERATOR_ROLE_NAME)
     async def test(self, ctx):
         await ctx.respond("test")
 

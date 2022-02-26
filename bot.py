@@ -146,7 +146,7 @@ class WordPractice(commands.AutoShardedBot):
             # Loading the extension
             try:
                 self.load_extension(ext)
-            except:
+            except Exception:
                 print(f"Failed to load extension: {ext}", file=sys.stderr)
                 traceback.print_exc()
 

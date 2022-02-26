@@ -52,7 +52,6 @@ def main():
         config=config,
         allowed_mentions=allowed_mentions,
         chunk_guilds_at_startup=False,
-        case_insensitive=True,
         debug_guild=DEBUG_GUILD,
         intents=intents,
     )

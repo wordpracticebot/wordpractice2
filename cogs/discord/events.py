@@ -10,7 +10,7 @@ from discord.utils import escape_markdown
 from PIL import ImageDraw
 
 import icons
-from achievements import check_all, get_achievement_tier
+from achievements import check_all
 from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
@@ -172,6 +172,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_application_command_completion(self, ctx):
         user = await self.bot.mongo.fetch_user(ctx.author, create=True)
+
         new_user = copy.deepcopy(user)
 
         now = datetime.utcnow()
@@ -197,17 +198,16 @@ class Events(commands.Cog):
 
         while done_checking is False:
             new_a = False
-
             # Looping through all the finished achievements
-            for (a, changer), tier, identifier in check_all(new_user):
-                a_earned[identifier] = a_earned.get(identifier, []) + [(a.name, tier)]
+            for (a, changer), count, identifier in check_all(new_user):
+
+                a_earned[identifier] = a_earned.get(identifier, []) + [(a.name, count)]
                 new_a = True
 
                 # Adding achievemnt to document
-                insert_tier = 0 if tier is None else tier - 1
-
+                insert_count = 0 if count is None else count
                 current = new_user.achievements.get(a.name, [])
-                current.insert(insert_tier, datetime.utcnow())
+                current.insert(insert_count, datetime.utcnow())
 
                 new_user.achievements[a.name] = current
 

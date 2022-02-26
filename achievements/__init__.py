@@ -14,8 +14,8 @@ categories = {
 }
 
 
-def handle_achievement(user, a, tier):
-    if tier <= len(user.achievements.get(a.name, [])) or a.has_callback() is False:
+def handle_achievement(user, a, count):
+    if count <= len(user.achievements.get(a.name, [])) or a.has_callback() is False:
         return None
 
     changer = a.callback(user)
@@ -31,18 +31,19 @@ def check_all(user: dict):
     for iii, cv in enumerate(categories.values()):
         for ii, a in enumerate(cv.challenges):
             # Handling if it's not a tier
-            is_tier = True
             if not isinstance(a, list):
                 a = [a]
-                is_tier = False
 
+            all_names = [b.name for b in a]
             for i, n in enumerate(a):
-                result = handle_achievement(user, n, i + 1)
+                a_count = all_names.count(n.name)
+
+                result = handle_achievement(user, n, a_count)
 
                 if result is None:
                     continue
 
-                yield result, i if is_tier else None, (iii, ii)
+                yield result, i if a_count > 1 else None, (iii, ii)
 
 
 def get_bar(progress):
@@ -62,10 +63,11 @@ def get_bar(progress):
 def get_achievement_tier(user, names):
     user_a = set(user.achievements)
 
+    # If the user doesn't have any achievements in the list then the tier is 0
     if user_a.isdisjoint(names):
         tier = 0
     else:
         # getting the amount of achievements that the user has in that tier
-        tier = sorted([len(user.achievements[x]) for x in set(names) & user_a])[-1]
+        tier = sum([len(user.achievements[x]) for x in set(names) & user_a])
 
     return tier
