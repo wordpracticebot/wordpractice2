@@ -21,7 +21,7 @@ from umongo.fields import (
 )
 from umongo.frameworks import MotorAsyncIOInstance
 
-from constants import DEFAULT_THEME, VOTING_SITES
+from constants import DEFAULT_THEME, PREMIUM_LAUNCHED, VOTING_SITES
 from helpers.user import generate_user_description
 from static.badges import get_badge_from_id, get_badges_from_ids
 
@@ -146,6 +146,10 @@ class User(Document):
     @property
     def description(self):
         return generate_user_description(self)
+
+    @property
+    def is_premium(self):
+        return PREMIUM_LAUNCHED and self.premium
 
 
 class Mongo(commands.Cog):

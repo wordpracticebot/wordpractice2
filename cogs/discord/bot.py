@@ -286,6 +286,7 @@ class Bot(commands.Cog):
     async def challenges(self, ctx):
         """View the daily challenges and your progress on them"""
         c = get_daily_challenges()
+        print(c)
         # TODO: display daily challenges
 
 

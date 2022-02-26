@@ -67,15 +67,25 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
         if isinstance(error, discord.commands.CheckFailure):
-            return await self.handle_check_failure(ctx, error)
+            return
 
         error = error.original
 
-        if isinstance(error, errors.UserInputError):
-            await self.handle_user_input_error(ctx, error)
+        if isinstance(error, discord.errors.Forbidden):
+            try:
+                await self.send_basic_error(
+                    ctx,
+                    "Permission Error",
+                    "I am missing the correct permissions",
+                )
+            except:  # bare exception :eyes:
+                pass
+            return
 
-        else:
-            await self.handle_unexpected_error(ctx, error)
+        if isinstance(error, errors.UserInputError):
+            return await self.handle_user_input_error(ctx, error)
+
+        await self.handle_unexpected_error(ctx, error)
 
     async def handle_user_input_error(self, ctx, error):
         if isinstance(error, errors.BadArgument):
@@ -85,35 +95,16 @@ class Events(commands.Cog):
                 options = " ".join(f"`{o}`" for o in error.options)
                 message += f"\n\n**Did you mean?**\n{options}"
 
-            await self.send_basic_error(ctx, "Invalid Argument", message)
+            return await self.send_basic_error(ctx, "Invalid Argument", message)
 
-        else:
-            await self.send_basic_error(
-                ctx,
-                "Invalid Input",
-                (
-                    "Your input is malformed"
-                    f"Type `{ctx.prefix}help` for a list of commands"
-                ),
-            )
-
-    async def handle_check_failure(self, ctx, error):
-        if isinstance(
-            error,
+        await self.send_basic_error(
+            ctx,
+            "Invalid Input",
             (
-                errors.BotMissingPermissions,
-                errors.BotMissingRole,
-                errors.BotMissingAnyRole,
+                "Your input is malformed"
+                f"Type `{ctx.prefix}help` for a list of commands"
             ),
-        ):
-            try:
-                await self.send_basic_error(
-                    ctx,
-                    "Permission Error",
-                    "I do not have the correct server permissons",
-                )
-            except:  # bare exception :eyes:
-                pass
+        )
 
     async def handle_unexpected_error(self, ctx, error):
         view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})

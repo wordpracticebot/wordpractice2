@@ -18,14 +18,17 @@ class WordChallenge:
 
 
 class VoteChallenge:
-    def __init__(self, word_amt):
-        self.word_amt = word_amt
-
     def progress(self, user) -> tuple:
         return user.last_voted.date() == datetime.utcnow().date()
 
 
-CHALLENGES = []
+# TODO: add actual challenges
+CHALLENGES = [
+    [VoteChallenge(), 2],
+    [WordChallenge(100), 2],
+    [WordChallenge(200), 2],
+    [WordChallenge(500), 1],
+]
 
 
 @lru_cache(maxsize=1)

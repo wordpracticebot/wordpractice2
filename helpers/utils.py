@@ -29,7 +29,9 @@ def weighted_lottery(seed, values, picks):
 
         chosen.append(c)
 
-        # Removing selected value to prevent duplicates being chosen
-        values.pop(items.index(c))
+        # Removing values of the same type
+        values = list(filter(lambda x: not isinstance(x[0], type(c)), values))
+
+        yield c
 
     return chosen

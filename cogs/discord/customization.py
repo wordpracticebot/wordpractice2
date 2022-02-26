@@ -6,12 +6,16 @@ from discord.ext import commands
 
 import icons
 import word_list
-from helpers.checks import cooldown, user_check
+from constants import PREMIUM_LINK
+from helpers.checks import cooldown, premium_command, user_check
 from helpers.converters import opt_user, rgb_to_hex, rqd_colour
 from helpers.errors import ImproperArgument
 from helpers.ui import BaseView
-from helpers.user import (get_pacer_display, get_pacer_type_name,
-                          get_theme_display)
+from helpers.user import (
+    get_pacer_display,
+    get_pacer_type_name,
+    get_theme_display
+)
 from static import themes
 
 
@@ -98,6 +102,7 @@ class Customization(commands.Cog):
 
         return max(int(math.sqrt(i)) + 1, 0)
 
+    @premium_command()
     @cooldown(8, 3)
     @theme_group.command()
     async def custom(self, ctx, background: rqd_colour(), text: rqd_colour()):
@@ -237,23 +242,7 @@ class Customization(commands.Cog):
         user = await user_check(ctx, user)
 
         embed = ctx.embed(
-            title=f"{user.username}'s Settings",
-        )
-
-        theme_name, theme_icon = get_theme_display(user.theme)
-
-        theme_name = theme_name or "Custom"
-
-        embed.add_field(
-            name="Theme",
-            value=f"{theme_icon} {theme_name} ({user.theme[0]} {user.theme[1]})",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="Language",
-            value=f"{user.language.capitalize()} ({user.level.capitalize()})",
-            inline=False,
+            title=f"{user.display_name} | User Settings",
         )
 
         pacer_type_name = get_pacer_type_name(user.pacer_type)
@@ -263,11 +252,28 @@ class Customization(commands.Cog):
         if pacer_name != "None":
             pacer_name += f" ({pacer_type_name})"
 
-        embed.add_field(name="Pacer", value=pacer_name, inline=False)
+        theme_name, theme_icon = get_theme_display(user.theme)
+
+        theme_name = theme_name or "Custom"
 
         embed.add_field(
-            name="Premium", value="Yes" if user.premium else "No", inline=False
+            name="Theme",
+            value=f"{theme_icon} {theme_name} ({user.theme[0]} {user.theme[1]})"
+            + (
+                ""
+                if user.is_premium
+                else f"\n**[Premium users]({PREMIUM_LINK})** can unlock custom themes!"
+            ),
+            inline=False,
         )
+
+        embed.add_field(
+            name="Language",
+            value=f"{user.language.capitalize()} ({user.level.capitalize()})",
+            inline=False,
+        )
+
+        embed.add_field(name="Pacer", value=pacer_name, inline=False)
 
         embed.set_thumbnail(url="https://i.imgur.com/2vUD4NF.png")
 

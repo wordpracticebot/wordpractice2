@@ -12,7 +12,7 @@ from constants import (
     PRIVACY_POLICY_LINK,
     RULES_LINK,
     SUPPORT_SERVER_INVITE,
-    VOTING_SITES,
+    VOTING_SITES
 )
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
@@ -181,6 +181,12 @@ class Misc(commands.Cog):
         embed = ctx.embed(title=f"Pong! {latency} ms", add_footer=False)
 
         await ctx.respond(embed=embed)
+
+        message = await self.bot.wait_for(
+            "message", check=lambda m: m.author == ctx.author, timeout=300
+        )
+
+        await message.delete()
 
     @commands.slash_command(name="help")
     async def _help(self, ctx):
