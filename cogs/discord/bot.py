@@ -1,10 +1,10 @@
 import discord
 from discord.ext import commands
-from discord.utils import escape_markdown
 
+import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
-from constants import LB_LENGTH, UPDATE_24_HOUR_INTERVAL
+from constants import LB_DISPLAY_AMT, LB_LENGTH, UPDATE_24_HOUR_INTERVAL
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
@@ -20,15 +20,15 @@ LB_OPTIONS = [
     {
         "label": "Monthly Season",
         "emoji": "\N{SPORTS MEDAL}",
-        "desc": "XP",
-        "options": ["XP"],
+        "desc": "Experience",
+        "options": ["Experience"],
         "default": 0,
     },
     {
         "label": "24 Hour",
         "emoji": "\N{CLOCK FACE ONE OCLOCK}",
-        "desc": "XP, Words Typed",
-        "options": ["XP", "Words Typed"],
+        "desc": "Experience, Words Typed",
+        "options": ["Experience", "Words Typed"],
         "default": 0,
     },
     {
@@ -41,44 +41,118 @@ LB_OPTIONS = [
 ]
 
 
-class LeaderboardSelect(discord.ui.Select):
-    def __init__(self):
-        super().__init__(
-            placeholder="Select a category...",
-            min_values=1,
-            max_values=1,
-            options=[
-                discord.SelectOption(
-                    label=n["label"],
-                    emoji=n["emoji"],
-                    description=n["desc"],
-                    value=str(i),
-                )
-                for i, n in enumerate(LB_OPTIONS)
-            ],
-            row=0,
-        )
-
-    async def callback(self, interaction):
-        pass
-
-
 class LeaderboardView(ScrollView):
     def __init__(self, ctx, user):
-        super().__init__(ctx, int(LB_LENGTH / 10), row=2, compact=False)
+        super().__init__(ctx, int(LB_DISPLAY_AMT / 10), row=2, compact=False)
+
+        self.timeout = 60
 
         self.user = user
+
         self.category = 1  # Starting on season category
 
+        self.stat = LB_OPTIONS[self.category]["default"]
+        self.placing = None
+
+        self.active_btns = []
+
+    @discord.ui.select(
+        placeholder="Select a category...",
+        min_values=1,
+        max_values=1,
+        options=[
+            discord.SelectOption(
+                label=n["label"],
+                emoji=n["emoji"],
+                description=n["desc"],
+                value=str(i),
+            )
+            for i, n in enumerate(LB_OPTIONS)
+        ],
+        row=0,
+    )
+    async def callback(self, select, interaction):
+        value = int(select.values[0])
+
+        self.stat = LB_OPTIONS[value]["default"]
+
+        self.page = 0
+        # TODO: can this be removed
+        self.placing = None
+        self.category = value
+
+        await self.update_all(interaction)
+
     async def create_page(self):
-        return self.ctx.embed(title=f"Page {self.page}")
+        # Getting the placing
+        return self.ctx.embed(title=f"Page {self.page} {self.category} {self.stat}")
 
     async def jump_to_placing(self, button, interaction):
-        pass
+        if self.placing is None:
+            return await interaction.response.send_message(
+                f"You are outside of the top {LB_DISPLAY_AMT}", ephemeral=True
+            )
+
+        # Getting the page where the user is placed
+        page = int((self.placing - 1) / 10)
+
+        if self.page != page:
+            self.page = page
+            await self.update_all(interaction)
+
+    async def change_stat(self, interaction, stat):
+        """
+        For changing the page in the metric button callbacks
+        """
+        self.stat = stat
+        self.page = 0
+
+        await self.update_all(interaction)
+
+    def get_active_btns(self):
+        return [c for c in self.children if c.row == 1]
+
+    def add_metric_buttons(self):
+        metrics = LB_OPTIONS[self.category]["options"]
+
+        active_btns = self.get_active_btns()
+
+        metric_amt = len(metrics)
+        active_amt = len(active_btns)
+
+        # Removing any extra buttons
+        if active_amt > metric_amt:
+            for c in active_btns[metric_amt:]:
+                self.remove_item(c)
+
+        # Adding any buttons
+        elif active_amt < metric_amt:
+            for i in metrics[active_amt:]:
+                btn = discord.ui.Button(
+                    row=1,
+                )
+                btn.callback = lambda interaction: self.change_stat(interaction, i)
+                self.add_item(btn)
+
+        # Renaming and changing colour of buttons
+        active_btns = self.get_active_btns()
+
+        for i, c in enumerate(self.get_active_btns()):
+            c.label = metrics[i]
+            c.style = (
+                discord.ButtonStyle.success
+                if i == self.stat
+                else discord.ButtonStyle.primary
+            )
+
+    async def update_buttons(self):
+        # Updating the scrolling buttons
+        await super().update_buttons()
+
+        # Adding the correct metric buttons
+        self.add_metric_buttons()
 
     async def start(self):
-        selector = LeaderboardSelect()
-
         # Cannot user decorator because it's added before scroll items are added and they are on the same row
         btn = discord.ui.Button(
             label="Jump to Placing",
@@ -87,7 +161,6 @@ class LeaderboardView(ScrollView):
         )
         btn.callback = self.jump_to_placing
 
-        self.add_item(selector)
         self.add_item(btn)
 
         await super().start()
@@ -218,8 +291,10 @@ class AchievementsView(ViewFromDict):
 
             bar = get_bar(p[0] / p[1])
 
+            emoji = icons.success if p[0] >= p[1] else icons.danger
+
             embed.add_field(
-                name=a.name
+                name=f"{emoji} {a.name}"
                 + (f" `[{tier + 1}/{len(names)}]`" if tier is not None else ""),
                 value=(f">>> {a.desc}\n**Reward:** {a.reward}\n{bar} `{p[0]}/{p[1]}`"),
                 inline=False,
@@ -286,7 +361,7 @@ class Bot(commands.Cog):
     async def challenges(self, ctx):
         """View the daily challenges and your progress on them"""
         c = get_daily_challenges()
-        print(c)
+
         # TODO: display daily challenges
 
 

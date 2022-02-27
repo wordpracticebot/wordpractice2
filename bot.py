@@ -154,6 +154,7 @@ class WordPractice(commands.AutoShardedBot):
         return discord.utils.oauth_url(
             client_id=self.user.id,
             permissions=discord.Permissions(permissions=PERMISSONS),
+            redirect_uri=SUPPORT_SERVER_INVITE,
             scopes=("bot", "applications.commands"),
         )
 
@@ -169,17 +170,26 @@ class WordPractice(commands.AutoShardedBot):
 
         print(msg)
 
+    async def handle_new_user(self, ctx):
+        embed = self.default_embed(
+            title="wordPractice Rules",
+            description="By using wordPractice, you agree to the following rules. Failure to follow these rules will result in a ban or account reset!",
+        )
+
+        # TODO: add the rules and accept button
+
     async def on_interaction(self, interaction):
         if interaction.type is InteractionType.application_command:
-            user = await self.mongo.fetch_user(interaction.user, create=True)
+            ctx = await self.get_application_context(interaction)
 
+            user = await self.mongo.fetch_user(interaction.user)
+
+            # Asking the user to accept the rules before using the bot
             if user is None:
-                return
+                return await self.handle_new_user(ctx)
 
             # Checking if the user is banned
             if user.banned:
-                ctx = await self.get_application_context(interaction)
-
                 embed = ctx.error_embed(
                     title="You are banned",
                     description="Join the support server and create a ticket for a ban appeal",

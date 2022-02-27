@@ -12,7 +12,7 @@ from constants import (
     PRIVACY_POLICY_LINK,
     RULES_LINK,
     SUPPORT_SERVER_INVITE,
-    VOTING_SITES
+    VOTING_SITES,
 )
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
@@ -182,12 +182,6 @@ class Misc(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-        message = await self.bot.wait_for(
-            "message", check=lambda m: m.author == ctx.author, timeout=300
-        )
-
-        await message.delete()
-
     @commands.slash_command(name="help")
     async def _help(self, ctx):
         """Help with bot usage and list of commands"""
@@ -267,7 +261,7 @@ class Misc(commands.Cog):
 
         user = await self.bot.mongo.fetch_user(ctx.author)
 
-        embed = ctx.embed(title="Vote for wordPractice", add_footer=False)
+        embed = ctx.embed(title="Vote for wordPractice", description=":trophy: Total times voted: 0", add_footer=False)
 
         embed.add_field(
             name="Rewards per Vote", value=f"{icons.xp} 1000 xp", inline=False
