@@ -256,12 +256,25 @@ class Misc(commands.Cog):
         await ctx.respond("Here you go!", view=view)
 
     @commands.slash_command()
+    async def patreon(self, ctx):
+        """Get information on wordPractice's Patreon"""
+
+    @commands.slash_command()
+    async def support(self, ctx):
+        """Join the wordPractice Discord server"""
+        await ctx.respond(SUPPORT_SERVER_INVITE)
+
+    @commands.slash_command()
     async def vote(self, ctx):
         """Get the voting link for the bot"""
 
         user = await self.bot.mongo.fetch_user(ctx.author)
 
-        embed = ctx.embed(title="Vote for wordPractice", description=":trophy: Total times voted: 0", add_footer=False)
+        embed = ctx.embed(
+            title="Vote for wordPractice",
+            description=f":trophy: Total Votes: {user.votes}",
+            add_footer=False,
+        )
 
         embed.add_field(
             name="Rewards per Vote", value=f"{icons.xp} 1000 xp", inline=False

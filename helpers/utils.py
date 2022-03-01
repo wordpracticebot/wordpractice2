@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 
 from discord import SlashCommand
 
@@ -35,3 +36,11 @@ def weighted_lottery(seed, values, picks):
         yield c
 
     return chosen
+
+
+def get_start_of_day():
+    today = datetime.utcnow()
+
+    return datetime(
+        year=today.year, month=today.month, day=today.day, hour=0, minute=0, second=0
+    )

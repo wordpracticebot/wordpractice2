@@ -12,8 +12,18 @@ class Moderator(commands.Cog):
 
     # TODO: only enable for users who are moderators
     @commands.slash_command(guild_ids=[SUPPORT_SERVER_ID], default_permission=False)
-    async def test(self, ctx):
-        await ctx.respond("test")
+    async def ban(self, ctx):
+        await ctx.respond("ban")
+
+    # TODO: only enable for users who are moderators
+    @commands.slash_command(guild_ids=[SUPPORT_SERVER_ID], default_permission=False)
+    async def unban(self, ctx):
+        await ctx.respond("unban")
+
+    # TODO: only enable for users who are moderators
+    @commands.slash_command(guild_ids=[SUPPORT_SERVER_ID], default_permission=False)
+    async def cat(self, ctx):
+        await ctx.respond("view infractions")
 
 
 def setup(bot):

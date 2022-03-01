@@ -23,6 +23,7 @@ from umongo.frameworks import MotorAsyncIOInstance
 
 from constants import DEFAULT_THEME, PREMIUM_LAUNCHED, VOTING_SITES
 from helpers.user import generate_user_description
+from helpers.utils import get_start_of_day
 from static.badges import get_badge_from_id, get_badges_from_ids
 
 
@@ -54,6 +55,19 @@ class Score(EmbeddedDocument):
     timestamp = DateTimeField(required=True)
 
 
+class DailyStat(EmbeddedDocument):
+    # Daily statistics are not saved if all of the statistics are 0
+
+    # TODO: update daily stats in tasks
+
+    # Stats
+    xp = IntegerField()
+    words = IntegerField()
+
+    # Timestamp of the exact start of the day
+    start_of_day = DateTimeField(default=get_start_of_day())
+
+
 class User(Document):
     # General member information
     id = IntegerField(attribute="_id")
@@ -70,10 +84,13 @@ class User(Document):
     # Statistics
     coins = IntegerField(default=0)
     words = IntegerField(default=0)
-    last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
 
     # Season
     xp = IntegerField(default=0)
+
+    # 24 Hour
+    last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
+    best24 = EmbeddedField(Score)
 
     # Typing
     highspeed = DictField(
@@ -85,6 +102,7 @@ class User(Document):
 
     # Other statistics
     scores = ListField(EmbeddedField(Score), default=[])
+    daily_stats = ListField(EmbeddedField(DailyStat), default=[])
     achievements = DictField(
         StringField(), ListField(DateTimeField), default=[]
     )  # id: timestamp
@@ -163,12 +181,7 @@ class Mongo(commands.Cog):
 
         g = globals()
 
-        for n in (
-            "Infraction",
-            "Score",
-            "User",
-        ):
-
+        for n in ("Infraction", "Score", "User", "DailyStat"):
             setattr(self, n, instance.register(g[n]))
             getattr(self, n).bot = bot
 

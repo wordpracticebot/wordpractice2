@@ -12,7 +12,7 @@ SUPPORT_SERVER_INVITE = "https://discord.gg/wordpractice"
 PRIVACY_POLICY_LINK = "https://www.google.com"
 RULES_LINK = "https://www.google.com"
 
-DEFAULT_VIEW_TIMEOUT = 20  # seconds
+DEFAULT_VIEW_TIMEOUT = 25  # seconds
 DEFAULT_THEME = default["Material"]["colours"]
 AUTO_MODERATOR_NAME = "Thomas Worker 99"  # :)
 

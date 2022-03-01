@@ -13,11 +13,11 @@ def premium_command():
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
         if user.is_premium is False:
-            view = create_link_view({"Get Premium": PREMIUM_LINK})
+            view = create_link_view({"Support our Patreon": PREMIUM_LINK})
 
             embed = ctx.error_embed(
                 title="Premium Command",
-                description=f"Only **[premium users]({PREMIUM_LINK})** can use this feature!",
+                description=f"Only **[Patrons]({PREMIUM_LINK})** can use this feature!",
             )
 
             await ctx.respond(embed=embed, view=view)
@@ -50,9 +50,9 @@ def cooldown(regular: int, premium: int):
                 )
 
                 if user.is_premium is False and regular > premium:
-                    embed.description += f"\n\n**[Premium users]({PREMIUM_LINK})** only wait **{premium}s** instead of **{regular}s**!"
+                    embed.description += f"\n\n**[Patrons]({PREMIUM_LINK})** only wait **{premium}s** instead of **{regular}s**!"
 
-                    view = create_link_view({"Get Premium": PREMIUM_LINK})
+                    view = create_link_view({"Support our Patreon": PREMIUM_LINK})
                 else:
                     view = None
 

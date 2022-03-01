@@ -4,7 +4,7 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
-from constants import LB_DISPLAY_AMT, LB_LENGTH, UPDATE_24_HOUR_INTERVAL
+from constants import LB_DISPLAY_AMT, UPDATE_24_HOUR_INTERVAL
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
@@ -14,7 +14,7 @@ LB_OPTIONS = [
         "label": "Alltime",
         "emoji": "\N{EARTH GLOBE AMERICAS}",
         "desc": "Coins, Words Typed",
-        "options": ["Coins", "Words Typed"],
+        "options": ["Coins", "Words Typed", "Daily Streak"],
         "default": 1,
     },
     {

@@ -11,11 +11,7 @@ from helpers.checks import cooldown, premium_command, user_check
 from helpers.converters import opt_user, rgb_to_hex, rqd_colour
 from helpers.errors import ImproperArgument
 from helpers.ui import BaseView
-from helpers.user import (
-    get_pacer_display,
-    get_pacer_type_name,
-    get_theme_display
-)
+from helpers.user import get_pacer_display, get_pacer_type_name, get_theme_display
 from static import themes
 
 
@@ -172,9 +168,9 @@ class Customization(commands.Cog):
             ctx.author, {"$set": {"language": name, "level": difficulty}}
         )
 
-    async def handle_update_pacer(self, ctx, name, value):
+    async def handle_update_pacer_speed(self, ctx, name, value):
         embed = ctx.embed(
-            title=f"{icons.success} Updated pacer to: `{name}`", add_footer=False
+            title=f"{icons.success} Updated pacer speed to: `{name}`", add_footer=False
         )
         await ctx.respond(embed=embed)
 
@@ -188,27 +184,56 @@ class Customization(commands.Cog):
 
     @cooldown(8, 3)
     @pacer_group.command()
+    async def style(
+        self,
+        ctx,
+        choice: Option(
+            str,
+            "Pick a style for your pacer",
+            choices=["Horizontal", "Vertical"],
+            required=True,
+        ),
+    ):
+        """Change the style of your pacer"""
+        user = await ctx.bot.mongo.fetch_user(ctx.author)
+
+        update = int(choice == "Vertical")
+
+        embed = ctx.embed(
+            title=f"{icons.success} Updated pacer style to: `{choice}`",
+            add_footer=False,
+        )
+
+        await ctx.respond(embed=embed)
+
+        if user.pacer_type != update:
+            await ctx.bot.mongo.update_user(
+                ctx.author, {"$set": {"pacer_type": update}}
+            )
+
+    @cooldown(8, 3)
+    @pacer_group.command()
     async def pb(self, ctx):
         """Set your typing test pacer to your personal best"""
-        await self.handle_update_pacer(ctx, "Personal Best", "pb")
+        await self.handle_update_pacer_speed(ctx, "Personal Best", "pb")
 
     @cooldown(8, 3)
     @pacer_group.command()
     async def average(self, ctx):
         """Set your typing test pacer to your average speed"""
-        await self.handle_update_pacer(ctx, "Average", "avg")
+        await self.handle_update_pacer_speed(ctx, "Average", "avg")
 
     @cooldown(8, 3)
     @pacer_group.command()
     async def rawaverage(self, ctx):
         """Set your typing test pacer to your raw average speed"""
-        await self.handle_update_pacer(ctx, "Raw Average", "rawavg")
+        await self.handle_update_pacer_speed(ctx, "Raw Average", "rawavg")
 
     @cooldown(8, 3)
     @pacer_group.command()
     async def off(self, ctx):
         """Turn off your typing test pacer"""
-        await self.handle_update_pacer(ctx, "Off", "")
+        await self.handle_update_pacer_speed(ctx, "Off", "")
 
     @cooldown(8, 3)
     @pacer_group.command()
@@ -225,7 +250,7 @@ class Customization(commands.Cog):
         if speed not in range(10, 300):
             raise commands.BadArgument("Pacer speed must be between 10 and 300")
 
-        await self.handle_update_pacer(ctx, f"{speed} wpm", str(speed))
+        await self.handle_update_pacer_speed(ctx, f"{speed} wpm", str(speed))
 
     @cooldown(8, 3)
     @commands.slash_command()
@@ -262,7 +287,7 @@ class Customization(commands.Cog):
             + (
                 ""
                 if user.is_premium
-                else f"\n**[Premium users]({PREMIUM_LINK})** can unlock custom themes!"
+                else f"\n**[Patrons]({PREMIUM_LINK})** can unlock custom themes!"
             ),
             inline=False,
         )
@@ -278,23 +303,6 @@ class Customization(commands.Cog):
         embed.set_thumbnail(url="https://i.imgur.com/2vUD4NF.png")
 
         await ctx.respond(embed=embed)
-
-    @cooldown(8, 3)
-    @commands.slash_command()
-    async def link(
-        self,
-        ctx,
-        website: Option(
-            str,
-            "Choose a typing website",
-            choices=["Nitro Type", "10FastFingers", "Typeracer"],
-            required=True,
-        ),
-        username: Option(str, "Enter your username / id", required=True),
-    ):
-        """Link your your typing website account to your profile"""
-        if len(username) not in range(1, 20):
-            raise commands.BadArgument("Username must be between 1 and 20 characters")
 
 
 def setup(bot):
