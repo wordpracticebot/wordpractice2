@@ -198,6 +198,7 @@ class Events(commands.Cog):
                 # Adding achievemnt to document
                 insert_count = 0 if count is None else count
                 current = new_user.achievements.get(a.name, [])
+
                 current.insert(insert_count, datetime.utcnow())
 
                 new_user.achievements[a.name] = current

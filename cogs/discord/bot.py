@@ -281,7 +281,7 @@ class AchievementsView(ViewFromDict):
             tier = None
             # Tiers
             if isinstance(a, list):
-                names = [m.name for m in a]
+                names = list(set(m.name for m in a))
 
                 tier = get_achievement_tier(self.user, names)
 

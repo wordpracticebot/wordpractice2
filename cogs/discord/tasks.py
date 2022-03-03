@@ -77,6 +77,12 @@ class Tasks(commands.Cog):
     async def update_leaderboards(self):
         lbs = []
 
+        # 0 = 24hr
+        # 1 = season
+        # 2 = alltime
+        # 3 = highspeed
+        # 4 = recent scores
+
         # 24 hour leaderboards
         lbs.append(
             [
@@ -105,7 +111,6 @@ class Tasks(commands.Cog):
         )
 
         # highspeed leaderboard
-        # TODO: add a 24 hour leaderboard for test scores
         lbs.append(
             [
                 await self.get_sorted_lb({"$sum": "$highspeed.short.wpm"}),
@@ -113,6 +118,8 @@ class Tasks(commands.Cog):
                 await self.get_sorted_lb({"$sum": "$highspeed.long.wpm"}),
             ]
         )
+
+        # TODO: add a leadebroard for recent test scores
 
         self.bot.lbs = lbs
         self.bot.last_lb_update = time.time()

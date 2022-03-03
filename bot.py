@@ -43,6 +43,38 @@ def get_exts():
         yield module.name
 
 
+async def _handle_after_welcome_check(bot, interaction, user):
+    # Checking if the user is banned
+    if user.banned:
+        ctx = await bot.get_application_context(interaction, theme=None)
+
+        embed = ctx.error_embed(
+            title="You are banned",
+            description="Join the support server and create a ticket for a ban appeal",
+        )
+        view = BaseView(ctx, personal=True)
+
+        item = discord.ui.Button(
+            style=discord.ButtonStyle.link,
+            label="Click here!",
+            url=SUPPORT_SERVER_INVITE,
+        )
+        view.add_item(item=item)
+
+        await ctx.respond(embed=embed, view=view, ephemeral=True)
+        return True
+
+    return False
+
+
+class WelcomeView(BaseView):
+    @discord.ui.button(label="Accept", style=discord.ButtonStyle.primary)
+    async def accept(self, button, interaction):
+        user = await self.ctx.bot.mongo.fetch_user(interaction.user, create=True)
+
+        await _handle_after_welcome_check(self.ctx.bot, interaction, user)
+
+
 class CustomContext(discord.commands.ApplicationContext):
     def __init__(self, bot, interaction, theme):
         super().__init__(bot, interaction)
@@ -54,7 +86,7 @@ class CustomContext(discord.commands.ApplicationContext):
         self.hint = random.choice(hints)
 
     def embed(self, **kwargs):
-        color = kwargs.pop("color", self.theme)
+        color = kwargs.pop("color", self.theme or PRIMARY_CLR)
         return CustomEmbed(self, color=color, hint=self.hint, **kwargs)
 
     @property
@@ -131,10 +163,9 @@ class WordPractice(commands.AutoShardedBot):
         self.log.info(f"Shard {shard_id} ready")
 
     async def get_application_context(self, interaction, cls=None):
-        # user account must have been made already so no create
         user = await self.mongo.fetch_user(interaction.user)
 
-        theme = int(user.theme[1].replace("#", "0x"), 16)
+        theme = int(user.theme[1].replace("#", "0x"), 16) if user else None
 
         if cls is None:
             cls = CustomContext
@@ -173,37 +204,26 @@ class WordPractice(commands.AutoShardedBot):
     async def handle_new_user(self, ctx):
         embed = self.default_embed(
             title="wordPractice Rules",
-            description="By using wordPractice, you agree to the following rules. Failure to follow these rules will result in a ban or account reset!",
         )
+        # TODO: add the proper rules and privacy policy
 
-        # TODO: add the rules and accept button
+        view = WelcomeView(ctx)
+
+        await ctx.respond(embed=embed, view=view)
 
     async def on_interaction(self, interaction):
         if interaction.type is InteractionType.application_command:
-            ctx = await self.get_application_context(interaction)
+            temp_ctx = await self.get_application_context(interaction)
 
             user = await self.mongo.fetch_user(interaction.user)
 
             # Asking the user to accept the rules before using the bot
             if user is None:
-                return await self.handle_new_user(ctx)
+                return await self.handle_new_user(temp_ctx)
 
-            # Checking if the user is banned
-            if user.banned:
-                embed = ctx.error_embed(
-                    title="You are banned",
-                    description="Join the support server and create a ticket for a ban appeal",
-                )
-                view = BaseView(ctx, personal=True)
+            if await _handle_after_welcome_check(self, interaction, user):
+                return
 
-                item = discord.ui.Button(
-                    style=discord.ButtonStyle.link,
-                    label="Click here!",
-                    url=SUPPORT_SERVER_INVITE,
-                )
-                view.add_item(item=item)
-
-                return await ctx.respond(embed=embed, view=view, ephemeral=True)
         # Processing command
         await self.process_application_commands(interaction)
 

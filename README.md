@@ -41,4 +41,4 @@
 
 # Formatting
 
-[Black](https://github.com/psf/black) and [isort](https://github.com/PyCQA/isort) are used for formatting.
+[Black](https://github.com/psf/black), [isort](https://github.com/PyCQA/isort) and [Prettier](https://prettier.io/) are used for formatting
