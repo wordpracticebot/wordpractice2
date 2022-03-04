@@ -119,7 +119,7 @@ class Tasks(commands.Cog):
             ]
         )
 
-        # TODO: add a leadebroard for recent test scores
+        # TODO: add a leaderboard for recent test scores
 
         self.bot.lbs = lbs
         self.bot.last_lb_update = time.time()

@@ -17,7 +17,6 @@ DEFAULT_THEME = default["Material"]["colours"]
 AUTO_MODERATOR_NAME = "Thomas Worker 99"  # :)
 
 SUPPORT_SERVER_ID = 903449744196661270
-MODERATOR_ROLE_NAME = "Moderator"
 
 # Testing
 DEBUG_GUILD = 903449744196661270
@@ -54,4 +53,4 @@ PREMIUM_LAUNCHED = True
 PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
 
 # Daily challenges
-CHALLENGE_AMT = 3
+CHALLENGE_AMT = 1

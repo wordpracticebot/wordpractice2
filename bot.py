@@ -46,7 +46,7 @@ def get_exts():
 async def _handle_after_welcome_check(bot, interaction, user):
     # Checking if the user is banned
     if user.banned:
-        ctx = await bot.get_application_context(interaction, theme=None)
+        ctx = await bot.get_application_context(interaction)
 
         embed = ctx.error_embed(
             title="You are banned",
@@ -56,7 +56,7 @@ async def _handle_after_welcome_check(bot, interaction, user):
 
         item = discord.ui.Button(
             style=discord.ButtonStyle.link,
-            label="Click here!",
+            label="Support Server",
             url=SUPPORT_SERVER_INVITE,
         )
         view.add_item(item=item)
@@ -72,7 +72,24 @@ class WelcomeView(BaseView):
     async def accept(self, button, interaction):
         user = await self.ctx.bot.mongo.fetch_user(interaction.user, create=True)
 
+        # TODO: add some kind of basic bot tutorial here
+        embed = self.ctx.default_embed(
+            title="Rules Accepted",
+        )
+
+        await interaction.message.edit(embed=embed, view=None)
+
         await _handle_after_welcome_check(self.ctx.bot, interaction, user)
+
+    async def start(self):
+        # TODO: add the proper rules and privacy policy
+        embed = self.ctx.default_embed(
+            title="wordPractice Rules",
+        )
+
+        self.embed = embed
+
+        await self.ctx.respond(embed=embed, view=self)
 
 
 class CustomContext(discord.commands.ApplicationContext):
@@ -202,14 +219,8 @@ class WordPractice(commands.AutoShardedBot):
         print(msg)
 
     async def handle_new_user(self, ctx):
-        embed = self.default_embed(
-            title="wordPractice Rules",
-        )
-        # TODO: add the proper rules and privacy policy
-
         view = WelcomeView(ctx)
-
-        await ctx.respond(embed=embed, view=view)
+        await view.start()
 
     async def on_interaction(self, interaction):
         if interaction.type is InteractionType.application_command:

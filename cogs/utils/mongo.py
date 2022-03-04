@@ -21,7 +21,13 @@ from umongo.fields import (
 )
 from umongo.frameworks import MotorAsyncIOInstance
 
-from constants import DEFAULT_THEME, PREMIUM_LAUNCHED, VOTING_SITES
+from constants import (
+    DEFAULT_THEME,
+    PREMIUM_LAUNCHED,
+    SUPPORT_SERVER_INVITE,
+    VOTING_SITES,
+)
+from helpers.ui import create_link_view
 from helpers.user import generate_user_description
 from helpers.utils import get_start_of_day
 from static.badges import get_badge_from_id, get_badges_from_ids
@@ -291,8 +297,6 @@ class Mongo(commands.Cog):
 
         timestamp = round(time.time())
 
-        # TODO: dm the user that they are banned
-
         # Logging ban
         embed = self.bot.error_embed(
             title="User Banned",
@@ -305,6 +309,24 @@ class Mongo(commands.Cog):
         )
 
         await self.bot.impt_wh.send(embed=embed)
+
+        # Dming the user that they've been banned
+        # Messaging is held off until the end because it is the least important
+
+        embed = self.bot.error_embed(
+            title="You were banned",
+            description=(
+                f"Reason: {reason}\n\n"
+                "Join the support server and create a ticket for a ban appeal"
+            ),
+        )
+
+        view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
+
+        try:
+            await user.send(embed=embed, view=view)
+        except:  # TODO: add proper exception here
+            pass
 
 
 def setup(bot):

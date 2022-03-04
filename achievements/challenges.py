@@ -9,15 +9,26 @@ from constants import CHALLENGE_AMT
 from helpers.utils import get_start_of_day, weighted_lottery
 
 
-class WordChallenge:
+class Challenge:
+    def __init__(self, description):
+        self.description = description
+
+
+class WordChallenge(Challenge):
     def __init__(self, word_amt):
+
+        super().__init__(f"Type {word_amt} words")
+
         self.word_amt = word_amt
 
     def progress(self, user) -> tuple:
         return sum(user.last24[0]), self.word_amt
 
 
-class VoteChallenge:
+class VoteChallenge(Challenge):
+    def __init__(self):
+        super().__init__("Vote for wordPractice\n\n**/vote** for more information")
+
     def progress(self, user) -> tuple:
         return user.last_voted.date() == datetime.utcnow().date()
 

@@ -4,7 +4,7 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
-from constants import LB_DISPLAY_AMT, UPDATE_24_HOUR_INTERVAL
+from constants import LB_DISPLAY_AMT
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
@@ -82,6 +82,10 @@ class LeaderboardView(ScrollView):
         self.category = value
 
         await self.update_all(interaction)
+
+    # TODO: add image generation for the leaderboard command
+    def gen_lb_image(self):
+        pass
 
     async def create_page(self):
         # Getting the placing
@@ -360,7 +364,10 @@ class Bot(commands.Cog):
     @commands.slash_command()
     async def challenges(self, ctx):
         """View the daily challenges and your progress on them"""
-        c = get_daily_challenges()
+
+        embed = ctx.embed(title="Daily Challenges")
+
+        challenges = get_daily_challenges()
 
         # TODO: display daily challenges
 

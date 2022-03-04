@@ -10,6 +10,9 @@ from helpers.utils import format_slash_command
 
 def premium_command():
     async def predicate(ctx):
+        if ctx.testing:
+            return True
+
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
         if user.is_premium is False:
