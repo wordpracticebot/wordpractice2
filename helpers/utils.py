@@ -1,3 +1,4 @@
+import calendar
 import random
 from datetime import datetime
 
@@ -32,8 +33,6 @@ def weighted_lottery(seed, values, picks):
 
         # Removing values of the same type
         values = list(filter(lambda x: not isinstance(x[0], type(c)), values))
-
-        yield c
 
     return chosen
 
@@ -141,3 +140,7 @@ def get_test_input_stats(u_input, quote):
                 extra_cc += extra
 
     return cc, word_history, extra_cc
+
+
+def datetime_to_unix(date):
+    return calendar.timegm(date.utctimetuple())

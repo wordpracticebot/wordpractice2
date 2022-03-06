@@ -20,7 +20,6 @@ from static.hints import hints
 
 # TODO: use max concurrency for typing test
 # TODO: check if user is banned when giving roles
-# TODO: customize pacer type (horizonal, vertical)
 
 
 def unqualify(name):

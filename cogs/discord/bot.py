@@ -365,11 +365,31 @@ class Bot(commands.Cog):
     async def challenges(self, ctx):
         """View the daily challenges and your progress on them"""
 
-        embed = ctx.embed(title="Daily Challenges")
+        user = await ctx.bot.mongo.fetch_user(ctx.author)
 
-        challenges = get_daily_challenges()
+        challenges, xp = get_daily_challenges()
 
-        # TODO: display daily challenges
+        embed = ctx.embed(
+            title="Daily Challenges",
+            description=f"Complete all the daily challenges to earn:\n{icons.xp} **{xp} xp**\n\n** **",
+        )
+
+        for c in challenges:
+            # Getting the user's progress on the challenge
+            p = c.progress(user)
+
+            # Generating the progress bar
+            bar = get_bar(p[0] / p[1])
+
+            emoji = icons.success if p[0] >= p[1] else icons.danger
+
+            embed.add_field(
+                name=f"{emoji} {c.title}",
+                value=f"> {c.description}\n> {bar} `{p[0]}/{p[1]}`",
+                inline=False,
+            )
+
+        await ctx.respond(embed=embed)
 
 
 def setup(bot):

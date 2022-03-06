@@ -22,6 +22,7 @@ from umongo.fields import (
 from umongo.frameworks import MotorAsyncIOInstance
 
 from constants import (
+    AUTO_MODERATOR_NAME,
     DEFAULT_THEME,
     PREMIUM_LAUNCHED,
     SUPPORT_SERVER_INVITE,
@@ -34,10 +35,10 @@ from static.badges import get_badge_from_id, get_badges_from_ids
 
 
 class Infraction(EmbeddedDocument):
-    moderator_name = StringField(required=True)  # NAME#DISCRIMINATOR
-    moderator_id = IntegerField(require=True)
+    mod_name = StringField(required=True)  # NAME#DISCRIMINATOR
+    mod_id = IntegerField(require=True)
     reason = StringField(required=True)
-    timestamp = DateTimeField(required=True)
+    timestamp = DateTimeField(default=datetime.utcnow())
 
 
 class Score(EmbeddedDocument):
@@ -282,13 +283,18 @@ class Mongo(commands.Cog):
         # Caching new user data
         self.bot.user_cache[user_id] = pickle.dumps(user_data)
 
-    async def ban_user(self, user, moderator: str, reason: str):
-        inf = self.Infraction(
-            moderator_name=moderator,
-            moderator_id=self.bot.user.id,
-            reason=reason,
-            timestamp=datetime.utcnow(),
-        )
+    # TODO: add temporary bans
+    async def ban_user(
+        self, user, reason: str, mod: Union[discord.Member, discord.User] = None
+    ):
+        if mod is None:
+            mod = AUTO_MODERATOR_NAME
+            mod_id = self.bot.user.id
+        else:
+            mod_id = mod.id
+            mod = str(mod)
+
+        inf = self.Infraction(mod_name=mod, mod_id=mod_id, reason=reason)
 
         await self.update_user(
             user, {"$push": {"infractions": inf.to_mongo()}, "$set": {"banned": True}}
@@ -301,7 +307,7 @@ class Mongo(commands.Cog):
             title="User Banned",
             description=(
                 f"**User:** {user} ({user.id})\n"
-                f"**Moderator:** {moderator}\n"
+                f"**Moderator:** {mod} ({mod_id})\n"
                 f"**Reason:** {reason}\n"
                 f"**Timestamp:** <t:{timestamp}:R>"
             ),

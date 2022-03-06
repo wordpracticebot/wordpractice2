@@ -5,6 +5,7 @@ from discord.ext import commands
 from constants import SUPPORT_SERVER_ID
 from helpers.checks import user_check
 from helpers.converters import rqd_user
+from helpers.utils import datetime_to_unix
 
 BAN_AUTOCOMPLETE = [
     "Cheating",
@@ -33,6 +34,7 @@ class Moderator(commands.Cog):
             "Reason for the ban",
             autocomplete=discord.utils.basic_autocomplete(BAN_AUTOCOMPLETE),
         ),
+        wipe: Option(bool, "Whether the user's account should be banned") = True,
     ):
         """Ban a user"""
         user_data = await user_check(ctx, user)
@@ -40,7 +42,7 @@ class Moderator(commands.Cog):
         if user_data.banned:
             raise commands.BadArgument("That user is already banned")
 
-        await self.bot.mongo.ban_user(user, str(ctx.author.id), reason)
+        await self.bot.mongo.ban_user(user, reason, ctx.author)
 
         embed = ctx.error_embed(
             title="User Banned",
@@ -67,12 +69,27 @@ class Moderator(commands.Cog):
     async def cat(self, ctx, user: rqd_user()):
         """View the infractions of a user"""
 
-        user = await ctx.bot.mongo.fetch_user(ctx.author)
+        user_data = await user_check(ctx, user)
 
         embed = ctx.error_embed(
-            title=f"{user.username}'s Infractions",
-            description=f"**Ban Status:** {user.banned}",
+            title=f"{user_data.username}'s Infractions",
+            description=f"**Ban Status:** {user_data.banned}",
         )
+
+        # TODO: add pagination
+
+        for i, inf in enumerate(user_data.infractions):
+            timestamp = datetime_to_unix(inf.timestamp)
+
+            embed.add_field(
+                name=f"Infraction {i + 1}",
+                value=(
+                    f">>> Moderator: {inf.mod_name} ({inf.mod_id})\n"
+                    f"Reason: {inf.reason}\n"
+                    f"Timestamp: <t:{timestamp}:F>"
+                ),
+                inline=False,
+            )
 
         await ctx.respond(embed=embed)
 
