@@ -98,24 +98,24 @@ class Tasks(commands.Cog):
         # season leaderboards
         lbs.append(
             [
-                await self.get_sorted_lb({"$sum": "$xp"}),
+                await self.get_sorted_lb("$xp"),
             ]
         )
 
         # alltime leaderboards
         lbs.append(
             [
-                await self.get_sorted_lb({"$sum": "$coins"}),
-                await self.get_sorted_lb({"$sum": "$words"}),
+                await self.get_sorted_lb("$words"),
+                await self.get_sorted_lb("$streak"),
             ]
         )
 
         # highspeed leaderboard
         lbs.append(
             [
-                await self.get_sorted_lb({"$sum": "$highspeed.short.wpm"}),
-                await self.get_sorted_lb({"$sum": "$highspeed.medium.wpm"}),
-                await self.get_sorted_lb({"$sum": "$highspeed.long.wpm"}),
+                await self.get_sorted_lb("$highspeed.short.wpm"),
+                await self.get_sorted_lb("$highspeed.medium.wpm"),
+                await self.get_sorted_lb("$highspeed.long.wpm"),
             ]
         )
 

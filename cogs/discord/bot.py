@@ -13,8 +13,8 @@ LB_OPTIONS = [
     {
         "label": "Alltime",
         "emoji": "\N{EARTH GLOBE AMERICAS}",
-        "desc": "Coins, Words Typed",
-        "options": ["Coins", "Words Typed", "Daily Streak"],
+        "desc": "Words Typed, Daily Streak",
+        "options": ["Words Typed", "Daily Streak"],
         "default": 1,
     },
     {

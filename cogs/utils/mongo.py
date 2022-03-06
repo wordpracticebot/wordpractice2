@@ -88,7 +88,6 @@ class User(Document):
     cmds_run = ListField(StringField, default=[])
 
     # Statistics
-    coins = IntegerField(default=0)
     words = IntegerField(default=0)
 
     # Season
