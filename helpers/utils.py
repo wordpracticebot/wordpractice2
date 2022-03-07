@@ -1,6 +1,6 @@
 import calendar
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 
 from discord import SlashCommand
 
@@ -41,7 +41,13 @@ def get_start_of_day():
     today = datetime.utcnow()
 
     return datetime(
-        year=today.year, month=today.month, day=today.day, hour=0, minute=0, second=0
+        year=today.year,
+        month=today.month,
+        day=today.day,
+        hour=0,
+        minute=0,
+        second=0,
+        tzinfo=timezone.utc,
     )
 
 

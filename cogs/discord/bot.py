@@ -277,19 +277,21 @@ class AchievementsView(ViewFromDict):
     async def create_page(self):
         c = self.the_dict[self.page]
 
-        tier = None
-
         embed = self.ctx.embed(title=f"{self.page}", description=c.desc)
 
         for a in c.challenges:
-            tier = None
+            tier_display = ""
             # Tiers
             if isinstance(a, list):
-                names = list(set(m.name for m in a))
+                all_names = [m.name for m in a]
+
+                names = list(set(all_names))
 
                 tier = get_achievement_tier(self.user, names)
 
                 a = a[tier]
+
+                tier_display = f" `[{tier + 1}/{len(all_names)}]`"
 
             p = a.progress(self.user)
 
@@ -298,8 +300,7 @@ class AchievementsView(ViewFromDict):
             emoji = icons.success if p[0] >= p[1] else icons.danger
 
             embed.add_field(
-                name=f"{emoji} {a.name}"
-                + (f" `[{tier + 1}/{len(names)}]`" if tier is not None else ""),
+                name=f"{emoji} {a.name}" + tier_display,
                 value=(f">>> {a.desc}\n**Reward:** {a.reward}\n{bar} `{p[0]}/{p[1]}`"),
                 inline=False,
             )
