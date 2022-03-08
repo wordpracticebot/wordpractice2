@@ -19,7 +19,6 @@ from helpers.ui import BaseView, CustomEmbed
 from static.hints import hints
 
 # TODO: use max concurrency for typing test
-# TODO: check if user is banned when giving roles
 
 
 def unqualify(name):
@@ -103,7 +102,7 @@ class CustomContext(discord.commands.ApplicationContext):
 
     def embed(self, **kwargs):
         color = kwargs.pop("color", self.theme or PRIMARY_CLR)
-        return CustomEmbed(self, color=color, hint=self.hint, **kwargs)
+        return CustomEmbed(self.bot, color=color, hint=self.hint, **kwargs)
 
     @property
     def error_embed(self):

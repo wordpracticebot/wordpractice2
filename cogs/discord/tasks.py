@@ -22,7 +22,7 @@ class Tasks(commands.Cog):
             u.start()
 
     async def get_sorted_lb(self, query: Union[list, dict]) -> list:
-        cursor = self.bot.mongo.db.user.aggregate(
+        cursor = self.bot.mongo.db.users.aggregate(
             [
                 {
                     "$project": {
@@ -40,11 +40,11 @@ class Tasks(commands.Cog):
         return [i async for i in cursor]
 
     async def reset_extra_24_hour_stats(self):
-        await self.bot.mongo.db.user.update_many(
+        await self.bot.mongo.db.users.update_many(
             {"last24.0": [0] * 96},
             {"$set": {"last24.0": [0]}},
         )
-        await self.bot.mongo.db.user.update_many(
+        await self.bot.mongo.db.users.update_many(
             {"last24.1": [0] * 96},
             {"$set": {"last24.1": [0]}},
         )
@@ -55,20 +55,20 @@ class Tasks(commands.Cog):
 
         # Have to update each field in two steps because of update conflict
 
-        await self.bot.mongo.db.user.update_many(
+        await self.bot.mongo.db.users.update_many(
             {f"last24.0.{every}": {"$exists": True}},
             {"$pop": {"last24.0": -1}},
         )
-        await self.bot.mongo.db.user.update_many(
+        await self.bot.mongo.db.users.update_many(
             {f"last24.0.{every}": {"$exists": True}},
             {"$push": {"last24.0": 0}},
         )
 
-        await self.bot.mongo.db.user.update_many(
+        await self.bot.mongo.db.users.update_many(
             {f"last24.1.{every}": {"$exists": True}},
             {"$pop": {"last24.1": -1}},
         )
-        await self.bot.mongo.db.user.update_many(
+        await self.bot.mongo.db.users.update_many(
             {f"last24.1.{every}": {"$exists": True}},
             {"$push": {f"last24.1": 0}},
         )

@@ -75,7 +75,10 @@ class DailyStat(EmbeddedDocument):
     start_of_day = DateTimeField(default=get_start_of_day())
 
 
-class User(Document):
+class UserBase(Document):
+    class Meta:
+        abstract = True
+
     # General member information
     id = IntegerField(attribute="_id")
     name = StringField(required=True)
@@ -147,6 +150,11 @@ class User(Document):
     pacer_speed = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"
     pacer_type = IntegerField(default=0)  # 0 = horizontal, 1 = vertical
 
+
+class User(UserBase):
+    class Meta:
+        collection_name = "users"
+
     @property
     def status(self):
         return get_badge_from_id(self._status) or ""
@@ -176,6 +184,13 @@ class User(Document):
         return PREMIUM_LAUNCHED and self.premium
 
 
+# Backup for users that have been wiped
+# TODO: add a timestamp and remove backups after 60 days
+class UserBackup(UserBase):
+    class Meta:
+        collection_name = "backup"
+
+
 class Mongo(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -187,7 +202,7 @@ class Mongo(commands.Cog):
 
         g = globals()
 
-        for n in ("Infraction", "Score", "User", "DailyStat"):
+        for n in ("UserBase", "Infraction", "Score", "User", "UserBackup", "DailyStat"):
             setattr(self, n, instance.register(g[n]))
             getattr(self, n).bot = bot
 
@@ -254,6 +269,13 @@ class Mongo(commands.Cog):
             "avatar": user.avatar.key if user.avatar else None,
         }
 
+    # TODO: handle wiping the user
+    async def wipe_user(self, user):
+        # Logging the wipe and sending the user's document as a json file
+
+        # Saving backup in database
+        ...
+
     async def update_user(self, user, query: dict):
         if isinstance(user, int):
             user_id = user
@@ -267,7 +289,7 @@ class Mongo(commands.Cog):
             if "$set" in query:
                 query["$set"].update(current)
 
-        await self.db.user.update_one({"_id": user_id}, query)
+        await self.db.users.update_one({"_id": user_id}, query)
 
         if user_id in self.bot.user_cache:
             del self.bot.user_cache[user_id]

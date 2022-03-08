@@ -22,8 +22,14 @@ class Moderator(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # TODO: finish wipe command and allow for user to be wiped in ban command
+    @commands.slash_command(guild_ids=[SUPPORT_SERVER_ID])
+    async def wipe(self, ctx, user: rqd_user()):
+        embed = ctx.embed(title="User Wiped", add_footer=False)
+
+        await ctx.respond(embed=embed)
+
     # TODO: only enable for users who are moderators
-    # TODO: add option to wipe the user
     @commands.slash_command(guild_ids=[SUPPORT_SERVER_ID])
     async def ban(
         self,
@@ -34,7 +40,7 @@ class Moderator(commands.Cog):
             "Reason for the ban",
             autocomplete=discord.utils.basic_autocomplete(BAN_AUTOCOMPLETE),
         ),
-        wipe: Option(bool, "Whether the user's account should be banned") = True,
+        wipe: Option(bool, "Whether the user's account should be wiped"),
     ):
         """Ban a user"""
         user_data = await user_check(ctx, user)

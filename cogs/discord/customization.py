@@ -260,9 +260,17 @@ class Customization(commands.Cog):
         pass
 
     @cooldown(5, 2)
+    @commands.user_command(name="Typing Settings")
+    async def settings_user(self, ctx, member: discord.Member):
+        await self.handle_settings_cmd(ctx, member)
+
+    @cooldown(5, 2)
     @commands.slash_command()
     async def settings(self, ctx, user: opt_user()):
         """View user settings"""
+        await self.handle_settings_cmd(ctx, user)
+
+    async def handle_settings_cmd(self, ctx, user):
 
         user = await user_check(ctx, user)
 

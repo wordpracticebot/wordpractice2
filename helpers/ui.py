@@ -19,13 +19,13 @@ def create_link_view(links: dict[str, str]):
 
 
 class CustomEmbed(discord.Embed):
-    def __init__(self, ctx, hint=None, add_footer=True, **kwargs):
+    def __init__(self, bot, hint=None, add_footer=True, **kwargs):
         if add_footer:
             self._footer = {}
 
             self._footer["text"] = f"Hint: {hint}"
-            if ctx.bot.user.display_avatar:
-                self._footer["icon_url"] = ctx.bot.user.display_avatar.url
+            if bot.user.display_avatar:
+                self._footer["icon_url"] = bot.user.display_avatar.url
 
         super().__init__(**kwargs)
 

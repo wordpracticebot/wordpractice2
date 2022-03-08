@@ -9,6 +9,7 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from constants import (
+    PREMIUM_LINK,
     PRIVACY_POLICY_LINK,
     RULES_LINK,
     SUPPORT_SERVER_INVITE,
@@ -105,7 +106,6 @@ class HelpView(BaseView):
             embed = self.ctx.embed(
                 title="Help",
                 description="Welcome to wordPractice!",
-                add_footer=False,
             )
             embed.add_field(
                 name="What is wordPractice?",
@@ -135,7 +135,6 @@ class HelpView(BaseView):
         embed = self.ctx.embed(
             title=f"{cog.qualified_name} Commands",
             description=cog.description or "No category description",
-            add_footer=False,
         )
 
         embed = _add_commands(embed, cmds)
@@ -201,9 +200,9 @@ class Misc(commands.Cog):
         h = int(uptime // 3600)
         m = int(uptime % 3600 // 60)
 
-        typist_count = await self.bot.mongo.db.user.estimated_document_count()
+        typist_count = await self.bot.mongo.db.users.estimated_document_count()
 
-        embed.set_thumbnail(url=self.bot.user.display_avatar.url)
+        embed.set_thumbnail(url=self.bot.users.display_avatar.url)
 
         embed.add_field(name="Servers", value=len(self.bot.guilds), inline=False)
         embed.add_field(name="Shards", value=len(self.bot.shards), inline=False)
@@ -258,6 +257,16 @@ class Misc(commands.Cog):
     @commands.slash_command()
     async def patreon(self, ctx):
         """Get information on wordPractice's Patreon"""
+        embed = ctx.custom_embed(
+            title="wordPractice Patreon",
+            description="Help keep wordPractice running and earn some exclusive perks!",
+        )
+
+        embed.set_thumbnail(url="https://i.imgur.com/TBfgXGG.png")
+
+        view = create_link_view({"Support our Patreon": PREMIUM_LINK})
+
+        await ctx.respond(embed=embed, view=view)
 
     @commands.slash_command()
     async def support(self, ctx):
@@ -273,7 +282,6 @@ class Misc(commands.Cog):
         embed = ctx.embed(
             title="Vote for wordPractice",
             description=f":trophy: Total Votes: {user.votes}",
-            add_footer=False,
         )
 
         embed.add_field(

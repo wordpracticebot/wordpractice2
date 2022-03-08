@@ -42,8 +42,10 @@ def main():
     )
 
     intents = discord.Intents.default()
+
+    # Privileged intents
     intents.members = True
-    intents.messages = True
+    intents.message_content = True
 
     allowed_mentions = discord.AllowedMentions(everyone=False, roles=False)
 

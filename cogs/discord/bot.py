@@ -188,7 +188,7 @@ class ProfileView(BaseView):
         return self.callbacks[self.page][1](base_embed)
 
     def get_base_embed(self, page_name):
-        embed = self.ctx.embed(title=self.user.display_name, add_footer=False)
+        embed = self.ctx.embed(title=self.user.display_name)
         embed.set_author(
             name=f"{self.user.username} | {page_name}",
             icon_url=self.user.avatar_url,
@@ -339,6 +339,14 @@ class Bot(commands.Cog):
     @commands.slash_command()
     async def graph(self, ctx, user: opt_user()):
         """See a graph of a user's typing scores"""
+        await self.handle_graph_cmd(ctx, user)
+
+    @cooldown(5, 2)
+    @commands.user_command(name="Typing Graph")
+    async def graph_user(self, ctx, member: discord.Member):
+        await self.handle_graph_cmd(ctx, member)
+
+    async def handle_graph_cmd(self, ctx, user):
         user = await user_check(ctx, user)
 
     @cooldown(6, 2)
