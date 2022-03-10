@@ -1,6 +1,8 @@
+import json
 import pickle
 import time
 from datetime import datetime
+from io import BytesIO
 from typing import Union
 
 import discord
@@ -99,7 +101,7 @@ class UserBase(Document):
 
     # 24 Hour
     last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
-    best24 = EmbeddedField(Score)
+    best24 = EmbeddedField(Score, default=None)  # best score in the last 24 hours
 
     # Typing
     highspeed = DictField(
@@ -187,8 +189,16 @@ class User(UserBase):
 # Backup for users that have been wiped
 # TODO: add a timestamp and remove backups after 60 days
 class UserBackup(UserBase):
+    wiped_at = DateTimeField(default=datetime.utcnow())
+
     class Meta:
         collection_name = "backup"
+
+
+# class Backup(Document):
+#     name = StringField(default="yes")
+#     class Meta:
+#         collection_name = "backup"
 
 
 class Mongo(commands.Cog):
@@ -202,9 +212,19 @@ class Mongo(commands.Cog):
 
         g = globals()
 
-        for n in ("UserBase", "Infraction", "Score", "User", "UserBackup", "DailyStat"):
+        for n in ("Infraction", "Score", "UserBase", "User", "UserBackup", "DailyStat"):
             setattr(self, n, instance.register(g[n]))
             getattr(self, n).bot = bot
+
+    def get_auto_mod(self, mod):
+        if mod is None:
+            mod = AUTO_MODERATOR_NAME
+            mod_id = self.bot.user.id
+        else:
+            mod_id = mod.id
+            mod = str(mod)
+
+        return mod, mod_id
 
     async def fetch_user(self, user: Union[discord.Member, int], create=False):
         if isinstance(user, int):
@@ -269,12 +289,40 @@ class Mongo(commands.Cog):
             "avatar": user.avatar.key if user.avatar else None,
         }
 
-    # TODO: handle wiping the user
-    async def wipe_user(self, user):
-        # Logging the wipe and sending the user's document as a json file
+    # TODO: reset fields from account and update backup if it exists
+    async def wipe_user(self, user, mod: Union[discord.Member, discord.User] = None):
+        mod, mod_id = self.get_auto_mod(mod)
+
+        timestamp = round(time.time())
+
+        embed = self.bot.error_embed(
+            title="Account Wiped",
+            description=(
+                f"**User:** {user.username} ({user.id})\n"
+                f"**Moderator:** {mod} ({mod_id})\n"
+                f"**Timestamp:** <t:{timestamp}:R>"
+            ),
+        )
+        await self.bot.impt_wh.send(embed=embed)
 
         # Saving backup in database
-        ...
+
+        data = user.to_mongo()
+
+        # Renaming fields to work as arguments
+
+        rename = {"_badges": "badges", "_status": "status", "id": "_id"}
+
+        for new, old in rename.items():
+            data[new] = data[old]
+            data.pop(old)
+
+        u = self.UserBackup(**data)
+
+        try:
+            await u.commit()
+        except pymongo.errors.DuplicateKeyError:
+            pass
 
     async def update_user(self, user, query: dict):
         if isinstance(user, int):
@@ -309,12 +357,7 @@ class Mongo(commands.Cog):
     async def ban_user(
         self, user, reason: str, mod: Union[discord.Member, discord.User] = None
     ):
-        if mod is None:
-            mod = AUTO_MODERATOR_NAME
-            mod_id = self.bot.user.id
-        else:
-            mod_id = mod.id
-            mod = str(mod)
+        mod, mod_id = self.get_auto_mod(mod)
 
         inf = self.Infraction(mod_name=mod, mod_id=mod_id, reason=reason)
 

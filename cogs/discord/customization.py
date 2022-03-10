@@ -170,7 +170,7 @@ class Customization(commands.Cog):
 
     async def handle_update_pacer_speed(self, ctx, name, value):
         embed = ctx.embed(
-            title=f"{icons.success} Updated pacer speed to: `{name}`", add_footer=False
+            title=f"{icons.success} Updated pacer speed to {name}", add_footer=False
         )
         await ctx.respond(embed=embed)
 
@@ -187,7 +187,7 @@ class Customization(commands.Cog):
     async def style(
         self,
         ctx,
-        choice: Option(
+        plane: Option(
             str,
             "Pick a style for your pacer",
             choices=["Horizontal", "Vertical"],
@@ -197,10 +197,10 @@ class Customization(commands.Cog):
         """Change the style of your pacer"""
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
-        update = int(choice == "Vertical")
+        update = int(plane == "Vertical")
 
         embed = ctx.embed(
-            title=f"{icons.success} Updated pacer style to: `{choice}`",
+            title=f"{icons.success} Updated pacer style to {plane}",
             add_footer=False,
         )
 

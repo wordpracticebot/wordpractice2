@@ -16,7 +16,7 @@ categories = {
 
 def handle_achievement(user, a, count):
     # checking if the user has already completed the achievement
-    if count < len(user.achievements.get(a.name, [])) or a.has_callback() is False:
+    if count <= len(user.achievements.get(a.name, [])) or a.has_callback() is False:
         return None
 
     changer = a.callback(user)
@@ -61,15 +61,11 @@ def get_bar(progress):
     return bar
 
 
-def get_achievement_tier(user, names):
+def get_achievement_tier(user, names: set):
     user_a = set(user.achievements)
 
-    # If the user doesn't have any achievements in the list then the tier is 0
-    if user_a.isdisjoint(names):
-        tier = 0
-    else:
-        # getting the amount of achievements that the user has in that tier
-        unique = set(names) & user_a
-        tier = min(sum([len(user.achievements[x]) for x in unique]), len(unique) - 1)
+    # getting the amount of achievements that the user has in that tier
+    unique = names & user_a
+    tier = max(sum([len(user.achievements[x]) for x in unique]) - 1, 0)
 
     return tier

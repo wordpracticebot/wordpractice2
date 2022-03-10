@@ -1,3 +1,6 @@
+import time
+from datetime import datetime, timezone
+
 import discord
 from discord.ext import commands
 
@@ -52,6 +55,8 @@ class LeaderboardView(ScrollView):
         self.category = 1  # Starting on season category
 
         self.stat = LB_OPTIONS[self.category]["default"]
+
+        # For storing placing across same page
         self.placing = None
 
         self.active_btns = []
@@ -77,7 +82,6 @@ class LeaderboardView(ScrollView):
         self.stat = LB_OPTIONS[value]["default"]
 
         self.page = 0
-        # TODO: can this be removed
         self.placing = None
         self.category = value
 
@@ -110,6 +114,7 @@ class LeaderboardView(ScrollView):
         """
         self.stat = stat
         self.page = 0
+        self.placing = None
 
         await self.update_all(interaction)
 
@@ -279,13 +284,15 @@ class AchievementsView(ViewFromDict):
 
         embed = self.ctx.embed(title=f"{self.page}", description=c.desc)
 
-        for a in c.challenges:
+        content = ""
+
+        for i, a in enumerate(c.challenges):
             tier_display = ""
             # Tiers
             if isinstance(a, list):
                 all_names = [m.name for m in a]
 
-                names = list(set(all_names))
+                names = set(all_names)
 
                 tier = get_achievement_tier(self.user, names)
 
@@ -299,11 +306,18 @@ class AchievementsView(ViewFromDict):
 
             emoji = icons.success if p[0] >= p[1] else icons.danger
 
-            embed.add_field(
-                name=f"{emoji} {a.name}" + tier_display,
-                value=(f">>> {a.desc}\n**Reward:** {a.reward}\n{bar} `{p[0]}/{p[1]}`"),
-                inline=False,
+            content += (
+                f"**{emoji} {a.name}{tier_display}**\n"
+                f"> {a.desc}\n"
+                f"> **Reward:** {a.reward}\n"
+                f"> {bar} `{p[0]}/{p[1]}`\n\n"
             )
+
+        embed.add_field(
+            name="** **",
+            value=content,
+            inline=False,
+        )
 
         return embed
 
@@ -378,12 +392,33 @@ class Bot(commands.Cog):
 
         challenges, xp = get_daily_challenges()
 
-        embed = ctx.embed(
-            title="Daily Challenges",
-            description=f"Complete all the daily challenges to earn:\n{icons.xp} **{xp} xp**\n\n** **",
+        # Getting the unix time of tomorrow
+        today = datetime.utcnow()
+
+        end_of_today = datetime(
+            year=today.year,
+            month=today.month,
+            day=today.day,
+            hour=23,
+            minute=59,
+            second=59,
+            tzinfo=timezone.utc,
         )
 
-        for c in challenges:
+        unix_timestamp = int(time.mktime(end_of_today.timetuple()))
+
+        embed = ctx.embed(
+            title="Daily Challenges",
+            description=(
+                f"**Today's daily challenge restarts in** <t:{unix_timestamp}:R>\n\n"
+                "Complete all the daily challenges to earn:\n"
+                f"{icons.xp} **{xp} xp**"
+            ),
+        )
+
+        content = ""
+
+        for i, c in enumerate(challenges):
             # Getting the user's progress on the challenge
             p = c.progress(user)
 
@@ -392,13 +427,25 @@ class Bot(commands.Cog):
 
             emoji = icons.success if p[0] >= p[1] else icons.danger
 
-            embed.add_field(
-                name=f"{emoji} {c.title}",
-                value=f"> {c.description}\n> {bar} `{p[0]}/{p[1]}`",
-                inline=False,
+            content += (
+                f"**{emoji} Challenge {i+1}**\n"
+                f"> {c.description}\n"
+                f"> {bar} `{p[0]}/{p[1]}`\n\n"
             )
 
+        embed.add_field(
+            name="** **",
+            value=content,
+            inline=False,
+        )
+
         await ctx.respond(embed=embed)
+        
+    @cooldown(6, 2)
+    @commands.slash_command()
+    async def season(self, ctx):
+        # TODO: write a description heres
+        pass
 
 
 def setup(bot):

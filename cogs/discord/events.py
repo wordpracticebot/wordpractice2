@@ -11,6 +11,7 @@ from PIL import ImageDraw
 
 import icons
 from achievements import check_all
+from achievements.challenges import get_daily_challenges
 from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument
 from helpers.ui import create_link_view
@@ -216,6 +217,12 @@ class Events(commands.Cog):
             # Continues checking until no new achievements are given in a round (allows chaining achievements)
             if new_a is False:
                 done_checking = True
+
+        challenges, xp = get_daily_challenges()
+
+        # Checking if the user has completed all the challenges
+        if all((p := c.progress(new_user))[0] > p[1] for c in challenges):
+            new_user.xp += xp
 
         # Updating the user's executed commands
 

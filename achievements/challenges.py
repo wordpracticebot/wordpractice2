@@ -11,17 +11,14 @@ from helpers.utils import get_start_of_day, weighted_lottery
 
 
 class Challenge:
-    def __init__(self, title, description):
-        self.title = title
+    def __init__(self, description):
         self.description = description
 
 
 class WordChallenge(Challenge):
     def __init__(self, word_amt):
 
-        super().__init__(
-            f"Type {word_amt} words", "Complete typing tests add to your word count"
-        )
+        super().__init__(f"Type {word_amt} words")
 
         self.word_amt = word_amt
 
@@ -31,7 +28,7 @@ class WordChallenge(Challenge):
 
 class VoteChallenge(Challenge):
     def __init__(self):
-        super().__init__("Vote for wordPractice", "Type /vote for more information")
+        super().__init__("Vote for wordPractice")
 
     def progress(self, user) -> tuple:
         return (

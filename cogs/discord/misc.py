@@ -202,7 +202,7 @@ class Misc(commands.Cog):
 
         typist_count = await self.bot.mongo.db.users.estimated_document_count()
 
-        embed.set_thumbnail(url=self.bot.users.display_avatar.url)
+        embed.set_thumbnail(url=self.bot.user.display_avatar.url)
 
         embed.add_field(name="Servers", value=len(self.bot.guilds), inline=False)
         embed.add_field(name="Shards", value=len(self.bot.shards), inline=False)
@@ -260,6 +260,7 @@ class Misc(commands.Cog):
         embed = ctx.custom_embed(
             title="wordPractice Patreon",
             description="Help keep wordPractice running and earn some exclusive perks!",
+            add_footer=False,
         )
 
         embed.set_thumbnail(url="https://i.imgur.com/TBfgXGG.png")
@@ -291,7 +292,7 @@ class Misc(commands.Cog):
         # Voting achievement progress
         all_achievements = categories["Endurance"].challenges[1]
 
-        names = [i.name for i in all_achievements]
+        names = set(i.name for i in all_achievements)
         tier = get_achievement_tier(user, names)
 
         a = all_achievements[tier]
