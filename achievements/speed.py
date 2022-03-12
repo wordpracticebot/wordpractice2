@@ -4,7 +4,6 @@ from .base import Achievement, Category
 def highest_speed(user):
     if user.highspeed == {}:
         return 0
-
     return max([s.wpm for s in user.highspeed.values()])
 
 

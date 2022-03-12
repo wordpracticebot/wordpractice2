@@ -2,6 +2,7 @@ import time
 from datetime import datetime, timezone
 
 import discord
+import humanize
 from discord.ext import commands
 
 import icons
@@ -188,6 +189,7 @@ class ProfileView(BaseView):
         await interaction.message.edit(embed=embed, view=self)
 
     def get_embed(self):
+        """Generates the base embed for all the pages"""
         base_embed = self.get_base_embed(self.page)
 
         return self.callbacks[self.page][1](base_embed)
@@ -200,24 +202,82 @@ class ProfileView(BaseView):
         )
         return embed
 
-    def general_page(self, embed):
-        return embed
+    def get_placing_display(self, user, category: int, stat: int):
+        # Getting the correct leaderboard
+        lb = self.ctx.bot.lbs[category][stat]
+
+        placing = next((i + 1 for i, u in enumerate(lb) if u["_id"] == user.id), None)
+
+        if placing is None:
+            return "(> 500)"
+
+        if placing == 1:
+            return ":first_place:"
+
+        if placing == 2:
+            return ":second_place:"
+
+        if placing == 3:
+            return ":third_place:"
+
+        return f"({humanize.ordinal(placing)})"
 
     def create_achievements_page(self, embed):
         return embed
 
     def create_stats_page(self, embed):
+        embed.set_thumbnail(url="https://i.imgur.com/KrXiy9S.png")
         return embed
 
     def create_typing_page(self, embed):
+        embed.set_thumbnail(url="https://i.imgur.com/BZzMGjc.png")
+        embed.add_field(
+            name="High Scores",
+            value="Scores are divided by word count range",
+            inline=False,
+        )
+
+        hs1, hs2, hs3 = self.user.highspeed.values()
+
+        ts = "\N{THIN SPACE}"
+
+        # Short high score
+        placing = self.get_placing_display(self.user, 3, 0)
+
+        embed.add_field(
+            name=f"Range:{ts*20}10-20:",
+            value=(
+                f"Wpm:{ts*22}{hs1.wpm}\n"
+                f"Accuracy:{ts*11}{hs1.acc}%\n"
+                f"Placing:{ts*17}**{placing}**"
+            ),
+            inline=True,
+        )
+
+        # Medium high score
+        placing = self.get_placing_display(self.user, 3, 1)
+
+        embed.add_field(
+            name="21-50:",
+            value=(f"{hs2.wpm}\n{hs2.acc}%\n**{placing}**"),
+            inline=True,
+        )
+
+        placing = self.get_placing_display(self.user, 3, 2)
+
+        embed.add_field(
+            name="21-50:",
+            value=(f"{hs3.wpm}\n{hs3.acc}%\n**{placing}**"),
+            inline=True,
+        )
+
         return embed
 
     def get_embed_callbacks(self):
         return {
-            "General": ["\N{GRINNING FACE}", self.general_page],
-            "Achievements": ["\N{SHIELD}", self.create_achievements_page],
             "Statistics": ["\N{BAR CHART}", self.create_stats_page],
             "Typing": ["\N{KEYBOARD}", self.create_typing_page],
+            "Achievements": ["\N{SHIELD}", self.create_achievements_page],
         }
 
     async def start(self):
@@ -286,7 +346,7 @@ class AchievementsView(ViewFromDict):
 
         content = ""
 
-        for i, a in enumerate(c.challenges):
+        for a in c.challenges:
             tier_display = ""
             # Tiers
             if isinstance(a, list):
@@ -440,7 +500,7 @@ class Bot(commands.Cog):
         )
 
         await ctx.respond(embed=embed)
-        
+
     @cooldown(6, 2)
     @commands.slash_command()
     async def season(self, ctx):

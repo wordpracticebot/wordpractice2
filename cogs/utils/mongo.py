@@ -1,8 +1,6 @@
-import json
 import pickle
 import time
 from datetime import datetime
-from io import BytesIO
 from typing import Union
 
 import discord
@@ -44,24 +42,24 @@ class Infraction(EmbeddedDocument):
 
 
 class Score(EmbeddedDocument):
-    wpm = FloatField(required=True)
-    raw = FloatField(required=True)
-    acc = FloatField(required=True)
+    wpm = FloatField(default=0.0)
+    raw = FloatField(default=0.0)
+    acc = FloatField(default=0.0)
 
     # correct words
-    cw = IntegerField(required=True)
+    cw = IntegerField(default=0)
     # total words
-    tw = IntegerField(required=True)
+    tw = IntegerField(default=0)
 
     # User input
-    u_input = StringField(required=True)
+    u_input = StringField(default="")
 
     # Quote
-    quote = ListField(StringField, required=True)
+    quote = ListField(StringField, default=[])
 
     # xp earnings
-    earnings = IntegerField(required=True)
-    timestamp = DateTimeField(required=True)
+    earnings = IntegerField(default=0)
+    timestamp = DateTimeField(default=datetime.min)
 
 
 class DailyStat(EmbeddedDocument):
@@ -105,10 +103,8 @@ class UserBase(Document):
 
     # Typing
     highspeed = DictField(
-        StringField(),
-        EmbeddedField(Score),
-        default={},
-    )
+        StringField(), EmbeddedField(Score), required=True
+    )  # short, medium, long
     verified = FloatField(default=0.0)
 
     # Other statistics
@@ -195,12 +191,6 @@ class UserBackup(UserBase):
         collection_name = "backup"
 
 
-# class Backup(Document):
-#     name = StringField(default="yes")
-#     class Meta:
-#         collection_name = "backup"
-
-
 class Mongo(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -245,11 +235,22 @@ class Mongo(commands.Cog):
                     if create is False:
                         return u
 
+                    # Schemas are instantiated when mongo cog is initialized
+                    # Default scores must be passed in at initialization to access schema
+                    default_score = dict(
+                        self.Score.schema.as_marshmallow_schema()().load({})
+                    )
+
                     u = self.User(
                         id=user.id,
                         name=user.name,
                         discriminator=user.discriminator,
                         avatar=user.avatar.key if user.avatar else None,
+                        highspeed={
+                            "short": default_score,
+                            "medium": default_score,
+                            "long": default_score,
+                        },
                     )
                     try:
                         await u.commit()
@@ -317,6 +318,7 @@ class Mongo(commands.Cog):
             data[new] = data[old]
             data.pop(old)
 
+        # Building object from_mongo does not work when trying to commit
         u = self.UserBackup(**data)
 
         try:
@@ -342,16 +344,11 @@ class Mongo(commands.Cog):
         if user_id in self.bot.user_cache:
             del self.bot.user_cache[user_id]
 
-    async def replace_user_data(self, user, user_data):
-        if isinstance(user, int):
-            user_id = user
-        else:
-            user_id = user.id
-
-        await self.update_user(user, {"$set": user_data})
+    async def replace_user_data(self, new_user):
+        await new_user.commit()
 
         # Caching new user data
-        self.bot.user_cache[user_id] = pickle.dumps(user_data)
+        self.bot.user_cache[new_user.id] = pickle.dumps(new_user.to_mongo())
 
     # TODO: add temporary bans
     async def ban_user(

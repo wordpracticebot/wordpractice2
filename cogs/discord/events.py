@@ -146,11 +146,10 @@ class Events(commands.Cog):
         extra = 0
 
         for m in earned.values():
-            raw_names, _ = zip(*m)
             a, t = m[-1]
 
             if len(files) < ACHIEVEMENTS_SHOWN:
-                if t is not None and raw_names.count(a) > 1:
+                if t is not None:
                     a += f" ({t + 1})"
 
                 image = generate_achievement_image(a)
@@ -240,7 +239,7 @@ class Events(commands.Cog):
             else:
                 self.bot.cmds_run[ctx.author.id] = new_cache_cmds
 
-        if user.to_mongo() != (user_data := new_user.to_mongo()):
+        if user.to_mongo() != new_user.to_mongo():
             # Checking if neaw achievements have been added
             if user.achievements != new_user.achievements:
                 files, extra = self.get_files_from_earned(a_earned)
@@ -255,8 +254,7 @@ class Events(commands.Cog):
                     await ctx.respond(files=files, ephemeral=True)
 
             # Replacing the user data with the new state
-            # TODO: potentially dangerous, find better way without updating all fields
-            await self.bot.mongo.replace_user_data(ctx.author, user_data)
+            await self.bot.mongo.replace_user_data(new_user)
 
 
 def setup(bot):

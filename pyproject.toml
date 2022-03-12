@@ -16,6 +16,7 @@ python-dotenv = "^0.19.2"
 Pillow = "^8.4.0"
 isort = "^5.10.1"
 py-cord = {git = "https://github.com/Pycord-Development/pycord"}
+humanize = "^4.0.0"
 
 [tool.poetry.dev-dependencies]
 
