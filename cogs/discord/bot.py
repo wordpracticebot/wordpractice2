@@ -12,6 +12,8 @@ from constants import LB_DISPLAY_AMT
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
+from helpers.user import get_typing_average
+from helpers.utils import calculate_consistency
 
 LB_OPTIONS = [
     {
@@ -202,6 +204,17 @@ class ProfileView(BaseView):
         )
         return embed
 
+    def get_perc_sign(self, value: int, percs: tuple[int, int]):
+        first, second = percs
+
+        if value in range(0, int(first)):
+            return "-"
+
+        if value in range(int(first), int(second)):
+            return "/"
+
+        return "+"
+
     def get_placing_display(self, user, category: int, stat: int):
         # Getting the correct leaderboard
         lb = self.ctx.bot.lbs[category][stat]
@@ -227,6 +240,19 @@ class ProfileView(BaseView):
 
     def create_stats_page(self, embed):
         embed.set_thumbnail(url="https://i.imgur.com/KrXiy9S.png")
+
+        ts = "\N{THIN SPACE}"
+
+        embed.title += f"\n\nAccount{ts*34}Season{ts*30}24h"
+
+        badges = " ".join(self.user.badges)
+
+        embed.description = (
+            "there is going to be something here soon\n\n"
+            f"**Badges ({len(badges)})**\n"
+            f"{badges}"
+        )
+
         return embed
 
     def create_typing_page(self, embed):
@@ -269,6 +295,33 @@ class ProfileView(BaseView):
             name="21-50:",
             value=(f"{hs3.wpm}\n{hs3.acc}%\n**{placing}**"),
             inline=True,
+        )
+
+        wpm, raw, acc, cw, tw, scores = get_typing_average(self.user, 10)
+
+        if len(scores) > 1:
+            con = calculate_consistency([s.wpm for s in scores])
+        else:
+            con = 0
+
+        # Average
+
+        wpm_perc = self.get_perc_sign(wpm * len(scores), self.ctx.bot.avg_perc[0])
+        raw_perc = self.get_perc_sign(raw * len(scores), self.ctx.bot.avg_perc[1])
+        acc_perc = self.get_perc_sign(acc * len(scores), self.ctx.bot.avg_perc[2])
+
+        # Consistency percentile is based on arbitrary values
+        con_perc = "+" if con >= 75 else "/" if con >= 50 else "-"
+
+        embed.add_field(
+            name="Average (Last 10 Tests)",
+            value=(
+                "```diff\n"
+                f"{wpm_perc} Wpm: {wpm}\n"
+                f"{raw_perc} Raw Wpm: {raw}\n"
+                f"{acc_perc} Accuracy: {acc}% ({cw} / {tw})\n"
+                f"{con_perc} Consistency: {con}%```"
+            ),
         )
 
         return embed

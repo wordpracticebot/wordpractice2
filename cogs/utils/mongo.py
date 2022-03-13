@@ -100,6 +100,7 @@ class UserBase(Document):
     # 24 Hour
     last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
     best24 = EmbeddedField(Score, default=None)  # best score in the last 24 hours
+    test_amt = IntegerField(default=0)  # amount of tests in the last 24 hours
 
     # Typing
     highspeed = DictField(

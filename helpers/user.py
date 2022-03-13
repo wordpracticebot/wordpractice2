@@ -39,3 +39,34 @@ def get_pacer_type_name(pacer_type: int):
         return "Horizontal"
 
     return "Vertical"
+
+
+def get_typing_average(user, amount: int):
+    """
+    user: user data
+    amount: how many scores to get the statistics of
+    """
+    wpm = 0
+    raw = 0
+    acc = 0
+    tw = 0
+    cw = 0
+
+    scores = user.scores[:amount]
+
+    for score in scores:
+        wpm += score.wpm
+        raw += score.raw
+
+        cw += score.cw
+        tw += score.tw
+
+    score_amt = min(len(user.scores), amount)
+
+    if score_amt != 0:
+        wpm = round(wpm / score_amt, 2)
+        raw = round(raw / score_amt, 2)
+        acc = round(acc / score_amt, 2)
+
+    # wpm, raw wpm, accuracy, correct words, total words
+    return wpm, raw, acc, cw, tw, scores

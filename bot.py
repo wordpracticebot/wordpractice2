@@ -149,6 +149,7 @@ class WordPractice(commands.AutoShardedBot):
         self.user_cache = {}
         self.cmds_run = {}  # user_id: set{cmds}
         self.lbs = []
+        self.avg_perc = []  # [wpm (33% 66%), raw, acc]
 
         self.start_time = time.time()
         self.last_lb_update = time.time()

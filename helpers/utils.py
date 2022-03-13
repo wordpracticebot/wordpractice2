@@ -1,4 +1,5 @@
 import calendar
+import math
 import random
 from datetime import datetime, timezone
 
@@ -150,3 +151,16 @@ def get_test_input_stats(u_input, quote):
 
 def datetime_to_unix(date):
     return calendar.timegm(date.utctimetuple())
+
+
+# Calculates consistency from scores
+# Formula by Kogasa: https://github.com/Miodec/monkeytype
+def calculate_consistency(nums: list) -> float:
+    length = len(nums)
+    mean = sum(nums) / length
+
+    x = math.sqrt(sum([(x - mean) ** 2 for x in nums]))
+    y = x / mean
+
+    return round(100 * (1 - math.tanh(y + y ** 3 / 3 + y ** 5 / 5)), 2)
+    # lol

@@ -3,6 +3,7 @@ import time
 from datetime import datetime, timedelta
 from typing import Union
 
+import numpy as np
 from discord.ext import commands, tasks
 
 from constants import COMPILE_INTERVAL, LB_LENGTH, UPDATE_24_HOUR_INTERVAL
@@ -18,6 +19,7 @@ class Tasks(commands.Cog):
             self.post_guild_count,
             self.daily_restart,
             self.clear_cooldowns,
+            self.update_percentiles,
         ]:
             u.start()
 
@@ -124,8 +126,42 @@ class Tasks(commands.Cog):
         self.bot.lbs = lbs
         self.bot.last_lb_update = time.time()
 
+    # Updates the typing average percentile
+    # Is updated infrequently because it provides an estimate
+    @tasks.loop(hours=12)
+    async def update_percentiles(self):
+        # Fetching the average wpm, raw and acc for every user in their last 10 tests
+        a = self.bot.mongo.db.users.aggregate(
+            [
+                {
+                    "$project": {
+                        "_id": 0,
+                        "wpm": {"$sum": {"$slice": ["$scores.wpm", 10]}},
+                        "raw": {"$sum": {"$slice": ["$scores.raw", 10]}},
+                        "acc": {"$sum": {"$slice": ["$scores.acc", 10]}},
+                    }
+                }
+            ]
+        )
+
+        total = zip(*[(m["wpm"], m["raw"], m["acc"]) async for m in a])
+
+        new_perc = []
+
+        # Calculating the percentile for each category
+        for t in total:
+            new_perc.append(
+                [
+                    np.percentile(t, 33),
+                    np.percentile(t, 66),
+                ]
+            )
+
+        self.bot.avg_perc = new_perc
+
     @tasks.loop(minutes=30)
     async def post_guild_count(self):
+        # TODO: post guid count to top.gg
         pass
 
     @tasks.loop(hours=24)

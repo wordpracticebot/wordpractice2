@@ -17,6 +17,7 @@ Pillow = "^8.4.0"
 isort = "^5.10.1"
 py-cord = {git = "https://github.com/Pycord-Development/pycord"}
 humanize = "^4.0.0"
+numpy = "^1.22.3"
 
 [tool.poetry.dev-dependencies]
 

@@ -1,9 +1,11 @@
+import asyncio
 import json
 import random
 import textwrap
 from itertools import cycle, islice
 
 import discord
+from captcha.image import ImageCaptcha
 from discord.commands import SlashCommandGroup
 from discord.ext import commands, tasks
 from discord.utils import escape_markdown
@@ -11,7 +13,7 @@ from humanfriendly import format_timespan
 
 import icons
 import word_list
-from constants import MAX_RACE_JOIN, RACE_EXPIRE_TIME, TEST_RANGE
+from constants import CAPTCHA_INTERVAL, MAX_RACE_JOIN, RACE_EXPIRE_TIME, TEST_RANGE
 from helpers.checks import cooldown
 from helpers.converters import quote_amt, word_amt
 from helpers.ui import BaseView
@@ -306,7 +308,53 @@ class Typing(commands.Cog):
             await ctx.respond("Start the race by joining it", ephemeral=True)
 
     async def do_typing_test(self, ctx, is_dict, quote):
-        pass
+        user = await ctx.bot.mongo.fetch_user(ctx.author)
+
+        # Prompting a captcha at intervals to prevent automated accounts
+        if (user.test_amt + 1) % CAPTCHA_INTERVAL == 0:
+            return await self.handle_interval_captcha(ctx, user)
+
+    async def handle_interval_captcha(self, ctx, user):
+        # Getting the quote for the captcha
+        words = load_test_file(word_list.languages["english"]["levels"]["easy"])
+        captcha_word = random.choice(words)
+
+        # Generating the captcha image
+        image = ImageCaptcha(width=200)
+        buffer = image.generate(captcha_word)
+        buffer.seek(0)
+
+        # TODO: add better UI for the captcha
+        embed = ctx.embed(title="Captcha", description="This is some captcha test")
+
+        file = discord.File(fp=buffer, filename="captcha.png")
+
+        embed.set_image(url="attachment://captcha.png")
+
+        await ctx.respond(embed=embed, file=file)
+
+        # Waiting for user input
+        try:
+            message = await self.bot.wait_for(
+                "message", check=lambda m: m.author == ctx.author, timeout=120
+            )
+        except asyncio.TimeoutError:
+            embed = ctx.error_embed(
+                title="Captcha Expired",
+                description="You did not complete the captcha within 2 minutes",
+            )
+            return await ctx.respond(embed=embed)
+
+        # Evaluating the success of the captcha
+        if message.content.lower() == captcha_word:
+            embed = ctx.embed(
+                title=f"{icons.success} Captcha Completed", add_footer=False
+            )
+            return await ctx.respond(embed=embed)
+
+        embed = ctx.error_embed(title=f"{icons.caution} Captcha Failed")
+
+        await ctx.respond(embed=embed)
 
     @staticmethod
     async def do_race(ctx, racers, is_dict, quote):
