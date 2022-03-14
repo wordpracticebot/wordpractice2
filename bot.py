@@ -53,12 +53,12 @@ class LBCategory:
         )
         self.data = [i async for i in cursor]
 
-    def get_placing(self, user_id: str):
+    def get_placing(self, user_id: int):
         if self.data is None:
             return None
 
         return next(
-            (i + 1 for i, u in enumerate(self.data) if u["_id"] == str(user_id)), None
+            (i + 1 for i, u in enumerate(self.data) if u["_id"] == int(user_id)), None
         )
 
 

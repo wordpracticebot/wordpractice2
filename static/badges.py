@@ -6,7 +6,7 @@ Only the identifier is stored in the user document
 # fmt: off
 
 default = {
-    "grey": "<:grey:748696246364930118>",
+    "grey": "c",
     "orange": "",
     "lightblue": "",
     "purple": "",
@@ -85,4 +85,4 @@ def get_badge_from_id(badge_id: str):
 
 
 def get_badges_from_ids(badge_ids: list):
-    return [b for badge in badge_ids if (b := default.get(badge)) is not None]
+    return [default.get(badge) for badge in badge_ids]

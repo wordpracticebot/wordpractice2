@@ -8,7 +8,7 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
-from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT
+from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
@@ -98,9 +98,7 @@ class LeaderboardView(ScrollView):
 
         if self.placing is None:
             # Getting the placing
-            self.placing = next(
-                (i + 1 for i, u in enumerate(c.data) if u["_id"] == self.user.id), None
-            )
+            self.placing = c.get_placing(self.user.id)
 
         if self.placing is None:
             place_display = "N/A"
@@ -243,12 +241,10 @@ class ProfileView(BaseView):
 
     def get_placing_display(self, user, category: int, stat: int):
         # Getting the correct leaderboard
-        lb = self.ctx.bot.lbs[category][stat]
-
-        placing = next((i + 1 for i, u in enumerate(lb) if u["_id"] == user.id), None)
+        placing = self.ctx.bot.lbs[category].stats[stat].get_placing(user.id)
 
         if placing is None:
-            return "(> 500)"
+            return f"(> {LB_LENGTH})"
 
         if placing == 1:
             return ":first_place:"
