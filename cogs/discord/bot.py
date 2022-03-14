@@ -15,44 +15,35 @@ from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_typing_average
 from helpers.utils import calculate_consistency
 
-UNIT_NAMES = {
-    "Words Typed": "words",
-    "Experience": "xp",
-    "Short": "wpm",
-    "Medium": "wpm",
-    "Long": "wpm",
-}
 
-LB_OPTIONS = [
-    {
-        "label": "Alltime",
-        "emoji": "\N{EARTH GLOBE AMERICAS}",
-        "desc": "Words Typed",
-        "options": ["Words Typed"],
-        "default": 1,
-    },
-    {
-        "label": "Monthly Season",
-        "emoji": "\N{SPORTS MEDAL}",
-        "desc": "Experience",
-        "options": ["Experience"],
-        "default": 0,
-    },
-    {
-        "label": "24 Hour",
-        "emoji": "\N{CLOCK FACE ONE OCLOCK}",
-        "desc": "Experience, Words Typed",
-        "options": ["Experience", "Words Typed"],
-        "default": 0,
-    },
-    {
-        "label": "High Score",
-        "emoji": "\N{RUNNER}",
-        "desc": "Short, Medium and Long Test",
-        "options": ["Short", "Medium", "Long"],
-        "default": 1,
-    },
-]
+class LeaderboardSelect(discord.ui.Select):
+    def __init__(self, ctx):
+        super().__init__(
+            placeholder="Select a category...",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    label=lb.title,
+                    emoji=lb.emoji,
+                    description=lb.description,
+                    value=str(i),
+                )
+                for i, lb in enumerate(ctx.bot.lbs)
+            ],
+            row=0,
+        )
+
+    async def callback(self, interaction):
+        value = int(self.values[0])
+
+        self.view.page = 0
+        self.view.category = value
+        self.view.placing = None
+
+        self.stat = self.view.lb.default
+
+        await self.view.update_all(interaction)
 
 
 class LeaderboardView(ScrollView):
@@ -65,57 +56,30 @@ class LeaderboardView(ScrollView):
 
         self.category = 1  # Starting on season category
 
-        self.stat = LB_OPTIONS[self.category]["default"]
+        self.stat = self.lb.default
 
         # For storing placing across same page
         self.placing = None
 
         self.active_btns = []
 
-    @discord.ui.select(
-        placeholder="Select a category...",
-        min_values=1,
-        max_values=1,
-        options=[
-            discord.SelectOption(
-                label=n["label"],
-                emoji=n["emoji"],
-                description=n["desc"],
-                value=str(i),
-            )
-            for i, n in enumerate(LB_OPTIONS)
-        ],
-        row=0,
-    )
-    async def callback(self, select, interaction):
-        value = int(select.values[0])
-
-        self.stat = LB_OPTIONS[value]["default"]
-
-        self.page = 0
-        self.placing = None
-        self.category = value
-
-        await self.update_all(interaction)
+    @property
+    def lb(self):
+        return self.ctx.bot.lbs[self.category]
 
     async def create_page(self):
-        lb = self.ctx.bot.lbs[self.category][self.stat]
+        c = self.lb.stats[self.stat]
 
         time_until_next_update = int(
             self.ctx.bot.last_lb_update + COMPILE_INTERVAL * 60
         )
 
-        category = LB_OPTIONS[self.category]
-
-        unit = UNIT_NAMES.get(category["options"][self.stat])
-        title = category["label"]
-
         embed = self.ctx.embed(
-            title=f"{title} Leaderboard | Page {self.page + 1}",
+            title=f"{c.name} Leaderboard | Page {self.page + 1}",
             description=f"The leaderboard updates again in <t:{time_until_next_update}:R>",
         )
 
-        for i, u in enumerate(lb[self.page * 10 : (self.page + 1) * 10]):
+        for i, u in enumerate(c.data[self.page * 10 : (self.page + 1) * 10]):
             p = self.page * 10 + i
 
             extra = ""
@@ -127,7 +91,7 @@ class LeaderboardView(ScrollView):
             username = f"{u['name']}{u['discriminator']} {u['status']}"
 
             embed.add_field(
-                name=f"`{p + 1}.` {extra}{username} - {u['count']} {unit}{extra}",
+                name=f"`{p + 1}.` {extra}{username} - {u['count']} {c.unit}{extra}",
                 value="** **",
                 inline=False,
             )
@@ -135,7 +99,7 @@ class LeaderboardView(ScrollView):
         if self.placing is None:
             # Getting the placing
             self.placing = next(
-                (i + 1 for i, u in enumerate(lb) if u["_id"] == self.user.id), None
+                (i + 1 for i, u in enumerate(c.data) if u["_id"] == self.user.id), None
             )
 
         if self.placing is None:
@@ -149,7 +113,7 @@ class LeaderboardView(ScrollView):
         count = 0
 
         embed.add_field(
-            name=f"`{place_display}.` {self.user.display_name} - {count} {unit}",
+            name=f"`{place_display}.` {self.user.display_name} - {count} {c.unit}",
             value="** **",
             inline=False,
         )
@@ -184,7 +148,7 @@ class LeaderboardView(ScrollView):
         return [c for c in self.children if c.row == 1]
 
     def add_metric_buttons(self):
-        metrics = LB_OPTIONS[self.category]["options"]
+        metrics = [s.name for s in self.lb.stats]
 
         active_btns = self.get_active_btns()
 
@@ -233,6 +197,9 @@ class LeaderboardView(ScrollView):
         btn.callback = self.jump_to_placing
 
         self.add_item(btn)
+
+        select = LeaderboardSelect(self.ctx)
+        self.add_item(select)
 
         await super().start()
 
@@ -616,7 +583,7 @@ class Bot(commands.Cog):
     @cooldown(6, 2)
     @commands.slash_command()
     async def season(self, ctx):
-        # TODO: write a description heres
+        # TODO: write a description here
         pass
 
 

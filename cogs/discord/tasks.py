@@ -1,12 +1,11 @@
 import asyncio
 import time
 from datetime import datetime, timedelta
-from typing import Union
 
 import numpy as np
 from discord.ext import commands, tasks
 
-from constants import COMPILE_INTERVAL, LB_LENGTH, UPDATE_24_HOUR_INTERVAL
+from constants import COMPILE_INTERVAL, UPDATE_24_HOUR_INTERVAL
 
 
 class Tasks(commands.Cog):
@@ -22,24 +21,6 @@ class Tasks(commands.Cog):
             self.update_percentiles,
         ]:
             u.start()
-
-    async def get_sorted_lb(self, query: Union[list, dict]) -> list:
-        cursor = self.bot.mongo.db.users.aggregate(
-            [
-                {
-                    "$project": {
-                        "_id": 1,
-                        "name": 1,
-                        "discriminator": 1,
-                        "status": 1,
-                        "count": query,
-                    }
-                },
-                {"$sort": {"count": -1}},
-                {"$limit": LB_LENGTH},
-            ]
-        )
-        return [i async for i in cursor]
 
     async def reset_extra_24_hour_stats(self):
         await self.bot.mongo.db.users.update_many(
@@ -77,52 +58,9 @@ class Tasks(commands.Cog):
 
     @tasks.loop(minutes=COMPILE_INTERVAL)
     async def update_leaderboards(self):
-        lbs = []
+        for lb in self.bot.lbs:
+            await lb.update_all()
 
-        # 2 = alltime
-        # 1 = season
-        # 0 = 24hr
-        # 3 = highspeed
-        # 4 = recent scores
-
-        # alltime leaderboards
-        lbs.append(
-            [
-                await self.get_sorted_lb("$words"),
-            ]
-        )
-
-        # season leaderboards
-        lbs.append(
-            [
-                await self.get_sorted_lb("$xp"),
-            ]
-        )
-
-        # 24 hour leaderboards
-        lbs.append(
-            [
-                await self.get_sorted_lb(
-                    {"$sum": {"$arrayElemAt": ["$last24", 0]}}
-                ),  # words
-                await self.get_sorted_lb(
-                    {"$sum": {"$arrayElemAt": ["$last24", 1]}}
-                ),  # xp
-            ]
-        )
-
-        # highspeed leaderboard
-        lbs.append(
-            [
-                await self.get_sorted_lb("$highspeed.short.wpm"),
-                await self.get_sorted_lb("$highspeed.medium.wpm"),
-                await self.get_sorted_lb("$highspeed.long.wpm"),
-            ]
-        )
-
-        # TODO: add a leaderboard for recent test scores
-
-        self.bot.lbs = lbs
         self.bot.last_lb_update = time.time()
 
     # Updates the typing average percentile

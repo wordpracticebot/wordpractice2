@@ -14,11 +14,79 @@ from discord import InteractionType
 from discord.ext import commands
 
 import cogs
-from constants import ERROR_CLR, PERMISSONS, PRIMARY_CLR, SUPPORT_SERVER_INVITE
+from constants import (
+    ERROR_CLR,
+    LB_LENGTH,
+    PERMISSONS,
+    PRIMARY_CLR,
+    SUPPORT_SERVER_INVITE,
+)
 from helpers.ui import BaseView, CustomEmbed
 from static.hints import hints
 
-# TODO: use max concurrency for typing test
+
+class LBCategory:
+    def __init__(self, bot, name, unit, query):
+        self.bot = bot
+        self.name = name
+        self.unit = unit
+
+        self.data = None
+
+        self.query = query
+
+    async def update(self):
+        cursor = self.bot.mongo.db.users.aggregate(
+            [
+                {
+                    "$project": {
+                        "_id": 1,
+                        "name": 1,
+                        "discriminator": 1,
+                        "status": 1,
+                        "count": self.query,
+                    }
+                },
+                {"$sort": {"count": -1}},
+                {"$limit": LB_LENGTH},
+            ]
+        )
+        self.data = [i async for i in cursor]
+
+    def get_placing(self, user_id: str):
+        if self.data is None:
+            return None
+
+        return next(
+            (i + 1 for i, u in enumerate(self.data) if u["_id"] == str(user_id)), None
+        )
+
+
+class Leaderboard:
+    def __init__(
+        self,
+        title: str,
+        description: str,
+        emoji: str,
+        default: int,
+        stats: list[LBCategory],
+    ):
+        # Meta data
+        self.title = title
+        self.description = description
+        self.emoji = emoji
+
+        self.stats = stats
+
+        if len(self.stats) <= default:
+            raise Exception("Default out of range")
+
+        # Default stat index
+        self.default = default
+
+    async def update_all(self):
+        for stat in self.stats:
+            await stat.update()
 
 
 def unqualify(name):
@@ -148,11 +216,66 @@ class WordPractice(commands.AutoShardedBot):
         # Cache
         self.user_cache = {}
         self.cmds_run = {}  # user_id: set{cmds}
-        self.lbs = []
         self.avg_perc = []  # [wpm (33% 66%), raw, acc]
 
-        self.start_time = time.time()
+        # Leaderboards
+
+        # Alltime
+        # Season
+        # 24h
+        # Highspeed
+        # Recent Highscores
+
+        self.lbs = [
+            Leaderboard(
+                title="Alltime",
+                description="Words Typed",
+                emoji="\N{EARTH GLOBE AMERICAS}",
+                stats=[LBCategory(self, "Words Typed", "words", "$words")],
+                default=0,
+            ),
+            Leaderboard(
+                title="Monthly Season",
+                description="Experience",
+                emoji="\N{SPORTS MEDAL}",
+                stats=[LBCategory(self, "Experience", "xp", "$xp")],
+                default=0,
+            ),
+            Leaderboard(
+                title="24 Hour",
+                description="Experience, Words Typed",
+                emoji="\N{CLOCK FACE ONE OCLOCK}",
+                stats=[
+                    LBCategory(
+                        self,
+                        "Experience",
+                        "xp",
+                        {"$sum": {"$arrayElemAt": ["$last24", 1]}},
+                    ),
+                    LBCategory(
+                        self,
+                        "Words Typed",
+                        "words",
+                        {"$sum": {"$arrayElemAt": ["$last24", 0]}},
+                    ),
+                ],
+                default=0,
+            ),
+            Leaderboard(
+                title="High Score",
+                description="Short, Medium and Long Test",
+                emoji="\N{RUNNER}",
+                stats=[
+                    LBCategory(self, "Short", "wpm", "$highspeed.short.wpm"),
+                    LBCategory(self, "Medium", "wpm", "$highspeed.medium.wpm"),
+                    LBCategory(self, "Long", "wpm", "$highspeed.long.wpm"),
+                ],
+                default=0,
+            ),
+        ]
         self.last_lb_update = time.time()
+
+        self.start_time = time.time()
 
         self.load_exts()
 
