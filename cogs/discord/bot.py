@@ -275,6 +275,10 @@ class ProfileView(BaseView):
             f"{badges}"
         )
 
+        embed.add_field(
+            name=f"Trophies ({sum(self.user.trophies)})", value="** **"
+        )
+
         return embed
 
     def create_typing_page(self, embed):

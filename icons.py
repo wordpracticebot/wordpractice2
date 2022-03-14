@@ -20,3 +20,11 @@ fast_left_arrow = "<:fast_left_arrow:945750740201271348>"
 left_arrow = "<:left_arrow:945750740150943755>"
 right_arrow = "<:right_arrow:945750740238999602>"
 fast_right_arrow = "<:fast_right_arrow:945750740331266128>"
+
+# Trophies
+trophies = [
+    "<:gold_trophy:953059551882653706>", # first
+    "<:silver_trophy:953059552008491028>", # second
+    "<:bronze_trophy:953059551882649610>", # third 
+    "<:top10_trophy:953059582937288714>" # top 10
+]

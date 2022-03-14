@@ -114,7 +114,7 @@ class UserBase(Document):
     achievements = DictField(
         StringField(), ListField(DateTimeField), default=[]
     )  # id: timestamp
-    medals = ListField(
+    trophies = ListField(
         IntegerField, default=[0, 0, 0, 0]
     )  # [first, second, third, top 10]
 
