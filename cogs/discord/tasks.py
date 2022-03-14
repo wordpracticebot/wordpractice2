@@ -79,21 +79,16 @@ class Tasks(commands.Cog):
     async def update_leaderboards(self):
         lbs = []
 
-        # 0 = 24hr
-        # 1 = season
         # 2 = alltime
+        # 1 = season
+        # 0 = 24hr
         # 3 = highspeed
         # 4 = recent scores
 
-        # 24 hour leaderboards
+        # alltime leaderboards
         lbs.append(
             [
-                await self.get_sorted_lb(
-                    {"$sum": {"$arrayElemAt": ["$last24", 0]}}
-                ),  # words
-                await self.get_sorted_lb(
-                    {"$sum": {"$arrayElemAt": ["$last24", 1]}}
-                ),  # xp
+                await self.get_sorted_lb("$words"),
             ]
         )
 
@@ -104,11 +99,15 @@ class Tasks(commands.Cog):
             ]
         )
 
-        # alltime leaderboards
+        # 24 hour leaderboards
         lbs.append(
             [
-                await self.get_sorted_lb("$words"),
-                await self.get_sorted_lb("$streak"),
+                await self.get_sorted_lb(
+                    {"$sum": {"$arrayElemAt": ["$last24", 0]}}
+                ),  # words
+                await self.get_sorted_lb(
+                    {"$sum": {"$arrayElemAt": ["$last24", 1]}}
+                ),  # xp
             ]
         )
 

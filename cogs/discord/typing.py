@@ -324,8 +324,9 @@ class Typing(commands.Cog):
         buffer = image.generate(captcha_word)
         buffer.seek(0)
 
-        # TODO: add better UI for the captcha
-        embed = ctx.embed(title="Captcha", description="This is some captcha test")
+        embed = ctx.embed(
+            title=":robot: Captcha", description="Type the word below", add_footer=False
+        )
 
         file = discord.File(fp=buffer, filename="captcha.png")
 

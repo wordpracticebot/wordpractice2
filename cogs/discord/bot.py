@@ -8,19 +8,27 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
-from constants import LB_DISPLAY_AMT
+from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_typing_average
 from helpers.utils import calculate_consistency
 
+UNIT_NAMES = {
+    "Words Typed": "words",
+    "Experience": "xp",
+    "Short": "wpm",
+    "Medium": "wpm",
+    "Long": "wpm",
+}
+
 LB_OPTIONS = [
     {
         "label": "Alltime",
         "emoji": "\N{EARTH GLOBE AMERICAS}",
-        "desc": "Words Typed, Daily Streak",
-        "options": ["Words Typed", "Daily Streak"],
+        "desc": "Words Typed",
+        "options": ["Words Typed"],
         "default": 1,
     },
     {
@@ -90,13 +98,63 @@ class LeaderboardView(ScrollView):
 
         await self.update_all(interaction)
 
-    # TODO: add image generation for the leaderboard command
-    def gen_lb_image(self):
-        pass
-
     async def create_page(self):
-        # Getting the placing
-        return self.ctx.embed(title=f"Page {self.page} {self.category} {self.stat}")
+        lb = self.ctx.bot.lbs[self.category][self.stat]
+
+        time_until_next_update = int(
+            self.ctx.bot.last_lb_update + COMPILE_INTERVAL * 60
+        )
+
+        category = LB_OPTIONS[self.category]
+
+        unit = UNIT_NAMES.get(category["options"][self.stat])
+        title = category["label"]
+
+        embed = self.ctx.embed(
+            title=f"{title} Leaderboard | Page {self.page + 1}",
+            description=f"The leaderboard updates again in <t:{time_until_next_update}:R>",
+        )
+
+        for i, u in enumerate(lb[self.page * 10 : (self.page + 1) * 10]):
+            p = self.page * 10 + i
+
+            extra = ""
+
+            if self.placing is None and u["_id"] == self.user.id:
+                self.placing = p
+                extra = "__"
+
+            username = f"{u['name']}{u['discriminator']} {u['status']}"
+
+            embed.add_field(
+                name=f"`{p + 1}.` {extra}{username} - {u['count']} {unit}{extra}",
+                value="** **",
+                inline=False,
+            )
+
+        if self.placing is None:
+            # Getting the placing
+            self.placing = next(
+                (i + 1 for i, u in enumerate(lb) if u["_id"] == self.user.id), None
+            )
+
+        if self.placing is None:
+            place_display = "N/A"
+        else:
+            place_display = self.placing + 1
+
+        # Adding author's own placing at the bottom
+
+        # TODO: add counts and make them show even if user is outside of calculated
+        count = 0
+
+        embed.add_field(
+            name=f"`{place_display}.` {self.user.display_name} - {count} {unit}",
+            value="** **",
+            inline=False,
+        )
+
+        return embed
 
     async def jump_to_placing(self, button, interaction):
         if self.placing is None:
@@ -115,11 +173,12 @@ class LeaderboardView(ScrollView):
         """
         For changing the page in the metric button callbacks
         """
-        self.stat = stat
-        self.page = 0
-        self.placing = None
+        if self.stat != stat:
+            self.stat = stat
+            self.page = 0
+            self.placing = None
 
-        await self.update_all(interaction)
+            await self.update_all(interaction)
 
     def get_active_btns(self):
         return [c for c in self.children if c.row == 1]
