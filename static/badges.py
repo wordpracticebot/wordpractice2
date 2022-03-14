@@ -6,7 +6,7 @@ Only the identifier is stored in the user document
 # fmt: off
 
 default = {
-    "grey": "",
+    "grey": "<:grey:748696246364930118>",
     "orange": "",
     "lightblue": "",
     "purple": "",

@@ -219,12 +219,7 @@ class WordPractice(commands.AutoShardedBot):
         self.avg_perc = []  # [wpm (33% 66%), raw, acc]
 
         # Leaderboards
-
-        # Alltime
-        # Season
-        # 24h
-        # Highspeed
-        # Recent Highscores
+        # fmt: off
 
         self.lbs = [
             Leaderboard(
@@ -246,18 +241,8 @@ class WordPractice(commands.AutoShardedBot):
                 description="Experience, Words Typed",
                 emoji="\N{CLOCK FACE ONE OCLOCK}",
                 stats=[
-                    LBCategory(
-                        self,
-                        "Experience",
-                        "xp",
-                        {"$sum": {"$arrayElemAt": ["$last24", 1]}},
-                    ),
-                    LBCategory(
-                        self,
-                        "Words Typed",
-                        "words",
-                        {"$sum": {"$arrayElemAt": ["$last24", 0]}},
-                    ),
+                    LBCategory(self,"Experience","xp", {"$sum": {"$arrayElemAt": ["$last24", 1]}}),
+                    LBCategory(self, "Words Typed", "words", {"$sum": {"$arrayElemAt": ["$last24", 0]}}),
                 ],
                 default=0,
             ),
@@ -273,6 +258,7 @@ class WordPractice(commands.AutoShardedBot):
                 default=0,
             ),
         ]
+        # fmt: on
         self.last_lb_update = time.time()
 
         self.start_time = time.time()

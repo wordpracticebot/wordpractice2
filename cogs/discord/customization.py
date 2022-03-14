@@ -15,6 +15,43 @@ from helpers.user import get_pacer_display, get_pacer_type_name, get_theme_displ
 from static import themes
 
 
+class EquipSelect(discord.ui.Select):
+    def __init__(self, ctx, user):
+        super().__init__(
+            placeholder="Select a badge to equip...",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    label=name.capitalize(),
+                    emoji=discord.PartialEmoji.from_str(icon),
+                    value=name,
+                )
+                for name, icon in zip(user._badges, user.badges)
+            ],
+            row=1,
+        )
+        self.ctx = ctx
+
+    async def update_equip(self, badge_id: list[str, str]):
+        await self.ctx.bot.mongo.update_user(
+            self.ctx.author, {"$set": {"status": badge_id}}
+        )
+
+    async def callback(self, interaction):
+        option = self.values[0]
+        self.disabled = True
+
+        embed = self.ctx.embed(
+            title=f"{icons.success} {option.capitalize()} Badge Equipped",
+            add_footer=False,
+        )
+
+        await interaction.message.edit(embed=embed, view=None)
+
+        await self.update_equip(option)
+
+
 class ThemeSelect(discord.ui.Select):
     def __init__(self, ctx):
         super().__init__(
@@ -256,8 +293,20 @@ class Customization(commands.Cog):
     @commands.slash_command()
     async def equip(self, ctx):
         """Equip a badge that you own"""
-        # Going to use a drop down menu
-        pass
+        user = await ctx.bot.mongo.fetch_user(ctx.author)
+
+        if len(user.badges) == 0:
+            embed = ctx.error_embed(
+                title=f"{icons.caution} You don't have any badges!",
+                description="Earn badges through achievements and monthly seasons",
+            )
+            return await ctx.respond(embed=embed)
+
+        view = BaseView(ctx, personal=True)
+
+        view.add_item(EquipSelect(ctx, user))
+
+        await ctx.respond(content="** **", view=view)
 
     @cooldown(5, 2)
     @commands.user_command(name="Typing Settings")
