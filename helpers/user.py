@@ -1,5 +1,7 @@
+import time
 from datetime import datetime
 
+from constants import UPDATE_24_HOUR_INTERVAL
 from static.themes import default
 
 
@@ -75,9 +77,21 @@ def get_typing_average(user, amount: int):
 
 
 def get_daily_stat(last24_stat: list[int]):
-    dt = datetime.utcnow()
+    """
+    last24_stat: expected to be 96 items in list
+    """
+    from helpers.utils import get_start_of_day
 
-    # Getting the amount of time since the start of the day
-    time_passed = -3600 * dt.hour - 60 * dt.minute - dt.second
+    # Amount of minutes left in the day
+    time_left = (
+        1440
+        + (
+            time.mktime(get_start_of_day().timetuple())
+            - time.mktime(datetime.utcnow().timetuple())
+        )
+        / 60
+    )
 
-    return sum(last24_stat[time_passed:])
+    start_index = int(time_left / UPDATE_24_HOUR_INTERVAL)
+
+    return sum(last24_stat[start_index:])

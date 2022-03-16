@@ -179,6 +179,10 @@ class Misc(commands.Cog):
 
         embed = ctx.embed(title=f"Pong! {latency} ms", add_footer=False)
 
+        await self.bot.mongo.update_user(
+            ctx.author, {"$set": {"last_voted.topgg": datetime.utcnow()}}
+        )
+
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name="help")
@@ -314,12 +318,12 @@ class Misc(commands.Cog):
             next_vote = timedelta(hours=value["time"]) + user.last_voted[name]
 
             if datetime.utcnow() >= next_vote:
-                button = discord.ui.Button(label=name, url=value["link"])
+                button = discord.ui.Button(label=value["name"], url=value["link"])
             else:
                 time_until = next_vote - datetime.utcnow()
 
                 button = discord.ui.Button(
-                    label=f"{name} - {max(time_until.seconds // 3600, 1)}h",
+                    label=f"{value['name']} - {max(time_until.seconds // 3600, 1)}h",
                     style=discord.ButtonStyle.gray,
                     disabled=True,
                 )

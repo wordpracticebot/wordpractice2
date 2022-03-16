@@ -222,11 +222,15 @@ class Events(commands.Cog):
         challenges, reward = get_daily_challenges()
 
         challenge_completed = all(
-            (p := c.progress(new_user))[0] > p[1] for c in challenges
+            (p := c.progress(new_user))[0] >= p[1] for c in challenges
+        )
+
+        challenge_completed_before = all(
+            (p := c.progress(user))[0] >= p[1] for c in challenges
         )
 
         # Checking if the user has completed all the challenges
-        if challenge_completed:
+        if challenge_completed and challenge_completed_before is False:
             new_user = reward.changer(new_user)
 
         # Updating the user's executed commands
@@ -248,8 +252,14 @@ class Events(commands.Cog):
         if user.to_mongo() != new_user.to_mongo():
             # Sending a message if the daily challenge has been completed
             if challenge_completed:
-                # TODO: send a message and the rewards that were earned
-                pass
+                embed = ctx.embed(
+                    title=":tada: Daily Challenge Complete",
+                    description=None
+                    if reward is None
+                    else f"**Reward:** {reward.desc}",
+                    add_footer=False,
+                )
+                await ctx.respond(embed=embed, ephemeral=True)
 
             # Sending a message with the achievements that have been completed
             if user.achievements != new_user.achievements:

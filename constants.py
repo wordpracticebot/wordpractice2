@@ -39,11 +39,13 @@ CAPTCHA_INTERVAL = 20  # tests
 
 # Voting
 VOTING_SITES = {
-    "Top.gg": {
+    "topgg": {
+        "name": "Top.gg",
         "time": 12,  # hours
         "link": "https://top.gg/bot/743183681182498906/vote",
     },
-    "DBL": {
+    "dbls": {
+        "name": "DBL",
         "time": 12,  # hours
         "link": "https://discordbotlist.com/bots/wordpractice/upvote",
     },

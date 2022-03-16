@@ -274,7 +274,7 @@ class ProfileView(BaseView):
                 f"**XP:** {self.user.xp:,}",
                 f"**Words:** {sum(self.user.last24[0]):,}",
             ),
-            (f"**XP:** {self.user.last24[1]:,}"),
+            (f"**XP:** {sum(self.user.last24[1]):,}"),
         ):
             pass
 
