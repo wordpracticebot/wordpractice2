@@ -66,14 +66,14 @@ class Leaderboard:
     def __init__(
         self,
         title: str,
-        description: str,
+        desc: str,
         emoji: str,
         default: int,
         stats: list[LBCategory],
     ):
         # Meta data
         self.title = title
-        self.description = description
+        self.desc = desc
         self.emoji = emoji
 
         self.stats = stats
@@ -224,21 +224,21 @@ class WordPractice(commands.AutoShardedBot):
         self.lbs = [
             Leaderboard(
                 title="Alltime",
-                description="Words Typed",
+                desc="Words Typed",
                 emoji="\N{EARTH GLOBE AMERICAS}",
                 stats=[LBCategory(self, "Words Typed", "words", "$words")],
                 default=0,
             ),
             Leaderboard(
                 title="Monthly Season",
-                description="Experience",
+                desc="Experience",
                 emoji="\N{SPORTS MEDAL}",
                 stats=[LBCategory(self, "Experience", "xp", "$xp")],
                 default=0,
             ),
             Leaderboard(
                 title="24 Hour",
-                description="Experience, Words Typed",
+                desc="Experience, Words Typed",
                 emoji="\N{CLOCK FACE ONE OCLOCK}",
                 stats=[
                     LBCategory(self,"Experience","xp", {"$sum": {"$arrayElemAt": ["$last24", 1]}}),
@@ -248,7 +248,7 @@ class WordPractice(commands.AutoShardedBot):
             ),
             Leaderboard(
                 title="High Score",
-                description="Short, Medium and Long Test",
+                desc="Short, Medium and Long Test",
                 emoji="\N{RUNNER}",
                 stats=[
                     LBCategory(self, "Short", "wpm", "$highspeed.short.wpm"),

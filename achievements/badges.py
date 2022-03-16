@@ -1,17 +1,13 @@
-from .base import Achievement, Category
+import icons
+
+from .base import Achievement, Category, XPReward
 
 
 class Badges(Achievement):
     def __init__(self, name, amt):
-        super().__init__(name, f"Earn {amt} badges", "Get some xp")
+        super().__init__(name, f"Earn {amt} badges", XPReward(2000))
 
         self.amt = amt
-
-    @staticmethod
-    def changer(user):
-        user.xp += 10
-
-        return user
 
     def callback(self, user):
         return self.changer if len(user.badges) >= self.amt else False

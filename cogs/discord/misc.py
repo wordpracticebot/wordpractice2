@@ -303,7 +303,8 @@ class Misc(commands.Cog):
 
         embed.add_field(
             name="** **\nVote Achievement Progress",
-            value=f">>> **Reward:** {a.reward}\n{bar} `{p[0]}/{p[1]}`",
+            value=("" if a.reward is None else f">>> **Reward:** {a.reward.desc}\n")
+            + f"{bar} `{p[0]}/{p[1]}`",
             inline=False,
         )
 

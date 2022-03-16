@@ -1,5 +1,6 @@
 import copy
 import time
+from collections import defaultdict
 from datetime import datetime
 from io import BytesIO
 
@@ -148,11 +149,13 @@ class Events(commands.Cog):
         for m in earned.values():
             a, t = m[-1]
 
+            name = a.name
+
             if len(files) < ACHIEVEMENTS_SHOWN:
                 if t is not None:
-                    a += f" ({t + 1})"
+                    name += f" ({t + 1})"
 
-                image = generate_achievement_image(a)
+                image = generate_achievement_image(name)
 
                 files.append(image)
             else:
@@ -191,8 +194,7 @@ class Events(commands.Cog):
             new_a = False
             # Looping through all the finished achievements
             for (a, changer), count, identifier in check_all(new_user):
-
-                a_earned[identifier] = a_earned.get(identifier, []) + [(a.name, count)]
+                a_earned[identifier] = a_earned.get(identifier, []) + [(a, count)]
                 new_a = True
 
                 # Adding achievemnt to document
@@ -217,11 +219,15 @@ class Events(commands.Cog):
             if new_a is False:
                 done_checking = True
 
-        challenges, xp = get_daily_challenges()
+        challenges, reward = get_daily_challenges()
+
+        challenge_completed = all(
+            (p := c.progress(new_user))[0] > p[1] for c in challenges
+        )
 
         # Checking if the user has completed all the challenges
-        if all((p := c.progress(new_user))[0] > p[1] for c in challenges):
-            new_user.xp += xp
+        if challenge_completed:
+            new_user = reward.changer(new_user)
 
         # Updating the user's executed commands
 
@@ -240,18 +246,45 @@ class Events(commands.Cog):
                 self.bot.cmds_run[ctx.author.id] = new_cache_cmds
 
         if user.to_mongo() != new_user.to_mongo():
-            # Checking if neaw achievements have been added
+            # Sending a message if the daily challenge has been completed
+            if challenge_completed:
+                # TODO: send a message and the rewards that were earned
+                pass
+
+            # Sending a message with the achievements that have been completed
             if user.achievements != new_user.achievements:
                 files, extra = self.get_files_from_earned(a_earned)
 
+                # Getting a list of rewards out of all the achievements
+                rewards = [
+                    b
+                    for a in a_earned.values()
+                    for c in a
+                    if (b := c[0].reward) is not None
+                ]
+
+                content = ""
+
+                if len(rewards) > 1:
+                    # Grouping the rewards by type
+                    groups = defaultdict(list)
+
+                    for r in rewards:
+                        groups[type(r)].append(r)
+
+                    r_overview = []
+
+                    for g_type, g in groups.items():
+                        r_overview += g_type.group(g)
+
+                    r_overview = "\n> ".join(r_overview)
+
+                    content += f"**Rewards Overview:**\n> {r_overview}\n** **\n"
+
                 if extra:
-                    await ctx.respond(
-                        f"and {extra} more...",
-                        files=files,
-                        ephemeral=True,
-                    )
-                else:
-                    await ctx.respond(files=files, ephemeral=True)
+                    content += f"and {extra} more achievements..."
+
+                await ctx.respond(content=content, files=files, ephemeral=True)
 
             # Replacing the user data with the new state
             await self.bot.mongo.replace_user_data(new_user)

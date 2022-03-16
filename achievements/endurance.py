@@ -8,12 +8,6 @@ class Endurance(Achievement):
         self.key = key
         self.value = value
 
-    @staticmethod
-    def changer(user):
-        user.xp += 10
-
-        return user
-
     def callback(self, user):
         return self.changer if user[self.key] >= self.value else False
 

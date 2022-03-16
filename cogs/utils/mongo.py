@@ -29,7 +29,7 @@ from constants import (
     VOTING_SITES,
 )
 from helpers.ui import create_link_view
-from helpers.user import generate_user_description
+from helpers.user import generate_user_desc
 from helpers.utils import get_start_of_day
 from static.badges import get_badge_from_id, get_badges_from_ids
 
@@ -175,8 +175,8 @@ class User(UserBase):
         return self.username + (f" {self.status}" if self.status else "")
 
     @property
-    def description(self):
-        return generate_user_description(self)
+    def desc(self):
+        return generate_user_desc(self)
 
     @property
     def is_premium(self):

@@ -7,12 +7,15 @@ from datetime import datetime
 from functools import lru_cache
 
 from constants import CHALLENGE_AMT
+from helpers.user import get_daily_stat
 from helpers.utils import get_start_of_day, weighted_lottery
+
+from .base import XPReward
 
 
 class Challenge:
-    def __init__(self, description):
-        self.description = description
+    def __init__(self, desc):
+        self.desc = desc
 
 
 class WordChallenge(Challenge):
@@ -23,7 +26,7 @@ class WordChallenge(Challenge):
         self.word_amt = word_amt
 
     def progress(self, user) -> tuple:
-        return sum(user.last24[0]), self.word_amt
+        return get_daily_stat(user.last24[0]), self.word_amt
 
 
 class VoteChallenge(Challenge):
@@ -60,9 +63,9 @@ def get_challenges_from_unix(start_unix):
     gen = random.Random()
     gen.seed(start_unix)
 
-    xp = gen.randint(15, 35) * 100
+    reward = XPReward(gen.randint(15, 35) * 100)
 
-    return challenges, xp
+    return challenges, reward
 
 
 def get_daily_challenges():

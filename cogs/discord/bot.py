@@ -26,7 +26,7 @@ class LeaderboardSelect(discord.ui.Select):
                 discord.SelectOption(
                     label=lb.title,
                     emoji=lb.emoji,
-                    description=lb.description,
+                    description=lb.desc,
                     value=str(i),
                 )
                 for i, lb in enumerate(ctx.bot.lbs)
@@ -265,18 +265,36 @@ class ProfileView(BaseView):
 
         ts = "\N{THIN SPACE}"
 
-        embed.title += f"\n\nAccount{ts*34}Season{ts*30}24h"
+        embed.title += f"\n\nAccount{ts*34}Season{ts*30}24h{ts*15}** **"
 
-        badges = " ".join(self.user.badges)
+        # TODO; add proper spacing
+        for group in (
+            (
+                f"**Words**: {self.user.words:,}",
+                f"**XP:** {self.user.xp:,}",
+                f"**Words:** {sum(self.user.last24[0]):,}",
+            ),
+            (f"**XP:** {self.user.last24[1]:,}"),
+        ):
+            pass
+
+        if self.user.badges == []:
+            badges = "They have no badges..."
+        else:
+            badges = " ".join(self.user.badges)
 
         embed.description = (
             "there is going to be something here soon\n\n"
-            f"**Badges ({len(badges)})**\n"
+            f"**Badges ({len(self.user.badges)})**\n"
             f"{badges}"
         )
 
         embed.add_field(
-            name=f"Trophies ({sum(self.user.trophies)})", value="** **"
+            name=f"Trophies ({sum(self.user.trophies)})",
+            value=f"{ts*8}".join(
+                f"{icons.trophies[i]} x{t}" for i, t in enumerate(self.user.trophies)
+            ),
+            inline=False,
         )
 
         return embed
@@ -303,7 +321,6 @@ class ProfileView(BaseView):
                 f"Accuracy:{ts*11}{hs1.acc}%\n"
                 f"Placing:{ts*17}**{placing}**"
             ),
-            inline=True,
         )
 
         # Medium high score
@@ -312,7 +329,6 @@ class ProfileView(BaseView):
         embed.add_field(
             name="21-50:",
             value=(f"{hs2.wpm}\n{hs2.acc}%\n**{placing}**"),
-            inline=True,
         )
 
         placing = self.get_placing_display(self.user, 3, 2)
@@ -320,7 +336,6 @@ class ProfileView(BaseView):
         embed.add_field(
             name="21-50:",
             value=(f"{hs3.wpm}\n{hs3.acc}%\n**{placing}**"),
-            inline=True,
         )
 
         wpm, raw, acc, cw, tw, scores = get_typing_average(self.user, 10)
@@ -448,7 +463,7 @@ class AchievementsView(ViewFromDict):
             content += (
                 f"**{emoji} {a.name}{tier_display}**\n"
                 f"> {a.desc}\n"
-                f"> **Reward:** {a.reward}\n"
+                f"> **Reward:** {a.reward.desc}\n"
                 f"> {bar} `{p[0]}/{p[1]}`\n\n"
             )
 
@@ -529,7 +544,7 @@ class Bot(commands.Cog):
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
-        challenges, xp = get_daily_challenges()
+        challenges, reward = get_daily_challenges()
 
         # Getting the unix time of tomorrow
         today = datetime.utcnow()
@@ -551,7 +566,7 @@ class Bot(commands.Cog):
             description=(
                 f"**Today's daily challenge restarts in** <t:{unix_timestamp}:R>\n\n"
                 "Complete all the daily challenges to earn:\n"
-                f"{icons.xp} **{xp} xp**"
+                f"**{reward.desc}**"
             ),
         )
 
@@ -568,7 +583,7 @@ class Bot(commands.Cog):
 
             content += (
                 f"**{emoji} Challenge {i+1}**\n"
-                f"> {c.description}\n"
+                f"> {c.desc}\n"
                 f"> {bar} `{p[0]}/{p[1]}`\n\n"
             )
 

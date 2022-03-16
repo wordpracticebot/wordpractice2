@@ -1,7 +1,9 @@
+from datetime import datetime
+
 from static.themes import default
 
 
-def generate_user_description(user):
+def generate_user_desc(user):
     """Generate a description from user data"""
     # TODO: Finish generation of descriptions
     return "Nothing much is known about this user"
@@ -70,3 +72,12 @@ def get_typing_average(user, amount: int):
 
     # wpm, raw wpm, accuracy, correct words, total words
     return wpm, raw, acc, cw, tw, scores
+
+
+def get_daily_stat(last24_stat: list[int]):
+    dt = datetime.utcnow()
+
+    # Getting the amount of time since the start of the day
+    time_passed = -3600 * dt.hour - 60 * dt.minute - dt.second
+
+    return sum(last24_stat[time_passed:])

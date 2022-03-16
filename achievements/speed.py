@@ -1,4 +1,4 @@
-from .base import Achievement, Category
+from .base import Achievement, Category, XPReward
 
 
 def highest_speed(user):
@@ -10,15 +10,9 @@ def highest_speed(user):
 # TODO: add proper rewards and descriptions for all achievements
 class Speed(Achievement):
     def __init__(self, name, wpm):
-        super().__init__(name, f"Type {wpm} wpm", "Get some xp")
+        super().__init__(name, f"Type {wpm} wpm", XPReward(5000))
 
         self.wpm = wpm
-
-    @staticmethod
-    def changer(user):
-        user.xp += 10
-
-        return user
 
     def callback(self, user):
         return self.changer if highest_speed(user) >= self.wpm else False
