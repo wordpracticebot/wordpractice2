@@ -22,16 +22,6 @@ class Tasks(commands.Cog):
         ]:
             u.start()
 
-    async def reset_extra_24_hour_stats(self):
-        await self.bot.mongo.db.users.update_many(
-            {"last24.0": [0] * 96},
-            {"$set": {"last24.0": [0]}},
-        )
-        await self.bot.mongo.db.users.update_many(
-            {"last24.1": [0] * 96},
-            {"$set": {"last24.1": [0]}},
-        )
-
     @tasks.loop(minutes=UPDATE_24_HOUR_INTERVAL)
     async def update_24_hour(self):
         every = 1440 / UPDATE_24_HOUR_INTERVAL - 1
@@ -104,7 +94,19 @@ class Tasks(commands.Cog):
     @tasks.loop(hours=24)
     async def daily_restart(self):
         # Removing excess items if user hasn't typed in last 24 hours
-        await self.reset_extra_24_hour_stats()
+        await self.bot.mongo.db.users.update_many(
+            {"last24.0": [0] * 96},
+            {"$set": {"last24.0": [0]}},
+        )
+        await self.bot.mongo.db.users.update_many(
+            {"last24.1": [0] * 96},
+            {"$set": {"last24.1": [0]}},
+        )
+
+        # Resetting daily challenge completions
+        await self.bot.mongo.db.users.update_many(
+            {"is_daily_completed": True}, {"$set": {"is_daily_completed": False}}
+        )
 
     # Clearing cache
     @tasks.loop(minutes=10)

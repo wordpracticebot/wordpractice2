@@ -97,10 +97,11 @@ class UserBase(Document):
     # Season
     xp = IntegerField(default=0)
 
+    # Daily challenge
+    is_daily_complete = BooleanField(default=False)
+
     # 24 Hour
-    last24 = ListField(
-        ListField(IntegerField), default=[[0] * 288, [0] * 288]
-    )  # words, xp
+    last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
     best24 = EmbeddedField(Score, default=None)  # best score in the last 24 hours
     test_amt = IntegerField(default=0)  # amount of tests in the last 24 hours
 
@@ -121,8 +122,8 @@ class UserBase(Document):
     )  # [first, second, third, top 10]
 
     # Cosmetics
-    _badges = ListField(StringField, default=[], attribute="badges")
-    _status = StringField(default="", attribute="status")
+    badges = ListField(StringField, default=[])
+    status = StringField(default="")
 
     # Streak of playing
     streak = IntegerField(default=0)  # days
@@ -157,12 +158,12 @@ class User(UserBase):
         collection_name = "users"
 
     @property
-    def status(self):
-        return get_badge_from_id(self._status) or ""
+    def status_emoji(self):
+        return get_badge_from_id(self.status) or ""
 
     @property
-    def badges(self):
-        return get_badges_from_ids(self._badges)
+    def badges_emojis(self):
+        return get_badges_from_ids(self.badges)
 
     @property
     def avatar_url(self):
@@ -174,7 +175,7 @@ class User(UserBase):
 
     @property
     def display_name(self):
-        return self.username + (f" {self.status}" if self.status else "")
+        return self.username + (f" {self.status_emoji}" if self.status else "")
 
     @property
     def desc(self):
@@ -315,11 +316,8 @@ class Mongo(commands.Cog):
 
         # Renaming fields to work as arguments
 
-        rename = {"_badges": "badges", "_status": "status", "id": "_id"}
-
-        for new, old in rename.items():
-            data[new] = data[old]
-            data.pop(old)
+        data["id"] = data["_id"]
+        data.pop("_id")
 
         # Building object from_mongo does not work when trying to commit
         u = self.UserBackup(**data)

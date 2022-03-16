@@ -15,6 +15,8 @@ from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_typing_average
 from helpers.utils import calculate_consistency
 
+TS = "\N{THIN SPACE}"
+
 
 class LeaderboardSelect(discord.ui.Select):
     def __init__(self, ctx):
@@ -260,38 +262,45 @@ class ProfileView(BaseView):
     def create_achievements_page(self, embed):
         return embed
 
+    def add_thin_spacing(self, num: str, intended: int):
+        s = 0
+
+        for c in num:
+            if c == ",":
+                s += 1.5
+            elif c in ["1", "(", ")"]:
+                s += 2
+            else:
+                s += 4
+
+        return f"{num}{(intended - int(s)) * TS}"
+
     def create_stats_page(self, embed):
         embed.set_thumbnail(url="https://i.imgur.com/KrXiy9S.png")
 
-        ts = "\N{THIN SPACE}"
+        embed.title += f"\n\nAccount{TS*38}Season{TS*40}24h{TS*15}** **"
 
-        embed.title += f"\n\nAccount{ts*34}Season{ts*30}24h{ts*15}** **"
+        fr_words = self.add_thin_spacing(f"{self.user.words:,}", 49)
+        fr_xp = self.add_thin_spacing(f"{self.user.xp:,}", 57)
+        fr_24_words = f"{sum(self.user.last24[0])}"
 
-        # TODO; add proper spacing
-        for group in (
-            (
-                f"**Words**: {self.user.words:,}",
-                f"**XP:** {self.user.xp:,}",
-                f"**Words:** {sum(self.user.last24[0]):,}",
-            ),
-            (f"**XP:** {sum(self.user.last24[1]):,}"),
-        ):
-            pass
+        fr_24_xp = f"{sum(self.user.last24[1]):,}"
 
         if self.user.badges == []:
             badges = "They have no badges..."
         else:
-            badges = " ".join(self.user.badges)
+            badges = " ".join(self.user.badges_emojis)
 
+        # TODO: add placings
         embed.description = (
-            "there is going to be something here soon\n\n"
+            f"**Words:** {fr_words}**XP:** {fr_xp}**Words:** {fr_24_words}\n{TS*147}**XP:** {fr_24_xp}\n\n"
             f"**Badges ({len(self.user.badges)})**\n"
             f"{badges}"
         )
 
         embed.add_field(
             name=f"Trophies ({sum(self.user.trophies)})",
-            value=f"{ts*8}".join(
+            value=f"{TS*8}".join(
                 f"{icons.trophies[i]} x{t}" for i, t in enumerate(self.user.trophies)
             ),
             inline=False,
@@ -309,17 +318,15 @@ class ProfileView(BaseView):
 
         hs1, hs2, hs3 = self.user.highspeed.values()
 
-        ts = "\N{THIN SPACE}"
-
         # Short high score
         placing = self.get_placing_display(self.user, 3, 0)
 
         embed.add_field(
-            name=f"Range:{ts*20}10-20:",
+            name=f"Range:{TS*20}10-20:",
             value=(
-                f"Wpm:{ts*22}{hs1.wpm}\n"
-                f"Accuracy:{ts*11}{hs1.acc}%\n"
-                f"Placing:{ts*17}**{placing}**"
+                f"Wpm:{TS*22}{hs1.wpm}\n"
+                f"Accuracy:{TS*11}{hs1.acc}%\n"
+                f"Placing:{TS*17}**{placing}**"
             ),
         )
 

@@ -75,7 +75,7 @@ class BadgeReward(Reward):
 
     def changer(self, user):
         if self.badge_id not in user.badges:
-            user._badges.append(self.badge_id)
+            user.badges.append(self.badge_id)
 
         return user
 

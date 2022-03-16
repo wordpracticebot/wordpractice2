@@ -219,19 +219,18 @@ class Events(commands.Cog):
             if new_a is False:
                 done_checking = True
 
-        challenges, reward = get_daily_challenges()
+        if new_user.is_daily_complete is False:
 
-        challenge_completed = all(
-            (p := c.progress(new_user))[0] >= p[1] for c in challenges
-        )
+            challenges, reward = get_daily_challenges()
 
-        challenge_completed_before = all(
-            (p := c.progress(user))[0] >= p[1] for c in challenges
-        )
+            challenge_completed = all(
+                (p := c.progress(new_user))[0] >= p[1] for c in challenges
+            )
 
-        # Checking if the user has completed all the challenges
-        if challenge_completed and challenge_completed_before is False:
-            new_user = reward.changer(new_user)
+            # Checking if the user has completed all the challenges
+            if challenge_completed:
+                new_user = reward.changer(new_user)
+                new_user.is_daily_complete = True
 
         # Updating the user's executed commands
 

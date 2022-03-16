@@ -27,7 +27,7 @@ class EquipSelect(discord.ui.Select):
                     emoji=None if icon is None else discord.PartialEmoji.from_str(icon),
                     value=name,
                 )
-                for name, icon in zip(user._badges, user.badges)
+                for name, icon in zip(user.badges, user.badges_emojis)
             ],
             row=1,
         )
