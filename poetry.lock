@@ -79,6 +79,17 @@ python2 = ["typed-ast (>=1.4.3)"]
 uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
+name = "captcha"
+version = "0.4"
+description = "A captcha library that generates audio and image CAPTCHAs."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+Pillow = "*"
+
+[[package]]
 name = "certifi"
 version = "2021.10.8"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -380,7 +391,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "af8bb3d5625941ccc884729f2bb7b3246790076296f5ecbb5577f0d2a43140d2"
+content-hash = "58a054f006719455d98dc826b9bde8908815af892bab0b841b5fa4622118aa36"
 
 [metadata.files]
 aiohttp = [
@@ -472,6 +483,10 @@ attrs = [
 black = [
     {file = "black-21.11b1-py3-none-any.whl", hash = "sha256:802c6c30b637b28645b7fde282ed2569c0cd777dbe493a41b6a03c1d903f99ac"},
     {file = "black-21.11b1.tar.gz", hash = "sha256:a042adbb18b3262faad5aff4e834ff186bb893f95ba3a8013f09de1e5569def2"},
+]
+captcha = [
+    {file = "captcha-0.4-py3-none-any.whl", hash = "sha256:529941705c01c20143d030805f82a362ba5a2af898e59426acc2c8d649ba034c"},
+    {file = "captcha-0.4.tar.gz", hash = "sha256:2ae5e8daac4f1649b57b34328bcc45ba691b5c707fc6fbdd016e213aece9a8b8"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},
