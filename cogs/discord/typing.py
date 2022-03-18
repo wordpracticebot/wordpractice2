@@ -21,7 +21,7 @@ from helpers.converters import quote_amt, word_amt
 from helpers.image import get_base, get_loading_img, get_width_height, wrap_text
 from helpers.ui import BaseView
 from helpers.user import get_pacer_display, get_pacer_type_name
-from helpers.utils import cmd_run_before
+from helpers.utils import cmd_run_before, get_test_input_stats
 
 
 def load_test_file(name):
@@ -380,6 +380,98 @@ class Typing(commands.Cog):
         await asyncio.sleep(5 - max(load_time, 0))
 
         await ctx.respond(embed=embed, file=file)
+
+        start_time = time.time()
+
+        # Waiting for the input from the user
+
+        try:
+            message = await self.bot.wait_for(
+                "message", check=lambda m: m.author == ctx.author, timeout=180
+            )
+        except asyncio.TimeoutError:
+            embed = ctx.error_embed(
+                title="Typing Test Expired",
+                description="You did not complete the typing test within 5 minutes.\n\nConsider lowering the test length so that you can finish it.",
+            )
+            return await ctx.respond(embed=embed)
+
+        end_time = round(time.time() - start_time, 2)
+
+        # Evaluating the input of the user
+        u_input = message.content.split()
+
+        cc, rws, extra_cc, cw = get_test_input_stats(u_input, quote)
+
+        # total characters
+        tc = len(" ".join(u_input)) + extra_cc
+
+        acc = round(cc / tc * 100, 2)
+        wpm = round(cc / (end_time / 12), 2)
+        raw = round(tc / (end_time / 12), 2)
+
+        xp_earned = round(1 + (cc * 2))
+
+        # Limiting the word history to 1024 characters (embed field value limit)
+        adjusted_history = [
+            rws[i]
+            for i in range(len(rws))
+            if [sum(list(map(len, rws))[: j + 1]) for j in range(len(rws))][i] < 1024
+        ]
+
+        word_history = " ".join(adjusted_history)
+
+        if len(adjusted_history) < len(rws):
+            word_history += "..."
+
+        ts = "\N{THIN SPACE}"
+
+        # Sending the results
+        embed = ctx.embed(
+            title=f"Typing Test Results{ts*110}\n\n`Statistics`",
+        )
+
+        embed.set_author(
+            name=ctx.author,
+            icon_url=ctx.author.avatar.url,
+        )
+
+        embed.set_thumbnail(url=ctx.author.avatar.url)
+
+        # Statistics
+
+        space = " "
+
+        embed.add_field(name=":person_walking: Wpm", value=wpm)
+
+        embed.add_field(name=":person_running: Raw Wpm", value=raw)
+
+        embed.add_field(name=":dart: Accuracy", value=acc)
+
+        embed.add_field(name=":clock1: Time", value=f"{end_time}s")
+
+        embed.add_field(name=f"{icons.xp} Experience", value=xp_earned)
+
+        embed.add_field(name=f":x: Mistakes", value=len(quote) - cw)
+
+        embed.add_field(
+            name="** **",
+            value=f"**Word History**\n> {word_history}\n\n```ini\n{space*13}[ Test Settings ]```\n** **",
+            inline=False,
+        )
+
+        # Settings
+        embed.add_field(
+            name=":earth_americas: Language", value=user.language.capitalize()
+        )
+
+        embed.add_field(name=":timer: Pacer", value=pacer_name)
+
+        embed.add_field(
+            name=":1234: Words", value=f"{len(quote)} ({len(raw_quote)} chars)"
+        )
+
+        await ctx.respond(embed=embed)
 
     async def handle_interval_captcha(self, ctx, user):
         # Getting the quote for the captcha

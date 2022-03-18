@@ -52,7 +52,7 @@ def get_start_of_day():
     )
 
 
-def get_test_input_stats(u_input, quote):
+def get_test_input_stats(u_input: list, quote: list):
     """
     Evaluates test from input and quote
     """
@@ -68,6 +68,7 @@ def get_test_input_stats(u_input, quote):
     w_shift = 0
 
     # Stats
+    cw = 0  # correct words
     cc = 0  # correct characters
     word_history = []
 
@@ -78,7 +79,7 @@ def get_test_input_stats(u_input, quote):
 
     while not (
         (w_index := w_shift + u) >= len(quote)
-        or (u_index := u_shift + u) > len(u_input)
+        or (u_index := u_shift + u) >= len(u_input)
     ):
         u += 1
 
@@ -89,6 +90,7 @@ def get_test_input_stats(u_input, quote):
             word_history.append(u_input[u_index])
 
             cc += len(quote[w_index]) + int(not_last_input)
+            cw += 1
 
         # If the word is not fully correct
         else:
@@ -133,12 +135,13 @@ def get_test_input_stats(u_input, quote):
 
                         word_history.append(f"__{w}__")
 
-                    # Removes the space that is added at the top of the loop
+                    # Removes the space that is added at the top of sthe loop
                     cc -= 1
 
                     continue
 
             # A word is mistyped
+            # TODO: make partial correct word evaluation more accurate
             cc += sum(int(c == w) for c, w in zip(u_input[u_index], quote[w_index]))
 
             word_history.append(f"~~{u_input[u_index]}~~ **({quote[w_index]})**")
@@ -146,7 +149,7 @@ def get_test_input_stats(u_input, quote):
             if (extra := len(quote[w_index]) - len(u_input[u_index])) > 0:
                 extra_cc += extra
 
-    return cc, word_history, extra_cc
+    return cc, word_history, extra_cc, cw
 
 
 def datetime_to_unix(date):
