@@ -37,6 +37,13 @@ RACE_EXPIRE_TIME = 120  # seconds
 TEST_RANGE = (1, 100)
 CAPTCHA_INTERVAL = 20  # tests
 
+# Typing test image
+FONT_SIZE = 19
+TOP_BORDER = 8
+SIDE_BORDER = 11
+SPACING = 5
+WRAP_WIDTH = 50
+
 # Voting
 VOTING_SITES = {
     "topgg": {

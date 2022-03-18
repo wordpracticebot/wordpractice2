@@ -2,6 +2,8 @@ import asyncio
 import json
 import random
 import textwrap
+import time
+from io import BytesIO
 from itertools import cycle, islice
 
 import discord
@@ -16,7 +18,9 @@ import word_list
 from constants import CAPTCHA_INTERVAL, MAX_RACE_JOIN, RACE_EXPIRE_TIME, TEST_RANGE
 from helpers.checks import cooldown
 from helpers.converters import quote_amt, word_amt
+from helpers.image import get_base, get_loading_img, get_width_height, wrap_text
 from helpers.ui import BaseView
+from helpers.user import get_pacer_display, get_pacer_type_name
 from helpers.utils import cmd_run_before
 
 
@@ -275,7 +279,7 @@ class Typing(commands.Cog):
         pass
 
     async def handle_dictionary_input(self, ctx, length: int):
-        if length not in range(*TEST_RANGE):
+        if length not in range(TEST_RANGE[0], TEST_RANGE[1] + 1):
             raise commands.BadArgument(
                 f"The typing test must be between {TEST_RANGE[0]} and {TEST_RANGE[1]} words"
             )
@@ -313,6 +317,69 @@ class Typing(commands.Cog):
         # Prompting a captcha at intervals to prevent automated accounts
         if (user.test_amt + 1) % CAPTCHA_INTERVAL == 0:
             return await self.handle_interval_captcha(ctx, user)
+
+        # Loading embed
+
+        test_type = "Dictionary" if is_dict else "Quote"
+        word_count = len(quote)
+
+        pacer_type_name = get_pacer_type_name(user.pacer_type)
+
+        pacer_name = get_pacer_display(user.pacer_speed)
+
+        if pacer_name != "None":
+            pacer_name += f" ({pacer_type_name})"
+
+        title = f"{user.display_name} | {test_type} Test ({word_count} words)"
+        desc = f"**Pacer:** {pacer_name}"
+
+        embed = ctx.embed(
+            title=title,
+            description=desc,
+            add_footer=False,
+        )
+
+        raw_quote = " ".join(quote)
+
+        word_list, fquote = wrap_text(raw_quote)
+
+        width, height = get_width_height(word_list)
+
+        base_img = get_base(width, height, user.theme, fquote)
+
+        loading_img = get_loading_img(base_img, user.theme[1])
+
+        buffer = BytesIO()
+        loading_img.save(buffer, "png")
+        buffer.seek(0)
+
+        file = discord.File(buffer, filename="loading.png")
+
+        embed.set_image(url="attachment://loading.png")
+
+        await ctx.respond(embed=embed, file=file, delete_after=5)
+
+        load_start = time.time()
+
+        # Generating the acutal test image
+
+        # TODO: generate pacer if the user has a pacer
+
+        buffer = BytesIO()
+        base_img.save(buffer, "png")
+        buffer.seek(0)
+
+        file = discord.File(buffer, filename="test.png")
+
+        embed = ctx.embed(title=title, description=desc, add_footer=False)
+
+        embed.set_image(url="attachment://test.png")
+
+        load_time = time.time() - load_start
+
+        await asyncio.sleep(5 - max(load_time, 0))
+
+        await ctx.respond(embed=embed, file=file)
 
     async def handle_interval_captcha(self, ctx, user):
         # Getting the quote for the captcha

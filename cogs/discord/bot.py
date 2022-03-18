@@ -120,7 +120,7 @@ class LeaderboardView(ScrollView):
 
         return embed
 
-    async def jump_to_placing(self, button, interaction):
+    async def jump_to_placing(self, interaction):
         if self.placing is None:
             return await interaction.response.send_message(
                 f"You are outside of the top {LB_DISPLAY_AMT}", ephemeral=True
@@ -467,10 +467,13 @@ class AchievementsView(ViewFromDict):
 
             emoji = icons.success if p[0] >= p[1] else icons.danger
 
+            reward_display = (
+                f"> **Reward:** {a.reward.desc}\n" if a.reward is not None else ""
+            )
+
             content += (
                 f"**{emoji} {a.name}{tier_display}**\n"
-                f"> {a.desc}\n"
-                f"> **Reward:** {a.reward.desc}\n"
+                f"> {a.desc}\n{reward_display}"
                 f"> {bar} `{p[0]}/{p[1]}`\n\n"
             )
 
