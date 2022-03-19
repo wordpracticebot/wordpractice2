@@ -1,4 +1,5 @@
 import math
+from io import BytesIO
 
 import discord
 from discord.commands import Option, SlashCommandGroup
@@ -10,9 +11,26 @@ from constants import PREMIUM_LINK
 from helpers.checks import cooldown, premium_command, user_check
 from helpers.converters import opt_user, rgb_to_hex, rqd_colour
 from helpers.errors import ImproperArgument
+from helpers.image import get_base, get_width_height, wrap_text
 from helpers.ui import BaseView
 from helpers.user import get_pacer_display, get_pacer_type_name, get_theme_display
 from static import themes
+
+
+def get_theme_preview_file(theme):
+    word_list, fquote = wrap_text(
+        "This is a preview of your theme. Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut nulla quas eius temporibus ex facilis ipsum culpa quod non possimus."
+    )
+
+    width, height = get_width_height(word_list)
+
+    img = get_base(width, height, theme, fquote)
+
+    buffer = BytesIO()
+    img.save(buffer, "png")
+    buffer.seek(0)
+
+    return discord.File(buffer, filename="preview.png")
 
 
 class EquipSelect(discord.ui.Select):
@@ -33,11 +51,6 @@ class EquipSelect(discord.ui.Select):
         )
         self.ctx = ctx
 
-    async def update_equip(self, badge_id: list[str, str]):
-        await self.ctx.bot.mongo.update_user(
-            self.ctx.author, {"$set": {"status": badge_id}}
-        )
-
     async def callback(self, interaction):
         option = self.values[0]
         self.disabled = True
@@ -49,7 +62,9 @@ class EquipSelect(discord.ui.Select):
 
         await interaction.message.edit(embed=embed, view=None)
 
-        await self.update_equip(option)
+        await self.ctx.bot.mongo.update_user(
+            self.ctx.author, {"$set": {"status": option}}
+        )
 
 
 class ThemeSelect(discord.ui.Select):
@@ -68,11 +83,6 @@ class ThemeSelect(discord.ui.Select):
         )
         self.ctx = ctx
 
-    async def update_theme(self, theme_value: list[str, str]):
-        await self.ctx.bot.mongo.update_user(
-            self.ctx.author, {"$set": {"theme": theme_value}}
-        )
-
     async def callback(self, interaction):
         option = self.values[0]
 
@@ -81,16 +91,20 @@ class ThemeSelect(discord.ui.Select):
         theme_value = themes.default[option]["colours"]
 
         embed = self.ctx.custom_embed(
-            title=f"{icons.success} Theme Selected",
+            title="Theme Selected",
             color=int(theme_value[1].replace("#", "0x"), 16),
             add_footer=False,
         )
 
-        # TODO: generate a preview image
+        file = get_theme_preview_file(theme_value)
 
-        await interaction.message.edit(embed=embed, view=None)
+        embed.set_image(url="attachment://preview.png")
 
-        await self.update_theme(theme_value)
+        await interaction.message.edit(embed=embed, file=file, view=None)
+
+        await self.ctx.bot.mongo.update_user(
+            self.ctx.author, {"$set": {"theme": theme_value}}
+        )
 
 
 def get_difficulty_choices(name):
@@ -143,25 +157,32 @@ class Customization(commands.Cog):
 
         distance = self.get_perceptual_distance(background, text)
 
+        colours = [rgb_to_hex(*background), rgb_to_hex(*text)]
+
+        embed_clr = int(colours[1].replace("#", "0x"), 16)
+
         # Warning if the perceptual distance is too low
         if distance < 45:
-            embed = ctx.embed(
+            embed = ctx.custom_embed(
                 title=f"{icons.caution} Custom Theme Applied",
                 description="Low colour contrast detected!",
+                color=embed_clr,
                 add_footer=False,
             )
         else:
-            embed = ctx.embed(
-                title=f"{icons.success} Custom Theme Applied", add_footer=False
+            embed = ctx.custom_embed(
+                title=f"{icons.success} Custom Theme Applied",
+                color=embed_clr,
+                add_footer=False,
             )
 
-        # TODO: generate a preview image
+        file = get_theme_preview_file(colours)
 
-        colour = [rgb_to_hex(*background), rgb_to_hex(*text)]
+        embed.set_image(url="attachment://preview.png")
 
-        await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed, file=file)
 
-        await self.bot.mongo.update_user(ctx.author, {"$set": {"theme": colour}})
+        await self.bot.mongo.update_user(ctx.author, {"$set": {"theme": colours}})
 
     @cooldown(8, 3)
     @theme_group.command()

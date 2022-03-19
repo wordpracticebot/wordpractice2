@@ -27,7 +27,7 @@ class HexOrRGB(commands.Converter):
 
 
 def rgb_to_hex(r, g, b):
-    return ("{:X}{:X}{:X}").format(r, g, b)
+    return ("#{:02x}{:02x}{:02x}").format(r, g, b)
 
 
 # Commonly used arguments using functions to work with groups

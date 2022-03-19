@@ -183,7 +183,7 @@ class User(UserBase):
 
     @property
     def is_premium(self):
-        return PREMIUM_LAUNCHED and self.premium
+        return not PREMIUM_LAUNCHED or self.premium
 
 
 # Backup for users that have been wiped
