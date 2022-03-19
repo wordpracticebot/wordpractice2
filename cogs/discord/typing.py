@@ -27,7 +27,7 @@ from helpers.converters import quote_amt, word_amt
 from helpers.image import get_base, get_loading_img, get_width_height, wrap_text
 from helpers.ui import BaseView
 from helpers.user import get_pacer_display, get_pacer_type_name
-from helpers.utils import cmd_run_before, get_test_input_stats
+from helpers.utils import cmd_run_before, get_test_stats
 
 
 def load_test_file(name):
@@ -36,7 +36,7 @@ def load_test_file(name):
 
 
 class TestResultView(BaseView):
-    def __init__(self, ctx):
+    def __init__(self, ctx, user, quote):
         super().__init__(ctx)
 
         # Adding link buttons because they can't be added with a decorator
@@ -47,13 +47,24 @@ class TestResultView(BaseView):
             discord.ui.Button(label="Invite Bot", url=ctx.bot.create_invite_link())
         )
 
+        self.quote = quote
+        self.user = user
+
     @discord.ui.button(label="Next Test", style=discord.ButtonStyle.primary)
     async def next_test(self, button, interaction):
         pass
 
     @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
-        pass
+        message, end_time, pacer_name, raw_quote = await Typing.personal_test_input(
+            self.user, self.ctx, 2, self.quote, interaction.response.send_message
+        )
+
+        u_input = message.content.split()
+
+        wpm, raw, acc, cc, cw, word_history = get_test_stats(
+            u_input, self.quote, end_time
+        )
 
     async def start(self, embed, message):
         self.message = await message.reply(embed=embed, view=self, mention_author=False)
@@ -346,7 +357,7 @@ class Typing(commands.Cog):
             await ctx.respond("Start the race by joining it", ephemeral=True)
 
     @staticmethod
-    async def personal_test_input(user, ctx, test_type_int, quote):
+    async def personal_test_input(user, ctx, test_type_int, quote, send):
         # Loading embed
 
         # fmt: off
@@ -401,7 +412,7 @@ class Typing(commands.Cog):
         embed.set_image(url="attachment://loading.png")
         embed.set_thumbnail(url="https://i.imgur.com/CjdaXi6.gif")
 
-        await ctx.respond(embed=embed, file=file, delete_after=5)
+        await send(embed=embed, file=file, delete_after=5)
 
         load_start = time.time()
 
@@ -452,34 +463,15 @@ class Typing(commands.Cog):
             return await self.handle_interval_captcha(ctx, user)
 
         message, end_time, pacer_name, raw_quote = await self.personal_test_input(
-            user, ctx, int(is_dict), quote
+            user, ctx, int(is_dict), quote, ctx.respond
         )
 
         # Evaluating the input of the user
         u_input = message.content.split()
 
-        cc, rws, extra_cc, cw = get_test_input_stats(u_input, quote)
-
-        # total characters
-        tc = len(" ".join(u_input)) + extra_cc
-
-        acc = round(cc / tc * 100, 2)
-        wpm = round(cc / (end_time / 12), 2)
-        raw = round(tc / (end_time / 12), 2)
+        wpm, raw, acc, cc, cw, word_history = get_test_stats(u_input, quote, end_time)
 
         xp_earned = round(1 + (cc * 2))
-
-        # Limiting the word history to 1024 characters (embed field value limit)
-        adjusted_history = [
-            rws[i]
-            for i in range(len(rws))
-            if [sum(list(map(len, rws))[: j + 1]) for j in range(len(rws))][i] < 1024
-        ]
-
-        word_history = " ".join(adjusted_history)
-
-        if len(adjusted_history) < len(rws):
-            word_history += "..."
 
         ts = "\N{THIN SPACE}"
 
@@ -529,7 +521,7 @@ class Typing(commands.Cog):
             name=":1234: Words", value=f"{len(quote)} ({len(raw_quote)} chars)"
         )
 
-        view = TestResultView(ctx)
+        view = TestResultView(ctx, user, quote)
 
         await view.start(embed, message)
 
@@ -583,12 +575,6 @@ class Typing(commands.Cog):
         is_dict: bool (if it's a dictionary race)
         quote: list
         """
-
-    @classmethod
-    async def do_practice_test(cls, ctx, user, quote):
-        message, end_time, pacer_name, raw_quote = await cls.personal_test_input(
-            user, ctx, 2, quote
-        )
 
 
 def setup(bot):

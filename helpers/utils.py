@@ -167,3 +167,28 @@ def calculate_consistency(nums: list) -> float:
 
     return round(100 * (1 - math.tanh(y + y ** 3 / 3 + y ** 5 / 5)), 2)
     # lol
+
+
+def get_test_stats(u_input, quote, end_time):
+    cc, rws, extra_cc, cw = get_test_input_stats(u_input, quote)
+
+    # total characters
+    tc = len(" ".join(u_input)) + extra_cc
+
+    acc = round(cc / tc * 100, 2)
+    wpm = round(cc / (end_time / 12), 2)
+    raw = round(tc / (end_time / 12), 2)
+
+    # Limiting the word history to 1024 characters (embed field value limit)
+    adjusted_history = [
+        rws[i]
+        for i in range(len(rws))
+        if [sum(list(map(len, rws))[: j + 1]) for j in range(len(rws))][i] < 1024
+    ]
+
+    word_history = " ".join(adjusted_history)
+
+    if len(adjusted_history) < len(rws):
+        word_history += "..."
+
+    return wpm, raw, acc, cc, cw, word_history
