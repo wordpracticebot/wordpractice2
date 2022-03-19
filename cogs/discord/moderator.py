@@ -81,7 +81,7 @@ class Moderator(commands.Cog):
 
         user_data.banned = False
 
-        await self.bot.mongo.replace_user_data(user)
+        await self.bot.mongo.replace_user_data(user_data)
 
         embed = ctx.default_embed(title="User Unbanned")
 

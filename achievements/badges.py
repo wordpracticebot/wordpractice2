@@ -1,9 +1,8 @@
-import icons
-
 from .base import Achievement, Category, XPReward
 
 
 class Badges(Achievement):
+    # TODO: fix "earn 1 badges"
     def __init__(self, name, amt):
         super().__init__(name, f"Earn {amt} badges", XPReward(2000))
 

@@ -613,7 +613,7 @@ class Bot(commands.Cog):
 
         embed.set_thumbnail(url="https://i.imgur.com/0Mzb6Js.png")
 
-        await ctx.send(embed=embed)
+        await ctx.respond(embed=embed)
 
 
 def setup(bot):

@@ -215,7 +215,7 @@ class Customization(commands.Cog):
             )
 
         embed = ctx.embed(
-            title=f"{icons.success} Language changed to: `{name.capitalize()} {difficulty.capitalize()}`",
+            title=f"{icons.success} Updated language to {name.capitalize()} {difficulty.capitalize()}",
             add_footer=False,
         )
 

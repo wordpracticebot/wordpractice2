@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import json
 import random
 import textwrap
@@ -360,7 +361,7 @@ class Typing(commands.Cog):
             islice(cycle(quotes), start, start + random.randint(*test_range))
         )
 
-        return sum(sections, [])
+        return [word for p in sections for word in p.split()]
 
     @staticmethod
     async def show_race_start(ctx, is_dict, quote):

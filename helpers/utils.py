@@ -77,10 +77,10 @@ def get_test_input_stats(u_input: list, quote: list):
 
     u = 0
 
-    while not (
-        (w_index := w_shift + u) >= len(quote)
-        or (u_index := u_shift + u) >= len(u_input)
+    while (u_index := u_shift + u) < len(u_input) and (w_index := w_shift + u) < len(
+        quote
     ):
+
         u += 1
 
         not_last_input = u_index + 1 < len(u_input)
