@@ -36,7 +36,7 @@ def load_test_file(name):
 
 
 class TestResultView(BaseView):
-    def __init__(self, ctx, user, quote):
+    def __init__(self, ctx, user, is_dict, quote, length):
         super().__init__(ctx)
 
         # Adding link buttons because they can't be added with a decorator
@@ -47,12 +47,27 @@ class TestResultView(BaseView):
             discord.ui.Button(label="Invite Bot", url=ctx.bot.create_invite_link())
         )
 
+        # Settings of the test completed
+        self.length = length
+        self.is_dict = is_dict
         self.quote = quote
+
         self.user = user
 
     @discord.ui.button(label="Next Test", style=discord.ButtonStyle.primary)
     async def next_test(self, button, interaction):
-        pass
+        if self.is_dict:
+            quote = await Typing.handle_dictionary_input(self.ctx, self.length)
+        else:
+            quote = await Typing.handle_quote_input(self.length)
+
+        await Typing.do_typing_test(
+            self.ctx,
+            self.is_dict,
+            quote,
+            self.length,
+            interaction.response.send_message,
+        )
 
     @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
@@ -287,15 +302,15 @@ class Typing(commands.Cog):
         """Take a dictionary typing test"""
         quote = await self.handle_dictionary_input(ctx, length)
 
-        await self.do_typing_test(ctx, True, quote)
+        await self.do_typing_test(ctx, True, quote, length, ctx.respond)
 
     @cooldown(5, 1)
     @tt_group.command()
     async def quote(self, ctx, length: quote_amt()):
         """Take a quote typing test"""
-        quote = await self.handle_quote_input(ctx, length)
+        quote = await self.handle_quote_input(length)
 
-        await self.do_typing_test(ctx, False, quote)
+        await self.do_typing_test(ctx, False, quote, length, ctx.respond)
 
     @cooldown(6, 2)
     @race_group.command()
@@ -309,7 +324,7 @@ class Typing(commands.Cog):
     @race_group.command()
     async def quote(self, ctx, length: quote_amt()):
         """Take a multiplayer quote typing test"""
-        quote = await self.handle_quote_input(ctx, length)
+        quote = await self.handle_quote_input(length)
 
         await self.show_race_start(ctx, False, quote)
 
@@ -319,19 +334,21 @@ class Typing(commands.Cog):
         # TODO: send a dropdown to choose race
         pass
 
-    async def handle_dictionary_input(self, ctx, length: int):
+    @staticmethod
+    async def handle_dictionary_input(ctx, length: int):
         if length not in range(TEST_RANGE[0], TEST_RANGE[1] + 1):
             raise commands.BadArgument(
                 f"The typing test must be between {TEST_RANGE[0]} and {TEST_RANGE[1]} words"
             )
 
-        user = await self.bot.mongo.fetch_user(ctx.author)
+        user = await ctx.bot.mongo.fetch_user(ctx.author)
 
         words = load_test_file(word_list.languages[user.language]["levels"][user.level])
 
         return random.sample(words, length)
 
-    async def handle_quote_input(self, ctx, length: str):
+    @staticmethod
+    async def handle_quote_input(length: str):
         test_range = word_list.quotes["lengths"][length]
 
         quotes = load_test_file("quotes.json")
@@ -345,7 +362,8 @@ class Typing(commands.Cog):
 
         return sum(sections, [])
 
-    async def show_race_start(self, ctx, is_dict, quote):
+    @staticmethod
+    async def show_race_start(ctx, is_dict, quote):
         # Storing is_dict and quote in RaceJoinView because do_race method will be called inside it
         view = RaceJoinView(ctx, is_dict, quote)
         await view.start()
@@ -455,15 +473,16 @@ class Typing(commands.Cog):
 
         return message, end_time, pacer_name, raw_quote
 
-    async def do_typing_test(self, ctx, is_dict, quote):
+    @classmethod
+    async def do_typing_test(cls, ctx, is_dict, quote, length, send):
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
         # Prompting a captcha at intervals to prevent automated accounts
         if (user.test_amt + 1) % CAPTCHA_INTERVAL == 0:
-            return await self.handle_interval_captcha(ctx, user)
+            return await cls.handle_interval_captcha(ctx, user)
 
-        message, end_time, pacer_name, raw_quote = await self.personal_test_input(
-            user, ctx, int(is_dict), quote, ctx.respond
+        message, end_time, pacer_name, raw_quote = await cls.personal_test_input(
+            user, ctx, int(is_dict), quote, send
         )
 
         # Evaluating the input of the user
@@ -521,11 +540,12 @@ class Typing(commands.Cog):
             name=":1234: Words", value=f"{len(quote)} ({len(raw_quote)} chars)"
         )
 
-        view = TestResultView(ctx, user, quote)
+        view = TestResultView(ctx, user, is_dict, quote, length)
 
         await view.start(embed, message)
 
-    async def handle_interval_captcha(self, ctx, user):
+    @staticmethod
+    async def handle_interval_captcha(ctx, user):
         # Getting the quote for the captcha
         words = load_test_file(word_list.languages["english"]["levels"]["easy"])
         captcha_word = random.choice(words)
@@ -547,7 +567,7 @@ class Typing(commands.Cog):
 
         # Waiting for user input
         try:
-            message = await self.bot.wait_for(
+            message = await ctx.bot.wait_for(
                 "message", check=lambda m: m.author == ctx.author, timeout=120
             )
         except asyncio.TimeoutError:
