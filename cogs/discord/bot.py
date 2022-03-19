@@ -609,7 +609,11 @@ class Bot(commands.Cog):
     @commands.slash_command()
     async def season(self, ctx):
         # TODO: write a description here
-        pass
+        embed = ctx.embed(title="Season Information")
+
+        embed.set_thumbnail(url="https://i.imgur.com/0Mzb6Js.png")
+
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

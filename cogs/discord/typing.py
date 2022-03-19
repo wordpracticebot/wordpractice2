@@ -15,7 +15,13 @@ from humanfriendly import format_timespan
 
 import icons
 import word_list
-from constants import CAPTCHA_INTERVAL, MAX_RACE_JOIN, RACE_EXPIRE_TIME, TEST_RANGE
+from constants import (
+    CAPTCHA_INTERVAL,
+    MAX_RACE_JOIN,
+    RACE_EXPIRE_TIME,
+    SUPPORT_SERVER_INVITE,
+    TEST_RANGE,
+)
 from helpers.checks import cooldown
 from helpers.converters import quote_amt, word_amt
 from helpers.image import get_base, get_loading_img, get_width_height, wrap_text
@@ -27,6 +33,27 @@ from helpers.utils import cmd_run_before, get_test_input_stats
 def load_test_file(name):
     with open(f"./word_list/{name}", "r") as f:
         return json.load(f)
+
+
+class TestResultView(BaseView):
+    def __init__(self, ctx):
+        super().__init__(ctx)
+
+        # Adding link buttons because they can't be added with a decorator
+        self.add_item(
+            discord.ui.Button(label="Community Server", url=SUPPORT_SERVER_INVITE)
+        )
+        self.add_item(
+            discord.ui.Button(label="Invite Bot", url=ctx.bot.create_invite_link())
+        )
+
+    @discord.ui.button(label="Next Test", style=discord.ButtonStyle.primary)
+    async def next_test(self, button, interaction):
+        pass
+
+    @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
+    async def practice_test(self, button, interaction):
+        pass
 
 
 class RaceMember:
@@ -427,6 +454,7 @@ class Typing(commands.Cog):
         ts = "\N{THIN SPACE}"
 
         # Sending the results
+        # Spacing in title keeps same spacing if word history is short
         embed = ctx.embed(
             title=f"Typing Test Results{ts*110}\n\n`Statistics`",
         )
@@ -436,7 +464,7 @@ class Typing(commands.Cog):
             icon_url=ctx.author.avatar.url,
         )
 
-        embed.set_thumbnail(url=ctx.author.avatar.url)
+        embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
 
         # Statistics
 
@@ -446,7 +474,7 @@ class Typing(commands.Cog):
 
         embed.add_field(name=":person_running: Raw Wpm", value=raw)
 
-        embed.add_field(name=":dart: Accuracy", value=acc)
+        embed.add_field(name=":dart: Accuracy", value=f"{acc}%")
 
         embed.add_field(name=":clock1: Time", value=f"{end_time}s")
 
@@ -471,7 +499,11 @@ class Typing(commands.Cog):
             name=":1234: Words", value=f"{len(quote)} ({len(raw_quote)} chars)"
         )
 
-        await ctx.respond(embed=embed)
+        view = TestResultView(ctx)
+
+        # TODO: add buttons below results
+
+        await ctx.respond(embed=embed, view=view)
 
     async def handle_interval_captcha(self, ctx, user):
         # Getting the quote for the captcha
@@ -523,6 +555,10 @@ class Typing(commands.Cog):
         is_dict: bool (if it's a dictionary race)
         quote: list
         """
+
+    @staticmethod
+    async def do_practice_test(ctx, user, quote):
+        pass
 
 
 def setup(bot):

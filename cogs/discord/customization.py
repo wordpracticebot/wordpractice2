@@ -211,13 +211,7 @@ class Customization(commands.Cog):
         )
         await ctx.respond(embed=embed)
 
-        # not inefficient because the user document is most likely cached from checking for ban
-        user = await ctx.bot.mongo.fetch_user(ctx.author)
-
-        if user.pacer_speed != value:
-            await ctx.bot.mongo.update_user(
-                ctx.author, {"$set": {"pacer_speed": value}}
-            )
+        await ctx.bot.mongo.update_user(ctx.author, {"$set": {"pacer_speed": value}})
 
     @cooldown(8, 3)
     @pacer_group.command()
@@ -232,8 +226,6 @@ class Customization(commands.Cog):
         ),
     ):
         """Change the style of your pacer"""
-        user = await ctx.bot.mongo.fetch_user(ctx.author)
-
         update = int(plane == "Vertical")
 
         embed = ctx.embed(
@@ -243,10 +235,7 @@ class Customization(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-        if user.pacer_type != update:
-            await ctx.bot.mongo.update_user(
-                ctx.author, {"$set": {"pacer_type": update}}
-            )
+        await ctx.bot.mongo.update_user(ctx.author, {"$set": {"pacer_type": update}})
 
     @cooldown(8, 3)
     @pacer_group.command()

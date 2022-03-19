@@ -179,10 +179,6 @@ class Misc(commands.Cog):
 
         embed = ctx.embed(title=f"Pong! {latency} ms", add_footer=False)
 
-        await self.bot.mongo.update_user(
-            ctx.author, {"$set": {"last_voted.topgg": datetime.utcnow()}}
-        )
-
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name="help")

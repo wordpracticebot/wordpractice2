@@ -2,7 +2,7 @@ from textwrap import TextWrapper
 
 from PIL import Image, ImageDraw, ImageFilter
 
-from constants import FONT_SIZE, SIDE_BORDER, SPACING, TOP_BORDER, WRAP_WIDTH
+from constants import SIDE_BORDER, SPACING, TOP_BORDER, WRAP_WIDTH
 from static.assets import arial
 
 WRAPPER = TextWrapper(width=WRAP_WIDTH)

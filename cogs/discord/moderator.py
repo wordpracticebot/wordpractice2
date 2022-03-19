@@ -79,7 +79,9 @@ class Moderator(commands.Cog):
         if user_data.banned is False:
             raise commands.BadArgument("That user is not banned")
 
-        await self.bot.mongo.update_user(user.id, {"$set": {"banned": False}})
+        user_data.banned = False
+
+        await self.bot.mongo.replace_user_data(user)
 
         embed = ctx.default_embed(title="User Unbanned")
 

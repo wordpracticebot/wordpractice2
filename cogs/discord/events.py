@@ -296,7 +296,7 @@ class Events(commands.Cog):
                 await ctx.respond(content=content, files=files, ephemeral=True)
 
             # Replacing the user data with the new state
-            await self.bot.mongo.replace_user_data(new_user)
+            await self.bot.mongo.replace_user_data(new_user, ctx.author)
 
 
 def setup(bot):

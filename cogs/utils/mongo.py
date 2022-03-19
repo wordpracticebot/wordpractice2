@@ -256,14 +256,8 @@ class Mongo(commands.Cog):
                             "long": default_score,
                         },
                     )
-                    try:
-                        await u.commit()
-                    except pymongo.errors.DuplicateKeyError:
-                        pass
 
-                    # Caching user
-                    self.bot.user_cache[user.id] = pickle.dumps(u.to_mongo())
-
+                    await self.replace_user_data(u)
                 else:
                     self.bot.user_cache[user_id] = None
                     return None
@@ -345,11 +339,19 @@ class Mongo(commands.Cog):
         if user_id in self.bot.user_cache:
             del self.bot.user_cache[user_id]
 
-    async def replace_user_data(self, new_user):
-        await new_user.commit()
+    async def replace_user_data(self, new_user, member=None):
+        if member is not None:
+            current = self.get_current(member)
 
-        # Caching new user data
-        self.bot.user_cache[new_user.id] = pickle.dumps(new_user.to_mongo())
+            new_user.update(current)
+
+        try:
+            await new_user.commit()
+        except pymongo.errors.DuplicateKeyError:
+            pass
+        else:
+            # Caching new user data
+            self.bot.user_cache[new_user.id] = pickle.dumps(new_user.to_mongo())
 
     # TODO: add temporary bans
     async def ban_user(
