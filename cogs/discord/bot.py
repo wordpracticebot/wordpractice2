@@ -282,7 +282,7 @@ class ProfileView(BaseView):
 
         fr_words = self.add_thin_spacing(f"{self.user.words:,}", 49)
         fr_xp = self.add_thin_spacing(f"{self.user.xp:,}", 57)
-        fr_24_words = f"{sum(self.user.last24[0])}"
+        fr_24_words = f"{sum(self.user.last24[0]):,}"
 
         fr_24_xp = f"{sum(self.user.last24[1]):,}"
 
@@ -309,6 +309,7 @@ class ProfileView(BaseView):
         return embed
 
     def create_typing_page(self, embed):
+        embed.title += f"{TS*115}** **"
         embed.set_thumbnail(url="https://i.imgur.com/BZzMGjc.png")
         embed.add_field(
             name="High Scores",
@@ -322,11 +323,11 @@ class ProfileView(BaseView):
         placing = self.get_placing_display(self.user, 3, 0)
 
         embed.add_field(
-            name=f"Range:{TS*20}10-20:",
+            name=f"Range:{TS*26}10-20:",
             value=(
-                f"Wpm:{TS*22}{hs1.wpm}\n"
-                f"Accuracy:{TS*11}{hs1.acc}%\n"
-                f"Placing:{TS*17}**{placing}**"
+                f"Wpm:{TS*28}{hs1.wpm}\n"
+                f"Accuracy:{TS*17}{hs1.acc}%\n"
+                f"Placing:{TS*23}**{placing}**"
             ),
         )
 

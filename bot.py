@@ -213,6 +213,8 @@ class WordPractice(commands.AutoShardedBot):
 
         self.cooldowns = {}
 
+        # TODO: clear cache every so often
+
         # Cache
         self.user_cache = {}
         self.cmds_run = {}  # user_id: set{cmds}
