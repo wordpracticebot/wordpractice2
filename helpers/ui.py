@@ -31,16 +31,20 @@ class CustomEmbed(discord.Embed):
 
 
 class BaseView(discord.ui.View):
-    def __init__(self, ctx, timeout=DEFAULT_VIEW_TIMEOUT, personal=True):
+    def __init__(self, ctx, timeout=DEFAULT_VIEW_TIMEOUT, message=None, personal=True):
         super().__init__(timeout=timeout)
 
         self.ctx = ctx
         self.personal = personal
 
+        # Allows regular messages to work with on_timeout
+        self.message = message
+
     async def on_timeout(self):
         if self.children:
             msg = (
-                self.ctx.interaction.message
+                self.message
+                or self.ctx.interaction.message
                 or await self.ctx.interaction.original_message()
             )
 

@@ -109,8 +109,7 @@ class LeaderboardView(ScrollView):
 
         # Adding author's own placing at the bottom
 
-        # TODO: add counts and make them show even if user is outside of calculated
-        count = 0
+        count = c.get_stat(self.user)
 
         embed.add_field(
             name=f"`{place_display}.` {self.user.display_name} - {count} {c.unit}",
@@ -609,7 +608,7 @@ class Bot(commands.Cog):
     @cooldown(6, 2)
     @commands.slash_command()
     async def season(self, ctx):
-        # TODO: write a description here
+        """Information about the monthly season and your progress in it"""
         embed = ctx.embed(title="Season Information")
 
         embed.set_thumbnail(url="https://i.imgur.com/0Mzb6Js.png")

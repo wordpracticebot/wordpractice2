@@ -55,6 +55,9 @@ class TestResultView(BaseView):
     async def practice_test(self, button, interaction):
         pass
 
+    async def start(self, embed, message):
+        self.message = await message.reply(embed=embed, view=self, mention_author=False)
+
 
 class RaceMember:
     def __init__(self, user):
@@ -325,7 +328,11 @@ class Typing(commands.Cog):
         start = random.randint(0, len(quotes) - 1)
 
         # Selecting consecutive items from list of sentences
-        return list(islice(cycle(quotes), start, start + random.randint(*test_range)))
+        sections = list(
+            islice(cycle(quotes), start, start + random.randint(*test_range))
+        )
+
+        return sum(sections, [])
 
     async def show_race_start(self, ctx, is_dict, quote):
         # Storing is_dict and quote in RaceJoinView because do_race method will be called inside it
@@ -338,16 +345,25 @@ class Typing(commands.Cog):
         if not cmd_run_before(ctx, user):
             await ctx.respond("Start the race by joining it", ephemeral=True)
 
-    async def do_typing_test(self, ctx, is_dict, quote):
-        user = await ctx.bot.mongo.fetch_user(ctx.author)
-
-        # Prompting a captcha at intervals to prevent automated accounts
-        if (user.test_amt + 1) % CAPTCHA_INTERVAL == 0:
-            return await self.handle_interval_captcha(ctx, user)
-
+    @staticmethod
+    async def personal_test_input(user, ctx, test_type_int, quote):
         # Loading embed
 
-        test_type = "Dictionary" if is_dict else "Quote"
+        # fmt: off
+        test_type = (
+            "Quote"
+            if test_type_int == 0
+
+            else "Dictionary"
+            if test_type_int == 1
+
+            else "Practice"
+            if test_type_int == 2
+            
+            else None
+        )
+        # fmt: on
+
         word_count = len(quote)
 
         pacer_type_name = get_pacer_type_name(user.pacer_type)
@@ -383,6 +399,7 @@ class Typing(commands.Cog):
         file = discord.File(buffer, filename="loading.png")
 
         embed.set_image(url="attachment://loading.png")
+        embed.set_thumbnail(url="https://i.imgur.com/CjdaXi6.gif")
 
         await ctx.respond(embed=embed, file=file, delete_after=5)
 
@@ -413,7 +430,7 @@ class Typing(commands.Cog):
         # Waiting for the input from the user
 
         try:
-            message = await self.bot.wait_for(
+            message = await ctx.bot.wait_for(
                 "message", check=lambda m: m.author == ctx.author, timeout=180
             )
         except asyncio.TimeoutError:
@@ -424,6 +441,19 @@ class Typing(commands.Cog):
             return await ctx.respond(embed=embed)
 
         end_time = round(time.time() - start_time, 2)
+
+        return message, end_time, pacer_name, raw_quote
+
+    async def do_typing_test(self, ctx, is_dict, quote):
+        user = await ctx.bot.mongo.fetch_user(ctx.author)
+
+        # Prompting a captcha at intervals to prevent automated accounts
+        if (user.test_amt + 1) % CAPTCHA_INTERVAL == 0:
+            return await self.handle_interval_captcha(ctx, user)
+
+        message, end_time, pacer_name, raw_quote = await self.personal_test_input(
+            user, ctx, int(is_dict), quote
+        )
 
         # Evaluating the input of the user
         u_input = message.content.split()
@@ -501,9 +531,7 @@ class Typing(commands.Cog):
 
         view = TestResultView(ctx)
 
-        # TODO: add buttons below results
-
-        await ctx.respond(embed=embed, view=view)
+        await view.start(embed, message)
 
     async def handle_interval_captcha(self, ctx, user):
         # Getting the quote for the captcha
@@ -556,9 +584,11 @@ class Typing(commands.Cog):
         quote: list
         """
 
-    @staticmethod
-    async def do_practice_test(ctx, user, quote):
-        pass
+    @classmethod
+    async def do_practice_test(cls, ctx, user, quote):
+        message, end_time, pacer_name, raw_quote = await cls.personal_test_input(
+            user, ctx, 2, quote
+        )
 
 
 def setup(bot):

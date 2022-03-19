@@ -26,7 +26,7 @@ from static.hints import hints
 
 
 class LBCategory:
-    def __init__(self, bot, name, unit, query):
+    def __init__(self, bot, name, unit, query, get_stat):
         self.bot = bot
         self.name = name
         self.unit = unit
@@ -34,6 +34,7 @@ class LBCategory:
         self.data = None
 
         self.query = query
+        self.get_stat = get_stat
 
     async def update(self):
         cursor = self.bot.mongo.db.users.aggregate(
@@ -118,7 +119,7 @@ async def _handle_after_welcome_check(bot, interaction, user):
             title="You are banned",
             description="Join the support server and create a ticket for a ban appeal",
         )
-        view = BaseView(ctx, personal=True)
+        view = BaseView(ctx)
 
         item = discord.ui.Button(
             style=discord.ButtonStyle.link,
@@ -228,14 +229,14 @@ class WordPractice(commands.AutoShardedBot):
                 title="Alltime",
                 desc="Words Typed",
                 emoji="\N{EARTH GLOBE AMERICAS}",
-                stats=[LBCategory(self, "Words Typed", "words", "$words")],
+                stats=[LBCategory(self, "Words Typed", "words", "$words", lambda u: u.words)],
                 default=0,
             ),
             Leaderboard(
                 title="Monthly Season",
                 desc="Experience",
                 emoji="\N{SPORTS MEDAL}",
-                stats=[LBCategory(self, "Experience", "xp", "$xp")],
+                stats=[LBCategory(self, "Experience", "xp", "$xp", lambda u: u.xp)],
                 default=0,
             ),
             Leaderboard(
@@ -243,8 +244,8 @@ class WordPractice(commands.AutoShardedBot):
                 desc="Experience, Words Typed",
                 emoji="\N{CLOCK FACE ONE OCLOCK}",
                 stats=[
-                    LBCategory(self,"Experience","xp", {"$sum": {"$arrayElemAt": ["$last24", 1]}}),
-                    LBCategory(self, "Words Typed", "words", {"$sum": {"$arrayElemAt": ["$last24", 0]}}),
+                    LBCategory(self,"Experience","xp", {"$sum": {"$arrayElemAt": ["$last24", 1]}}, lambda u: sum(u.last24[1])),
+                    LBCategory(self, "Words Typed", "words", {"$sum": {"$arrayElemAt": ["$last24", 0]}}, lambda u: sum(u.last24[0])),
                 ],
                 default=0,
             ),
@@ -253,9 +254,9 @@ class WordPractice(commands.AutoShardedBot):
                 desc="Short, Medium and Long Test",
                 emoji="\N{RUNNER}",
                 stats=[
-                    LBCategory(self, "Short", "wpm", "$highspeed.short.wpm"),
-                    LBCategory(self, "Medium", "wpm", "$highspeed.medium.wpm"),
-                    LBCategory(self, "Long", "wpm", "$highspeed.long.wpm"),
+                    LBCategory(self, "Short", "wpm", "$highspeed.short.wpm", lambda u: u.highspeed["short"].wpm),
+                    LBCategory(self, "Medium", "wpm", "$highspeed.medium.wpm", lambda u: u.highspeed["medium"].wpm),
+                    LBCategory(self, "Long", "wpm", "$highspeed.long.wpm", lambda u: u.highspeed["long"].wpm),
                 ],
                 default=0,
             ),
