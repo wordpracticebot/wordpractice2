@@ -1,4 +1,5 @@
 import calendar
+import difflib
 import math
 import random
 from datetime import datetime, timezone
@@ -77,53 +78,84 @@ def get_test_input_stats(u_input: list, quote: list):
 
     u = 0
 
+    def _eval_one_iteration(shift=0):
+        mu_index = u_index + shift
+        mw_index = w_index + shift
+
+        # The the word is fully correct
+        if u_input[mu_index] == quote[mw_index]:
+            return 0
+
+        # If the word is not fully correct
+
+        # Checking if it isn't the last word inputted
+        if mu_index + 1 < len(u_input):
+            # Space was added inside a word
+            if u_input[mu_index] + u_input[mu_index + 1] == quote[mw_index]:
+                return 1
+
+            # Extra word was added
+            if u_input[mu_index + 1] == quote[mw_index]:
+                return 2
+
+        # Checking if it isn't the last word in the quote
+        if mw_index + 1 < len(quote):
+            # Space was missed between two words
+            if u_input[mu_index] == quote[mw_index] + quote[mw_index + 1]:
+                return 3
+
+        return None
+
     while (u_index := u_shift + u) < len(u_input) and (w_index := w_shift + u) < len(
         quote
     ):
 
         u += 1
 
-        not_last_input = u_index + 1 < len(u_input)
+        result = _eval_one_iteration()
 
-        # The the word is fully correct
-        if u_input[u_index] == quote[w_index]:
-            word_history.append(u_input[u_index])
+        if u_index + 1 < len(u_input):
+            # For the space after the word
+            cc += 1
 
-            cc += len(quote[w_index]) + int(not_last_input)
-            cw += 1
+        if result is not None:
+            if result == 0:
+                word_history.append(u_input[u_index])
 
-        # If the word is not fully correct
-        else:
-            # Checking if it isn't the last word inputted
-            if not_last_input:
-                # For the space after the word
-                cc += 1
+                cc += len(quote[w_index])
+                cw += 1
 
-                # Space was added inside a word
-                if u_input[u_index] + u_input[u_index + 1] == quote[w_index]:
-                    word_history.append(f"__{quote[w_index]}__")
-                    cc += len(quote[w_index]) - 1
-                    u_shift += 1
-                    continue
+            elif result == 1:
+                word_history.append(f"__{quote[w_index]}__")
+                cc += len(quote[w_index]) - 1
+                u_shift += 1
 
-                # Extra word was added
-                if u_input[u_index + 1] == quote[w_index]:
-                    word_history.append(f"~~{u_input[u_index]}~~")
-                    w_shift -= 1
-                    continue
+            elif result == 2:
+                word_history.append(f"~~{u_input[u_index]}~~")
+                w_shift -= 1
 
-            # Checking if it isn't the last word in the quote
-            if w_index + 1 < len(quote):
-                # Space was missed between two words
-                if u_input[u_index] == quote[w_index] + quote[w_index + 1]:
-                    word_history.append(f"{quote[w_index]} __  __ {quote[w_index + 1]}")
-                    cc += len(u_input[u_index])
-                    w_shift += 1
-                    extra_cc += 1
-                    continue
+            elif result == 3:
+                word_history.append(f"{quote[w_index]} __  __ {quote[w_index + 1]}")
+                cc += len(u_input[u_index])
+                w_shift += 1
+                extra_cc += 1
 
-                # One or more words were skipped
-                if u_input[u_index] in (search := quote[w_index:]):
+            continue
+
+        # Checking if it isn't the last word in the quote
+        if w_index + 1 < len(quote):
+            # One or more words were skipped
+            if u_input[u_index] in (search := quote[w_index:]):
+                is_skipped = True
+
+                if u_index + 1 < len(u_input):
+                    # If next word is correct then it is most likely that the word was mistyped as another ones
+                    result = _eval_one_iteration(1)
+
+                    if result is not None:
+                        is_skipped = False
+
+                if is_skipped:
                     skip_index = search.index(u_input[u_index])
 
                     w_shift += skip_index - 1
@@ -140,14 +172,20 @@ def get_test_input_stats(u_input: list, quote: list):
 
                     continue
 
-            # A word is mistyped
-            # TODO: make partial correct word evaluation more accurate
-            cc += sum(int(c == w) for c, w in zip(u_input[u_index], quote[w_index]))
+        # calculating number of differences between the quote and input word
+        wc = sum(
+            map(
+                lambda x: x[0] != " ",
+                difflib.ndiff(u_input[u_index], quote[w_index]),
+            )
+        )
 
-            word_history.append(f"~~{u_input[u_index]}~~ **({quote[w_index]})**")
+        cc += max(len(quote[w_index]) - wc, 0)
 
-            if (extra := len(quote[w_index]) - len(u_input[u_index])) > 0:
-                extra_cc += extra
+        word_history.append(f"~~{u_input[u_index]}~~ **({quote[w_index]})**")
+
+        if (extra := len(quote[w_index]) - len(u_input[u_index])) > 0:
+            extra_cc += extra
 
     return cc, word_history, extra_cc, cw
 

@@ -1,5 +1,5 @@
 import discord
-from discord.commands import Option
+from discord.commands import Option, permissions
 from discord.ext import commands
 
 from constants import SUPPORT_SERVER_ID
@@ -30,6 +30,7 @@ class Moderator(commands.Cog):
 
     # TODO: finish wipe command and allow for user to be wiped in ban command
     @commands.slash_command(guild_ids=[SUPPORT_SERVER_ID])
+    @permissions.is_owner()
     async def wipe(self, ctx, user: rqd_user()):
         """Wipe a user"""
         user_data = await self.handle_moderator_user(ctx, user)
@@ -42,6 +43,7 @@ class Moderator(commands.Cog):
 
     # TODO: only enable for users who are moderators
     @commands.slash_command(guild_ids=[SUPPORT_SERVER_ID])
+    @permissions.is_owner()
     async def ban(
         self,
         ctx,
@@ -72,6 +74,7 @@ class Moderator(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(guild_ids=[SUPPORT_SERVER_ID])
+    @permissions.is_owner()
     async def unban(self, ctx, user: rqd_user()):
         """Unban a user"""
         user_data = await self.handle_moderator_user(ctx, user)
@@ -88,6 +91,7 @@ class Moderator(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(guild_ids=[SUPPORT_SERVER_ID])
+    @permissions.is_owner()
     async def cat(self, ctx, user: rqd_user()):
         """View the infractions of a user"""
 

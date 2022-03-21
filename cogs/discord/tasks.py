@@ -103,10 +103,11 @@ class Tasks(commands.Cog):
             {"$set": {"last24.1": [0]}},
         )
 
-        # Resetting daily challenge completions
+        # Resetting daily challenge completions and tests
         await self.bot.mongo.db.users.update_many(
             {"is_daily_completed": True}, {"$set": {"is_daily_completed": False}}
         )
+        await self.bot.mongo.db.users.update_many({}, {"$set": {"test_amt": 0}})
 
     # Clearing cache
     @tasks.loop(minutes=10)

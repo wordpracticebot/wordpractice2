@@ -61,6 +61,7 @@ def get_typing_average(user, amount: int):
     for score in scores:
         wpm += score.wpm
         raw += score.raw
+        acc += score.acc
 
         cw += score.cw
         tw += score.tw

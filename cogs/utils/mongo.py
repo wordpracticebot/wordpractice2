@@ -52,13 +52,12 @@ class Score(EmbeddedDocument):
     tw = IntegerField(default=0)
 
     # User input
-    u_input = StringField(default="")
+    u_input = ListField(StringField, default=[])
 
     # Quote
     quote = ListField(StringField, default=[])
 
-    # xp earnings
-    earnings = IntegerField(default=0)
+    xp = IntegerField(default=0)
     timestamp = DateTimeField(default=datetime.min)
 
 
@@ -85,6 +84,7 @@ class UserBase(Document):
     discriminator = IntegerField(required=True)
     avatar = StringField(default=None)
     created_at = DateTimeField(default=datetime.utcnow())
+    premium = BooleanField(default=False)
     views = IntegerField(default=0)  # TODO: update views
 
     # list of commands that the user has run before (for context tutorials)
@@ -103,12 +103,12 @@ class UserBase(Document):
     # 24 Hour
     last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
     best24 = EmbeddedField(Score, default=None)  # best score in the last 24 hours
-    test_amt = IntegerField(default=0)  # amount of tests in the last 24 hours
+
+    # Daily
+    test_amt = IntegerField(default=0)  # amount of tests in the last day
 
     # Typing
-    highspeed = DictField(
-        StringField(), EmbeddedField(Score), required=True
-    )  # short, medium, long
+    highspeed = DictField(StringField(), EmbeddedField(Score), required=True)
     verified = FloatField(default=0.0)
 
     # Other statistics
@@ -142,7 +142,6 @@ class UserBase(Document):
     # Infractions
     infractions = ListField(EmbeddedField(Infraction), default=[])
     banned = BooleanField(default=False)
-    premium = BooleanField(default=False)
 
     # Settings
     theme = ListField(StringField, default=DEFAULT_THEME)
@@ -395,7 +394,7 @@ class Mongo(commands.Cog):
 
         try:
             await user.send(embed=embed, view=view)
-        except:  # TODO: add proper exception here
+        except Exception:
             pass
 
 

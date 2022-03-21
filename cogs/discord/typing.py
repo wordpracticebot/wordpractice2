@@ -1,9 +1,9 @@
 import asyncio
-import itertools
 import json
 import random
 import textwrap
 import time
+from datetime import datetime
 from io import BytesIO
 from itertools import cycle, islice
 
@@ -34,6 +34,19 @@ from helpers.utils import cmd_run_before, get_test_stats
 def load_test_file(name):
     with open(f"./word_list/{name}", "r") as f:
         return json.load(f)
+
+
+def get_test_zone(cw):
+    if cw in range(10, 21):
+        return "short", "(10-20) words"
+
+    elif cw in range(21, 50):
+        return "medium", "(21-50) words"
+
+    elif cw in range(51, 100):
+        return "long", "(51-100) words"
+
+    return None
 
 
 class TestResultView(BaseView):
@@ -82,8 +95,57 @@ class TestResultView(BaseView):
             u_input, self.quote, end_time
         )
 
-    async def start(self, embed, message):
-        self.message = await message.reply(embed=embed, view=self, mention_author=False)
+        ts = "\N{THIN SPACE}"
+
+        # Sending the results
+        # Spacing in title keeps same spacing if word history is short
+        embed = self.ctx.embed(
+            title=f"Practice Test Results (Repeat){ts*75}\n\n`Statistics`",
+        )
+
+        embed.set_author(
+            name=self.ctx.author,
+            icon_url=self.ctx.author.display_avatar.url,
+        )
+
+        embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
+
+        # Statistics
+
+        space = " "
+
+        embed.add_field(name=":person_walking: Wpm", value=wpm)
+
+        embed.add_field(name=":person_running: Raw Wpm", value=raw)
+
+        embed.add_field(name=":dart: Accuracy", value=f"{acc}%")
+
+        embed.add_field(name=":clock1: Time", value=f"{end_time}s")
+
+        embed.add_field(name=f":x: Mistakes", value=len(u_input) - cw)
+
+        embed.add_field(name="** **", value="** **")
+
+        embed.add_field(
+            name="** **",
+            value=f"**Word History**\n> {word_history}\n\n```ini\n{space*13}[ Test Settings ]```\n** **",
+            inline=False,
+        )
+
+        # Settings
+        embed.add_field(
+            name=":earth_americas: Language", value=self.user.language.capitalize()
+        )
+
+        embed.add_field(name=":timer: Pacer", value=pacer_name)
+
+        embed.add_field(
+            name=":1234: Words", value=f"{len(self.quote)} ({len(raw_quote)} chars)"
+        )
+
+        await message.reply(embed=embed, mention_author=False)
+
+        await self.ctx.respond("Warning: Practice tests aren't saved")
 
 
 class RaceMember:
@@ -503,7 +565,7 @@ class Typing(commands.Cog):
 
         embed.set_author(
             name=ctx.author,
-            icon_url=ctx.author.avatar.url,
+            icon_url=ctx.author.display_avatar.url,
         )
 
         embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
@@ -522,7 +584,7 @@ class Typing(commands.Cog):
 
         embed.add_field(name=f"{icons.xp} Experience", value=xp_earned)
 
-        embed.add_field(name=f":x: Mistakes", value=len(quote) - cw)
+        embed.add_field(name=f":x: Mistakes", value=len(u_input) - cw)
 
         embed.add_field(
             name="** **",
@@ -543,7 +605,48 @@ class Typing(commands.Cog):
 
         view = TestResultView(ctx, user, is_dict, quote, length)
 
-        await view.start(embed, message)
+        view.message = await message.reply(embed=embed, view=view, mention_author=False)
+
+        # Checking if there is a new high score
+
+        user.xp += xp_earned
+        user.words += cw
+        user.test_amt += 1
+
+        result = get_test_zone(cw)
+
+        if result is None:
+            await ctx.respond(
+                "Warning: Tests below 10 correct words are not saved", ephemeral=True
+            )
+        else:
+            zone, zone_range = result
+
+            score = ctx.bot.mongo.Score(
+                wpm=wpm,
+                raw=raw,
+                acc=acc,
+                cw=cw,
+                tw=len(quote),
+                u_input=u_input,
+                quote=quote,
+                xp=xp_earned,
+                timestamp=datetime.utcnow(),
+            )
+
+            user.scores.append(score)
+
+            if wpm > user.highspeed[zone].wpm:
+                user.highspeed[zone] = score
+
+                embed = ctx.embed(
+                    title=":trophy: New High Score",
+                    description=f"You got a new high score of **{wpm}** on the {zone} test {zone_range}",
+                )
+
+                await ctx.respond(embed=embed)
+
+        await ctx.bot.mongo.replace_user_data(user)
 
     @staticmethod
     async def handle_interval_captcha(ctx, user):
