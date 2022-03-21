@@ -16,7 +16,7 @@ DEFAULT_VIEW_TIMEOUT = 25  # seconds
 DEFAULT_THEME = default["Material"]["colours"]
 AUTO_MODERATOR_NAME = "Thomas Worker 99"  # :)
 
-SUPPORT_SERVER_ID = 742960643312713738
+SUPPORT_SERVER_ID = 903449744196661270
 
 # Testing
 DEBUG_GUILD = 903449744196661270
@@ -59,7 +59,7 @@ VOTING_SITES = {
 }
 
 # Premium
-PREMIUM_LAUNCHED = False
+PREMIUM_LAUNCHED = True
 PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
 
 # Daily challenges

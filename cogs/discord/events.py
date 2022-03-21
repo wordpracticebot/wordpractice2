@@ -68,7 +68,12 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
-        if isinstance(error, discord.commands.CheckFailure):
+        if isinstance(error, (discord.commands.CheckFailure, commands.CheckFailure)):
+            if isinstance(error, errors.BotMissingPermissions):
+                embed = ctx.error_embed(
+                    title=f"{icons.caution} Bot Missing Permissions",
+                )
+                await ctx.respond(embed=embed, ephemeral=True)
             return
 
         error = error.original

@@ -347,6 +347,7 @@ class ProfileView(BaseView):
 
         wpm, raw, acc, cw, tw, scores = get_typing_average(self.user, 10)
 
+        # TODO: consistency seems to be wrong
         if len(scores) > 1:
             con = calculate_consistency([s.wpm for s in scores])
         else:
@@ -359,7 +360,7 @@ class ProfileView(BaseView):
         acc_perc = self.get_perc_sign(acc * len(scores), self.ctx.bot.avg_perc[2])
 
         # Consistency percentile is based on arbitrary values
-        con_perc = "+" if con >= 75 else "/" if con >= 50 else "-"
+        con_perc = "+" if con >= 75 else "/" if con >= 40 else "-"
 
         embed.add_field(
             name="Average (Last 10 Tests)",

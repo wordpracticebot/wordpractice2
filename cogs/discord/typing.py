@@ -225,6 +225,9 @@ class RaceJoinView(BaseView):
             "You left the race", ephemeral=True
         )
 
+    async def handle_race(self):
+        await self.ctx.respond("race command not finished")
+
     async def add_racer(self, interaction):
         if len(self.racers) == MAX_RACE_JOIN:
             return
@@ -253,6 +256,9 @@ class RaceJoinView(BaseView):
             if self.children:
                 for child in self.children:
                     child.disabled = True
+
+            # Starting the race
+            await self.handle_race()
 
         else:
             bucket = self.race_join_cooldown.get_bucket(interaction.message)

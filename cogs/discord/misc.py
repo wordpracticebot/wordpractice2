@@ -17,6 +17,7 @@ from constants import (
 )
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
+from helpers.utils import format_slash_command
 
 
 def _add_commands(embed, cmds):
@@ -25,8 +26,10 @@ def _add_commands(embed, cmds):
     wrapper = TextWrapper(width=55)
 
     for cmd in cmds:
+        cmd_name = format_slash_command(cmd)
+
         embed.add_field(
-            name=f"/{cmd.name}",
+            name=f"/{cmd_name}",
             value="\n".join(wrapper.wrap(text=cmd.description))
             or "No command description",
             inline=False,
@@ -35,12 +38,10 @@ def _add_commands(embed, cmds):
     return embed
 
 
-async def _filter_commands(ctx, commands):
+async def _filter_commands(ctx, cmds):
     ctx.testing = True  # skipping displaying
 
-    iterator = filter(
-        lambda c: isinstance(c, (SlashCommand, SlashCommandGroup)), commands
-    )
+    iterator = filter(lambda c: isinstance(c, (SlashCommand, SlashCommandGroup)), cmds)
 
     async def predicate(cmd):
         try:

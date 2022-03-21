@@ -1,3 +1,4 @@
+import discord
 from discord.ext import commands
 
 from constants import SUPPORT_SERVER_ID
