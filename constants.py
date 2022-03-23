@@ -59,7 +59,7 @@ VOTING_SITES = {
 }
 
 # Premium
-PREMIUM_LAUNCHED = True
+PREMIUM_LAUNCHED = False
 PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
 
 # Daily challenges

@@ -226,7 +226,7 @@ class WordPractice(commands.AutoShardedBot):
 
         self.lbs = [
             Leaderboard(
-                title="Alltime",
+                title="All Time",
                 desc="Words Typed",
                 emoji="\N{EARTH GLOBE AMERICAS}",
                 stats=[LBCategory(self, "Words Typed", "words", "$words", lambda u: u.words)],

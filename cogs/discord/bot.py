@@ -43,7 +43,7 @@ class LeaderboardSelect(discord.ui.Select):
         self.view.category = value
         self.view.placing = None
 
-        self.stat = self.view.lb.default
+        self.view.stat = self.view.lb.default
 
         await self.view.update_all(interaction)
 
@@ -161,11 +161,15 @@ class LeaderboardView(ScrollView):
 
         # Adding any buttons
         elif active_amt < metric_amt:
-            for i in metrics[active_amt:]:
+            for i in range(len(metrics[active_amt:])):
+                amt = i + active_amt
+
                 btn = discord.ui.Button(
                     row=1,
                 )
-                btn.callback = lambda interaction: self.change_stat(interaction, i)
+
+                btn.callback = lambda interaction: self.change_stat(interaction, amt)
+
                 self.add_item(btn)
 
         # Renaming and changing colour of buttons
@@ -341,7 +345,7 @@ class ProfileView(BaseView):
         placing = self.get_placing_display(self.user, 3, 2)
 
         embed.add_field(
-            name="21-50:",
+            name="51-100:",
             value=(f"{hs3.wpm}\n{hs3.acc}%\n**{placing}**"),
         )
 

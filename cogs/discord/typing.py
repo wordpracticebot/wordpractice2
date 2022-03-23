@@ -40,13 +40,30 @@ def get_test_zone(cw):
     if cw in range(10, 21):
         return "short", "(10-20) words"
 
-    elif cw in range(21, 50):
+    elif cw in range(21, 51):
         return "medium", "(21-50) words"
 
     elif cw in range(51, 100):
         return "long", "(51-100) words"
 
     return None
+
+
+def get_test_type(test_type_int: int):
+    # fmt: off
+    return (
+        "Quote"
+        if test_type_int == 0
+
+        else "Dictionary"
+        if test_type_int == 1
+
+        else "Practice"
+        if test_type_int == 2
+        
+        else None
+        )
+    # fmt: on
 
 
 class TestResultView(BaseView):
@@ -85,9 +102,14 @@ class TestResultView(BaseView):
 
     @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
-        message, end_time, pacer_name, raw_quote = await Typing.personal_test_input(
+        result = await Typing.personal_test_input(
             self.user, self.ctx, 2, self.quote, interaction.response.send_message
         )
+
+        if result is None:
+            return
+
+        message, end_time, pacer_name, raw_quote = result
 
         u_input = message.content.split()
 
@@ -179,11 +201,15 @@ class RaceLeaveButton(discord.ui.Button):
 
 
 class RaceJoinView(BaseView):
-    def __init__(self, ctx, *test_data):
+    def __init__(self, ctx, is_dict, quote):
         super().__init__(ctx, timeout=None, personal=False)
 
-        self.test_data = test_data
+        self.is_dict = is_dict
+        self.quote = quote
         self.racers = {}  # id: user object (for preserve uniqueness)
+
+        self.race_msg = None
+        self.start_time = None
 
         # Cooldown for joining the race (prevents spamming join and leave)
         self.race_join_cooldown = commands.CooldownMapping.from_cooldown(
@@ -225,8 +251,110 @@ class RaceJoinView(BaseView):
             "You left the race", ephemeral=True
         )
 
-    async def handle_race(self):
-        await self.ctx.respond("race command not finished")
+    def get_race_embed(self):
+        test_type = get_test_type(int(self.is_dict))
+
+        embed = self.ctx.embed(
+            title=f"{test_type} Race",
+            description="\n".join(
+                f"{r.data.display_name}"
+                + ("" if r.result is None else ":checkered_flag:")
+                for r in self.racers.values()
+            ),
+            add_footer=False,
+        )
+
+        return embed
+
+    async def handle_racer_finish(self, m):
+        end_time = time.time() - self.start_time
+
+        r = self.racers[m.author.id]
+
+        u_input = m.content.split()
+
+        wpm, raw, acc, cc, cw, word_history = get_test_stats(
+            u_input, self.quote, end_time
+        )
+
+        xp_earned = round(1 + (cc * 2))
+
+        r.result = self.ctx.bot.mongo.Score(
+            wpm=wpm,
+            raw=raw,
+            acc=acc,
+            cw=cw,
+            tw=len(self.quote),
+            u_input=u_input,
+            quote=self.quote,
+            xp=xp_earned,
+            timestamp=datetime.utcnow(),
+        )
+        embed = self.get_race_embed()
+        embed.set_image(url="attachment://test.png")
+
+        await self.race_msg.edit(embed=embed)
+
+    # TODO: automatically end the race after a certain amount of time
+    async def do_race(self, interaction):
+        # Fetching the data for all the users in the race
+        for r in self.racers.values():
+            r.data = await self.ctx.bot.mongo.fetch_user(r.user)
+
+        author_theme = self.racers[self.ctx.author.id].data.theme
+
+        raw_quote = " ".join(self.quote)
+
+        word_list, fquote = wrap_text(raw_quote)
+
+        width, height = get_width_height(word_list)
+
+        base_img = get_base(width, height, author_theme, fquote)
+
+        loading_img = get_loading_img(base_img, author_theme[1])
+
+        buffer = BytesIO()
+        loading_img.save(buffer, "png")
+        buffer.seek(0)
+
+        # Loading image
+        embed = self.get_race_embed()
+
+        file = discord.File(buffer, filename="loading.png")
+
+        embed.set_image(url="attachment://loading.png")
+        embed.set_thumbnail(url="https://i.imgur.com/CjdaXi6.gif")
+
+        await interaction.response.send_message(embed=embed, file=file, delete_after=5)
+
+        load_start = time.time()
+
+        buffer = BytesIO()
+        base_img.save(buffer, "png")
+        buffer.seek(0)
+
+        file = discord.File(buffer, filename="test.png")
+
+        embed = self.get_race_embed()
+
+        embed.set_image(url="attachment://test.png")
+
+        load_time = time.time() - load_start
+
+        await asyncio.sleep(5 - max(load_time, 0))
+
+        self.race_msg = await self.ctx.respond(embed=embed, file=file)
+
+        self.start_time = time.time()
+
+        # Waiting for the input from all the users
+        message = await self.ctx.bot.wait_for(
+            "message",
+            check=lambda m: (r := self.racers.get(m.author.id, None)) is not None
+            and r.result is None,
+        )
+
+        await self.handle_racer_finish(message)
 
     async def add_racer(self, interaction):
         if len(self.racers) == MAX_RACE_JOIN:
@@ -257,9 +385,6 @@ class RaceJoinView(BaseView):
                 for child in self.children:
                     child.disabled = True
 
-            # Starting the race
-            await self.handle_race()
-
         else:
             bucket = self.race_join_cooldown.get_bucket(interaction.message)
 
@@ -274,13 +399,14 @@ class RaceJoinView(BaseView):
                 )
 
         self.racers[user.id] = RaceMember(user)
+
         embed = self.get_race_join_embed(is_author)
 
         await msg.edit(embed=embed, view=self)
 
         if is_author:
             self.stop()
-            await Typing.do_race(self.ctx, self.racers, *self.test_data)
+            await self.do_race(interaction)
 
         else:
             return await interaction.response.send_message(
@@ -312,7 +438,7 @@ class RaceJoinView(BaseView):
 
         embed = self.ctx.error_embed(
             title=f"{icons.caution} Race Expired",
-            description=f"The race was not started in {timespan}",
+            description=f"The race was not started within {timespan}",
         )
 
         await self.ctx.interaction.edit_original_message(embed=embed, view=None)
@@ -447,20 +573,7 @@ class Typing(commands.Cog):
     async def personal_test_input(user, ctx, test_type_int, quote, send):
         # Loading embed
 
-        # fmt: off
-        test_type = (
-            "Quote"
-            if test_type_int == 0
-
-            else "Dictionary"
-            if test_type_int == 1
-
-            else "Practice"
-            if test_type_int == 2
-            
-            else None
-        )
-        # fmt: on
+        test_type = get_test_type(test_type_int)
 
         word_count = len(quote)
 
@@ -536,7 +649,8 @@ class Typing(commands.Cog):
                 title="Typing Test Expired",
                 description="You did not complete the typing test within 5 minutes.\n\nConsider lowering the test length so that you can finish it.",
             )
-            return await ctx.respond(embed=embed)
+            await ctx.respond(embed=embed)
+            return None
 
         end_time = round(time.time() - start_time, 2)
 
@@ -550,9 +664,12 @@ class Typing(commands.Cog):
         if (user.test_amt + 1) % CAPTCHA_INTERVAL == 0:
             return await cls.handle_interval_captcha(ctx, user)
 
-        message, end_time, pacer_name, raw_quote = await cls.personal_test_input(
-            user, ctx, int(is_dict), quote, send
-        )
+        result = await cls.personal_test_input(user, ctx, int(is_dict), quote, send)
+
+        if result is None:
+            return
+
+        message, end_time, pacer_name, raw_quote = result
 
         # Evaluating the input of the user
         u_input = message.content.split()
@@ -692,19 +809,15 @@ class Typing(commands.Cog):
             embed = ctx.embed(
                 title=f"{icons.success} Captcha Completed", add_footer=False
             )
-            return await ctx.respond(embed=embed)
+            await ctx.respond(embed=embed)
+
+            user.test_amt += 1
+
+            return await ctx.bot.mongo.replace_user_data(user)
 
         embed = ctx.error_embed(title=f"{icons.caution} Captcha Failed")
 
         await ctx.respond(embed=embed)
-
-    @staticmethod
-    async def do_race(ctx, racers, is_dict, quote):
-        """
-        racers: dict
-        is_dict: bool (if it's a dictionary race)
-        quote: list
-        """
 
 
 def setup(bot):
