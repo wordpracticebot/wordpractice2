@@ -48,6 +48,16 @@ class LeaderboardSelect(discord.ui.Select):
         await self.view.update_all(interaction)
 
 
+class LeaderboardButton(discord.ui.Button):
+    def __init__(self, stat):
+        super().__init__(row=1)
+
+        self.stat = stat
+
+    async def callback(self, interaction):
+        await self.view.change_stat(interaction, self.stat)
+
+
 class LeaderboardView(ScrollView):
     def __init__(self, ctx, user):
         super().__init__(ctx, int(LB_DISPLAY_AMT / 10), row=2, compact=False)
@@ -136,6 +146,7 @@ class LeaderboardView(ScrollView):
         """
         For changing the page in the metric button callbacks
         """
+        print(stat)
         if self.stat != stat:
             self.stat = stat
             self.page = 0
@@ -157,18 +168,13 @@ class LeaderboardView(ScrollView):
         # Removing any extra buttons
         if active_amt > metric_amt:
             for c in active_btns[metric_amt:]:
+                print("removing", c.label)
                 self.remove_item(c)
 
         # Adding any buttons
         elif active_amt < metric_amt:
             for i in range(len(metrics[active_amt:])):
-                amt = i + active_amt
-
-                btn = discord.ui.Button(
-                    row=1,
-                )
-
-                btn.callback = lambda interaction: self.change_stat(interaction, amt)
+                btn = LeaderboardButton(i + active_amt)
 
                 self.add_item(btn)
 
