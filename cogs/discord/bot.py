@@ -146,7 +146,6 @@ class LeaderboardView(ScrollView):
         """
         For changing the page in the metric button callbacks
         """
-        print(stat)
         if self.stat != stat:
             self.stat = stat
             self.page = 0
@@ -168,7 +167,6 @@ class LeaderboardView(ScrollView):
         # Removing any extra buttons
         if active_amt > metric_amt:
             for c in active_btns[metric_amt:]:
-                print("removing", c.label)
                 self.remove_item(c)
 
         # Adding any buttons

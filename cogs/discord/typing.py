@@ -347,14 +347,30 @@ class RaceJoinView(BaseView):
 
         self.start_time = time.time()
 
-        # Waiting for the input from all the users
-        message = await self.ctx.bot.wait_for(
-            "message",
-            check=lambda m: (r := self.racers.get(m.author.id, None)) is not None
-            and r.result is None,
+        # TODO: make race expire after 120 minutes
+        for _ in range(len(self.racers)):
+            # Waiting for the input from all the users
+            message = await self.ctx.bot.wait_for(
+                "message",
+                check=lambda m: (r := self.racers.get(m.author.id, None)) is not None
+                and r.result is None,
+            )
+
+            try:
+                await message.delete()
+            except Exception as e:
+                print(type(e))
+
+            await self.handle_racer_finish(message)
+
+        await self.send_race_results()
+
+    async def send_race_results(self):
+        embed = self.ctx.embed(
+            title="Race Results",
         )
 
-        await self.handle_racer_finish(message)
+        await self.ctx.respond(embed=embed)
 
     async def add_racer(self, interaction):
         if len(self.racers) == MAX_RACE_JOIN:
