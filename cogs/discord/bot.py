@@ -18,6 +18,10 @@ from helpers.utils import calculate_consistency
 TS = "\N{THIN SPACE}"
 
 
+class ScoreView(ScrollView):
+    pass
+
+
 class LeaderboardSelect(discord.ui.Select):
     def __init__(self, ctx):
         super().__init__(
@@ -87,7 +91,7 @@ class LeaderboardView(ScrollView):
         )
 
         embed = self.ctx.embed(
-            title=f"{c.name} Leaderboard | Page {self.page + 1}",
+            title=f"{self.lb.title} Leaderboard | Page {self.page + 1}",
             description=f"The leaderboard updates again in <t:{time_until_next_update}:R>",
         )
 
@@ -121,8 +125,10 @@ class LeaderboardView(ScrollView):
 
         count = c.get_stat(self.user)
 
+        line_space = "\N{BOX DRAWINGS LIGHT HORIZONTAL}"
+
         embed.add_field(
-            name=f"`{place_display}.` {self.user.display_name} - {count} {c.unit}",
+            name=f"{line_space * 13}\n`{place_display}.` {self.user.display_name} - {count} {c.unit}",
             value="** **",
             inline=False,
         )
@@ -355,9 +361,8 @@ class ProfileView(BaseView):
 
         wpm, raw, acc, cw, tw, scores = get_typing_average(self.user, 10)
 
-        # TODO: consistency seems to be wrong
         if len(scores) > 1:
-            con = calculate_consistency([s.wpm for s in scores])
+            con = calculate_consistency([s.wpm + s.raw + s.acc for s in scores])
         else:
             con = 0
 
@@ -368,7 +373,7 @@ class ProfileView(BaseView):
         acc_perc = self.get_perc_sign(acc * len(scores), self.ctx.bot.avg_perc[2])
 
         # Consistency percentile is based on arbitrary values
-        con_perc = "+" if con >= 75 else "/" if con >= 40 else "-"
+        con_perc = "+" if con >= 70 else "/" if con >= 40 else "-"
 
         embed.add_field(
             name="Average (Last 10 Tests)",
@@ -623,6 +628,13 @@ class Bot(commands.Cog):
         embed.set_thumbnail(url="https://i.imgur.com/0Mzb6Js.png")
 
         await ctx.respond(embed=embed)
+
+    @cooldown(6, 2)
+    async def scores(self, ctx, user: opt_user()):
+        """View and download a user's recent typing scores"""
+        user = await user_check(ctx, user)
+
+        view = ScoreView()
 
 
 def setup(bot):

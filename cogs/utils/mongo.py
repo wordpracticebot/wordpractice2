@@ -276,7 +276,7 @@ class Mongo(commands.Cog):
             u = self.User.build_from_mongo(uj)
 
         # Updating in cache
-        self.bot.user_cache[user.id] = pickle.dumps(uj)
+        self.bot.user_cache[user_id] = pickle.dumps(uj)
 
         return u
 
