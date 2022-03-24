@@ -171,14 +171,14 @@ class TestResultView(BaseView):
 
 
 class RaceMember:
-    def __init__(self, user):
+    def __init__(self, user, data):
         """
         user: user object
         """
         self.user = user
 
         # User's database document
-        self.data = None
+        self.data = data
 
         # The test score (mongo.Score)
         self.result = None
@@ -273,9 +273,13 @@ class RaceJoinView(BaseView):
 
         u_input = m.content.split()
 
-        wpm, raw, acc, cc, cw, word_history = get_test_stats(
-            u_input, self.quote, end_time
-        )
+        wpm, raw, _, cc, cw, _ = get_test_stats(u_input, self.quote, end_time)
+
+        ratio = cc / len(" ".join(self.quote))
+
+        acc = round(ratio, 2)
+        wpm = round(wpm * ratio, 2)
+        raw = round(raw * ratio, 2)
 
         xp_earned = round(1 + (cc * 2))
 
@@ -297,9 +301,6 @@ class RaceJoinView(BaseView):
 
     # TODO: automatically end the race after a certain amount of time
     async def do_race(self, interaction):
-        # Fetching the data for all the users in the race
-        for r in self.racers.values():
-            r.data = await self.ctx.bot.mongo.fetch_user(r.user)
 
         author_theme = self.racers[self.ctx.author.id].data.theme
 
@@ -347,7 +348,14 @@ class RaceJoinView(BaseView):
 
         self.start_time = time.time()
 
-        # TODO: make race expire after 120 minutes
+        try:
+            await asyncio.wait_for(self.wait_for_inputs, timeout=11)
+        except asyncio.TimeoutError:
+            await self.ctx.respond("race ended")
+
+        await self.send_race_results()
+
+    async def wait_for_inputs(self):
         for _ in range(len(self.racers)):
             # Waiting for the input from all the users
             message = await self.ctx.bot.wait_for(
@@ -363,8 +371,6 @@ class RaceJoinView(BaseView):
 
             await self.handle_racer_finish(message)
 
-        await self.send_race_results()
-
     async def send_race_results(self):
         embed = self.ctx.embed(
             title="Race Results",
@@ -377,6 +383,17 @@ class RaceJoinView(BaseView):
             return
 
         user = interaction.user
+
+        user_data = await self.ctx.bot.mongo.fetch_user(user)
+
+        # TODO: create an account for them
+        if user_data is None:
+            return
+
+        if user_data.banned:
+            return await interaction.response.send_message(
+                "You are banned", ephemeral=True
+            )
 
         if user.id in self.racers:
             return await interaction.response.send_message(
@@ -414,7 +431,7 @@ class RaceJoinView(BaseView):
                     ephemeral=True,
                 )
 
-        self.racers[user.id] = RaceMember(user)
+        self.racers[user.id] = RaceMember(user, user_data)
 
         embed = self.get_race_join_embed(is_author)
 
