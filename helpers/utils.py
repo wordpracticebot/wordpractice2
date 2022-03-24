@@ -98,11 +98,19 @@ def get_test_input_stats(u_input: list, quote: list):
             if u_input[mu_index + 1] == quote[mw_index]:
                 return 2
 
+            if mw_index + 1 < len(quote):
+                # Space was added at wrong point between two words
+                if (
+                    u_input[mu_index] + u_input[mu_index + 1]
+                    == quote[mw_index] + quote[mw_index + 1]
+                ):
+                    return 3
+
         # Checking if it isn't the last word in the quote
         if mw_index + 1 < len(quote):
             # Space was missed between two words
             if u_input[mu_index] == quote[mw_index] + quote[mw_index + 1]:
-                return 3
+                return 4
 
         return None
 
@@ -110,13 +118,13 @@ def get_test_input_stats(u_input: list, quote: list):
         quote
     ):
 
+        if u_index < len(u_input) and u_index != 0:
+            # For the space after the word
+            cc += 1
+
         u += 1
 
         result = _eval_one_iteration()
-
-        if u_index + 1 < len(u_input):
-            # For the space after the word
-            cc += 1
 
         if result is not None:
             if result == 0:
@@ -135,6 +143,13 @@ def get_test_input_stats(u_input: list, quote: list):
                 w_shift -= 1
 
             elif result == 3:
+                combined = u_input[u_index] + u_input[u_index + 1]
+                word_history.append(f"__{combined}__")
+                cc += len(combined)
+                w_shift += 1
+                u_shift += 1
+
+            elif result == 4:
                 word_history.append(f"{quote[w_index]} __  __ {quote[w_index + 1]}")
                 cc += len(u_input[u_index])
                 w_shift += 1
