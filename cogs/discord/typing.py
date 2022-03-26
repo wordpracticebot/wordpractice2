@@ -534,6 +534,7 @@ class Typing(commands.Cog):
         f"Take a multiplayer typing test. Up to {MAX_RACE_JOIN} other users can join your race.",
     )
 
+    @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(5, 1)
     @tt_group.command()
     async def dictionary(self, ctx, length: word_amt()):
@@ -542,6 +543,7 @@ class Typing(commands.Cog):
 
         await self.do_typing_test(ctx, True, quote, length, ctx.respond)
 
+    @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(5, 1)
     @tt_group.command()
     async def quote(self, ctx, length: quote_amt()):
@@ -550,6 +552,7 @@ class Typing(commands.Cog):
 
         await self.do_typing_test(ctx, False, quote, length, ctx.respond)
 
+    @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(6, 2)
     @race_group.command()
     async def dictionary(self, ctx, length: word_amt()):
@@ -558,6 +561,7 @@ class Typing(commands.Cog):
 
         await self.show_race_start(ctx, True, quote)
 
+    @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(6, 2)
     @race_group.command()
     async def quote(self, ctx, length: quote_amt()):
@@ -566,6 +570,7 @@ class Typing(commands.Cog):
 
         await self.show_race_start(ctx, False, quote)
 
+    @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(6, 2)
     @commands.user_command(name="Typing Challenge")
     async def race_challenge(self, ctx, member: discord.Member):

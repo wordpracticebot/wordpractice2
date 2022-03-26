@@ -78,6 +78,11 @@ class Events(commands.Cog):
 
         error = error.original
 
+        if isinstance(error, errors.MaxConcurrencyReached):
+            return await ctx.respond(
+                "Another instance of this command is still being run!", ephemeral=True
+            )
+
         if isinstance(error, discord.errors.Forbidden):
             try:
                 await self.send_basic_error(

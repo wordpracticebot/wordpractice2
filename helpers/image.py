@@ -11,7 +11,10 @@ WRAPPER = TextWrapper(width=WRAP_WIDTH)
 def get_width_height(word_list):
     largest_item = max(word_list, key=lambda x: arial.getsize(x)[0])
 
-    width = arial.getsize(largest_item)[0] + SIDE_BORDER * 2
+    width = (
+        max(WRAP_WIDTH * arial.getsize(" ")[0], arial.getsize(largest_item)[0])
+        + SIDE_BORDER * 2
+    )
 
     line_spacing = arial.getsize("A")[1] + SPACING
 

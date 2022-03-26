@@ -228,7 +228,7 @@ def get_test_stats(u_input, quote, end_time):
     # total characters
     tc = len(" ".join(u_input)) + extra_cc
 
-    acc = round(cc / tc * 100, 2)
+    acc = 0 if tc == 0 else round(cc / tc * 100, 2)
     wpm = round(cc / (end_time / 12), 2)
     raw = round(tc / (end_time / 12), 2)
 
@@ -236,7 +236,7 @@ def get_test_stats(u_input, quote, end_time):
     adjusted_history = [
         rws[i]
         for i in range(len(rws))
-        if [sum(list(map(len, rws))[: j + 1]) for j in range(len(rws))][i] < 1024
+        if [sum(list(map(len, rws))[: j + 1]) for j in range(len(rws))][i] + 1 <= 1024
     ]
 
     word_history = " ".join(adjusted_history)
