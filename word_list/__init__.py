@@ -57,7 +57,7 @@ languages = {
     },
     "indonesian": {
         "levels": {
-            "easy": "indonesian/indonesian/json",
+            "easy": "indonesian/indonesian.json",
             "normal": "indonesian/indonesian_1k.json",
         },
     },
