@@ -222,8 +222,8 @@ class WordPractice(commands.AutoShardedBot):
         self.avg_perc = []  # [wpm (33% 66%), raw, acc]
 
         # Leaderboards
-        # fmt: off
 
+        # fmt: off
         self.lbs = [
             Leaderboard(
                 title="All Time",

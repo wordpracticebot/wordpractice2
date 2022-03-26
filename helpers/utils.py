@@ -195,9 +195,11 @@ def get_test_input_stats(u_input: list, quote: list):
             )
         )
 
-        cc += max(len(quote[w_index]) - wc, 0)
+        print(wc, u_input[u_index])
 
-        word_history.append(f"~~{u_input[u_index]}~~ **({quote[w_index]})**")
+        cc += max(len(u_input[u_index]) - wc, 0)
+
+        word_history.append(f"~~{u_input[u_index]}~~ **({u_input[u_index]})**")
 
         if (extra := len(quote[w_index]) - len(u_input[u_index])) > 0:
             extra_cc += extra

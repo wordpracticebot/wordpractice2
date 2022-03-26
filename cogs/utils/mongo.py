@@ -29,7 +29,7 @@ from constants import (
     VOTING_SITES,
 )
 from helpers.ui import create_link_view
-from helpers.user import generate_user_desc
+from helpers.user import generate_user_desc, get_expanded_24_hour_stat
 from helpers.utils import get_start_of_day
 from static.badges import get_badge_from_id, get_badges_from_ids
 
@@ -147,7 +147,6 @@ class UserBase(Document):
     theme = ListField(StringField, default=DEFAULT_THEME)
     language = StringField(default="english")
     level = StringField(default="easy")
-    links = DictField(StringField(), StringField(), default={})
     pacer_speed = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"
     pacer_type = IntegerField(default=0)  # 0 = horizontal, 1 = vertical
 
@@ -183,6 +182,24 @@ class User(UserBase):
     @property
     def is_premium(self):
         return not PREMIUM_LAUNCHED or self.premium
+
+    def add_words(self, words: int):
+        self.words += words
+
+        if words != 0:
+            current = get_expanded_24_hour_stat(self.last24[0])
+            current[-1] += words
+
+            self.last24[0] = current
+
+    def add_xp(self, xp: int):
+        self.xp += xp
+
+        if xp != 0:
+            current = get_expanded_24_hour_stat(self.last24[1])
+            current[-1] += xp
+
+            self.last24[1] = current
 
 
 # Backup for users that have been wiped

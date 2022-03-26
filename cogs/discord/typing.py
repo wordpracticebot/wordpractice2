@@ -19,8 +19,9 @@ import word_list
 from constants import (
     CAPTCHA_INTERVAL,
     MAX_RACE_JOIN,
-    RACE_EXPIRE_TIME,
+    RACE_JOIN_EXPIRE_TIME,
     SUPPORT_SERVER_INVITE,
+    TEST_EXPIRE_TIME,
     TEST_RANGE,
 )
 from helpers.checks import cooldown
@@ -47,6 +48,10 @@ def get_test_zone(cw):
         return "long", "(51-100) words"
 
     return None
+
+
+def get_xp_earned(cc):
+    return round(1 + (cc * 2))
 
 
 def get_test_type(test_type_int: int):
@@ -113,7 +118,7 @@ class TestResultView(BaseView):
 
         u_input = message.content.split()
 
-        wpm, raw, acc, cc, cw, word_history = get_test_stats(
+        wpm, raw, acc, _, cw, word_history = get_test_stats(
             u_input, self.quote, end_time
         )
 
@@ -167,7 +172,7 @@ class TestResultView(BaseView):
 
         await message.reply(embed=embed, mention_author=False)
 
-        await self.ctx.respond("Warning: Practice tests aren't saved")
+        await self.ctx.respond("Warning: Practice tests are not saved")
 
 
 class RaceMember:
@@ -281,7 +286,7 @@ class RaceJoinView(BaseView):
         wpm = round(wpm * ratio, 2)
         raw = round(raw * ratio, 2)
 
-        xp_earned = round(1 + (cc * 2))
+        xp_earned = get_xp_earned(cc)
 
         r.result = self.ctx.bot.mongo.Score(
             wpm=wpm,
@@ -349,9 +354,14 @@ class RaceJoinView(BaseView):
         self.start_time = time.time()
 
         try:
-            await asyncio.wait_for(self.wait_for_inputs, timeout=11)
+            await asyncio.wait_for(self.wait_for_inputs, timeout=TEST_EXPIRE_TIME)
         except asyncio.TimeoutError:
-            await self.ctx.respond("race ended")
+            embed = self.ctx.error_embed(
+                title="Race Ended",
+                description=f"The race automatically ends after {format_timespan(TEST_EXPIRE_TIME)}",
+            )
+
+            await self.ctx.respond(embed=embed)
 
         await self.send_race_results()
 
@@ -460,14 +470,14 @@ class RaceJoinView(BaseView):
         return len(self.racers)
 
     # Using a task to expire the race because the built in view timeout restarts after each interaction
-    @tasks.loop(seconds=RACE_EXPIRE_TIME, count=2)
+    @tasks.loop(seconds=RACE_JOIN_EXPIRE_TIME, count=2)
     async def timeout_race(self):
         if self.timeout_race.current_loop == 1:
             await self.send_expire_race_message()
             self.stop()
 
     async def send_expire_race_message(self):
-        timespan = format_timespan(RACE_EXPIRE_TIME)
+        timespan = format_timespan(RACE_JOIN_EXPIRE_TIME)
 
         embed = self.ctx.error_embed(
             title=f"{icons.caution} Race Expired",
@@ -675,12 +685,14 @@ class Typing(commands.Cog):
 
         try:
             message = await ctx.bot.wait_for(
-                "message", check=lambda m: m.author == ctx.author, timeout=180
+                "message",
+                check=lambda m: m.author == ctx.author,
+                timeout=TEST_EXPIRE_TIME,
             )
         except asyncio.TimeoutError:
             embed = ctx.error_embed(
                 title="Typing Test Expired",
-                description="You did not complete the typing test within 5 minutes.\n\nConsider lowering the test length so that you can finish it.",
+                description=f"You did not complete the typing test within {format_timespan(TEST_EXPIRE_TIME)}.\n\nConsider lowering the test length so that you can finish it.",
             )
             await ctx.respond(embed=embed)
             return None
@@ -709,7 +721,7 @@ class Typing(commands.Cog):
 
         wpm, raw, acc, cc, cw, word_history = get_test_stats(u_input, quote, end_time)
 
-        xp_earned = round(1 + (cc * 2))
+        xp_earned = get_xp_earned(cc)
 
         ts = "\N{THIN SPACE}"
 
@@ -765,13 +777,19 @@ class Typing(commands.Cog):
 
         # Checking if there is a new high score
 
-        user.xp += xp_earned
-        user.words += cw
         user.test_amt += 1
+
+        user.add_xp(xp_earned)
+        user.add_words(cw)
 
         result = get_test_zone(cw)
 
-        if result is None:
+        if acc < 75:
+            await ctx.respond(
+                "Warning: Tests below 75% accuracy are not saved", ephemeral=True
+            )
+
+        elif result is None:
             await ctx.respond(
                 "Warning: Tests below 10 correct words are not saved", ephemeral=True
             )

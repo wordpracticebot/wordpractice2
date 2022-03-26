@@ -8,7 +8,7 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
-from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH
+from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH, SCORES_PER_PAGE
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
@@ -18,8 +18,19 @@ from helpers.utils import calculate_consistency
 TS = "\N{THIN SPACE}"
 
 
+class GraphView(ViewFromDict):
+    def __init__(self, ctx, user):
+        pass
+
+
 class ScoreView(ScrollView):
-    pass
+    def __init__(self, ctx, user):
+        super().__init__(ctx, int(len(user.scores) / SCORES_PER_PAGE))
+
+        self.user = user
+
+    async def create_page(self):
+        return self.ctx.embed(title=f"Scores Page {self.page}")
 
 
 class LeaderboardSelect(discord.ui.Select):
@@ -541,6 +552,9 @@ class Bot(commands.Cog):
     async def handle_graph_cmd(self, ctx, user):
         user = await user_check(ctx, user)
 
+        view = GraphView(ctx, user)
+        await view.start()
+
     @cooldown(6, 2)
     @commands.slash_command()
     async def leaderboard(self, ctx):
@@ -632,9 +646,11 @@ class Bot(commands.Cog):
     @cooldown(6, 2)
     async def scores(self, ctx, user: opt_user()):
         """View and download a user's recent typing scores"""
-        user = await user_check(ctx, user)
+        user_data = await user_check(ctx, user)
 
-        view = ScoreView()
+        view = ScoreView(ctx, user_data)
+
+        await view.start()
 
 
 def setup(bot):

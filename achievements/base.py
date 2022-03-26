@@ -16,10 +16,11 @@ from static.badges import get_badge_from_id
 
 
 class Achievement:
-    def __init__(self, name: str, desc: str, reward=None):
+    def __init__(self, name: str, desc: str, reward=None, hidden=False):
         self.name = name
         self.desc = desc
         self.reward = reward
+        self.hidden = hidden
 
     @property
     def changer(self):
@@ -93,7 +94,7 @@ class XPReward(Reward):
         super().__init__(desc=XPReward.template.format(self.amt))
 
     def changer(self, user):
-        user.xp += self.amt
+        user.add_xp(self.amt)
 
         return user
 
