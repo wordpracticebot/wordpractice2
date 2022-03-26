@@ -5,7 +5,7 @@ import textwrap
 import time
 from datetime import datetime
 from io import BytesIO
-from itertools import cycle, islice
+from itertools import cycle, groupby, islice
 
 import discord
 from captcha.image import ImageCaptcha
@@ -263,7 +263,7 @@ class RaceJoinView(BaseView):
             title=f"{test_type} Race",
             description="\n".join(
                 f"{r.data.display_name}"
-                + ("" if r.result is None else ":checkered_flag:")
+                + ("" if r.result is None else " :checkered_flag:")
                 for r in self.racers.values()
             ),
             add_footer=False,
@@ -282,7 +282,7 @@ class RaceJoinView(BaseView):
 
         ratio = cc / len(" ".join(self.quote))
 
-        acc = round(ratio, 2)
+        acc = round(ratio * 100, 2)
         wpm = round(wpm * ratio, 2)
         raw = round(raw * ratio, 2)
 
@@ -302,7 +302,6 @@ class RaceJoinView(BaseView):
 
         await self.race_msg.edit(embed=embed)
 
-    # TODO: automatically end the race after a certain amount of time
     async def do_race(self, interaction):
 
         author_theme = self.racers[self.ctx.author.id].data.theme
@@ -382,9 +381,49 @@ class RaceJoinView(BaseView):
     async def send_race_results(self):
         embed = self.ctx.embed(
             title="Race Results",
+            description="Results are adjusted to the portion of test completed",
         )
 
+        key_wpm = lambda r: r.result.wpm if r.result else 0
+
+        sorted_results = sorted(self.racers.values(), key=key_wpm, reverse=True)
+
+        grouped_results = groupby(sorted_results, key=key_wpm)
+
+        for i, (_, g) in enumerate(grouped_results):
+            place_display = f"`{i+1}.`" if i != 0 else ":first_place:"
+
+            long_space = "\N{IDEOGRAPHIC SPACE}"
+
+            for r in g:
+                user = r.data
+                score = r.result
+
+                if r.result is None:
+                    value = f"** **{long_space}__Not Finished__"
+                else:
+                    value = (
+                        f"** **{long_space}:person_walking: Wpm: **{score.wpm}**\n"
+                        f"{long_space} :person_running: Raw Wpm: **{score.raw}**\n"
+                        f"{long_space} :dart: Accuracy: **{score.acc}%**"
+                    )
+                    user.scores.append(score)
+                    user.add_words(score.cw)
+                    user.add_xp(score.xp)
+
+                embed.add_field(
+                    name=f"{place_display} {r.data.display_name}",
+                    value=value,
+                    inline=False,
+                )
+
+        embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
+
         await self.ctx.respond(embed=embed)
+
+        for r in self.racers.values():
+            if r.result is not None:
+                await self.ctx.bot.mongo.replace_user_data(r.data)
 
     async def add_racer(self, interaction):
         if len(self.racers) == MAX_RACE_JOIN:
