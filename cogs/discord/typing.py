@@ -354,7 +354,7 @@ class RaceJoinView(BaseView):
         self.start_time = time.time()
 
         try:
-            await asyncio.wait_for(self.wait_for_inputs, timeout=TEST_EXPIRE_TIME)
+            await asyncio.wait_for(self.wait_for_inputs(), timeout=TEST_EXPIRE_TIME)
         except asyncio.TimeoutError:
             embed = self.ctx.error_embed(
                 title="Race Ended",

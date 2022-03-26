@@ -1,3 +1,5 @@
+from itertools import groupby
+
 from .base import Achievement, Category
 
 
@@ -28,21 +30,25 @@ class Perfectionist(Achievement):
     def __init__(self, amt):
         super().__init__(
             "Perfectionist",
-            "Complete {} typing tests in a row with 100% accuracy. (Minimum 60 wpm)",
+            f"Complete {amt} typing tests in a row with 100% accuracy.",
         )
 
         self.amt = amt
 
     def callback(self, user):
-        pass
+        return self.changer if self.get_scores_in_a_row(user) >= self.amt else False
 
     def progress(self, user):
-        # TODO: find a way to check how many True in a row
-        return user
+        return self.get_scores_in_a_row(user), self.amt
 
     @staticmethod
     def get_scores_in_a_row(user):
-        return [s.acc == 100 and s.wpm >= 60 for s in user.scores]
+        result = [s.acc == 100 for s in user.scores]
+
+        if result[-1] is False:
+            return 0
+
+        return [sum(i) for r, i in groupby(result) if r][-1]
 
 
 endurance = Category(
@@ -60,5 +66,6 @@ endurance = Category(
             (1, 5, 10, 25, 50, 100, 200, 350, 500, 750),
             "Vote for wordPractice {} time{}",
         ),
+        [Perfectionist(amt) for amt in [10, 25, 50, 100, 250, 500]],
     ],
 )

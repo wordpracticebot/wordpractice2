@@ -195,8 +195,6 @@ def get_test_input_stats(u_input: list, quote: list):
             )
         )
 
-        print(wc, u_input[u_index])
-
         cc += max(len(u_input[u_index]) - wc, 0)
 
         word_history.append(f"~~{u_input[u_index]}~~ **({u_input[u_index]})**")
