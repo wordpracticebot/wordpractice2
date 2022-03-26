@@ -1,3 +1,4 @@
+import math
 import time
 from datetime import datetime, timezone
 
@@ -25,12 +26,33 @@ class GraphView(ViewFromDict):
 
 class ScoreView(ScrollView):
     def __init__(self, ctx, user):
-        super().__init__(ctx, int(len(user.scores) / SCORES_PER_PAGE))
+        super().__init__(ctx, math.ceil(len(user.scores) / SCORES_PER_PAGE))
 
         self.user = user
 
     async def create_page(self):
-        return self.ctx.embed(title=f"Scores Page {self.page}")
+        start_page = self.page * SCORES_PER_PAGE
+        end_page = min((self.page + 1) * SCORES_PER_PAGE, len(self.user.scores))
+
+        embed = self.ctx.embed(
+            title=f"{self.user.display_name} | Scores ({start_page + 1} - {end_page})"
+        )
+
+        for i, s in enumerate(self.user.scores[start_page:end_page]):
+            timestamp = int(time.mktime(s.timestamp.timetuple()))
+
+            embed.add_field(
+                name=f"Score {start_page + i + 1}",
+                value=(
+                    f">>> **Wpm:** {s.wpm}\n"
+                    f"**Raw:** 108.21 {s.raw}\n"
+                    f"**Accuracy:** {s.acc}% ({s.cw} / {s.tw})\n"
+                    f"**XP:** {s.xp}\n"
+                    f"**Timestamp:** <t:{timestamp}:R>"
+                ),
+                inline=False,
+            )
+        return embed
 
 
 class LeaderboardSelect(discord.ui.Select):
@@ -648,6 +670,13 @@ class Bot(commands.Cog):
     async def scores(self, ctx, user: opt_user()):
         """View and download a user's recent typing scores"""
         user_data = await user_check(ctx, user)
+
+        if len(user_data.scores) == 0:
+            embed = ctx.error_embed(
+                title=f"{icons.caution} User does not have any scores saved",
+                description="Complete at least 1 typing test or race",
+            )
+            return await ctx.respond(embed=embed)
 
         view = ScoreView(ctx, user_data)
 
