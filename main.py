@@ -10,8 +10,8 @@ from collections import namedtuple
 
 import discord
 
-import constants
 from bot import WordPractice
+from constants import DEBUG_GUILD
 
 Config = namedtuple(
     "Config",
@@ -23,6 +23,7 @@ Config = namedtuple(
         "COMMAND_LOG",
         "TEST_LOG",
         "IMPORTANT_LOG",
+        "ERROR_LOG",
     ],
 )
 
@@ -37,11 +38,14 @@ def main():
         COMMAND_LOG=os.environ["COMMAND_LOG"],
         TEST_LOG=os.environ["TEST_LOG"],
         IMPORTANT_LOG=os.environ["IMPORTANT_LOG"],
+        ERROR_LOG=os.environ["ERROR_LOG"],
     )
 
     intents = discord.Intents.default()
+
+    # Privileged intents
     intents.members = True
-    intents.messages = True
+    intents.message_content = True
 
     allowed_mentions = discord.AllowedMentions(everyone=False, roles=False)
 
@@ -50,8 +54,7 @@ def main():
         config=config,
         allowed_mentions=allowed_mentions,
         chunk_guilds_at_startup=False,
-        case_insensitive=True,
-        debug_guild=constants.DEBUG_GUILD,
+        debug_guild=DEBUG_GUILD,
         intents=intents,
     )
 

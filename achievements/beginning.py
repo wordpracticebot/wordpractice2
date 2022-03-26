@@ -5,7 +5,7 @@ class StartingOut(Achievement):
     def __init__(self):
         super().__init__("Starting out", "Use wordPractice for the first time")
 
-    async def callback(self, user):
+    def callback(self, user):
         return bool(user)
 
 

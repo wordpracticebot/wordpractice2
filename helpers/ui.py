@@ -1,73 +1,115 @@
-import random
+import time
 
 import discord
 
-from static.hints import hints
+import icons
+from constants import DEFAULT_VIEW_TIMEOUT, ERROR_CLR, SUPPORT_SERVER_INVITE
+
+
+def create_link_view(links: dict[str, str]):
+    """
+    links: {NAME: URL}
+    """
+    view = discord.ui.View()
+
+    for name, url in links.items():
+        view.add_item(discord.ui.Button(label=name, url=url))
+
+    return view
 
 
 class CustomEmbed(discord.Embed):
-    def __init__(self, bot, add_footer=True, **kwargs):
+    def __init__(self, bot, hint=None, add_footer=True, **kwargs):
         if add_footer:
             self._footer = {}
 
-            hint = self.get_random_hint()
-
             self._footer["text"] = f"Hint: {hint}"
-            if bot.user.avatar:
-                self._footer["icon_url"] = bot.user.avatar.url
+            if bot.user.display_avatar:
+                self._footer["icon_url"] = bot.user.display_avatar.url
 
         super().__init__(**kwargs)
 
-    # TODO: add proper hints
-    def get_random_hint(self):
-        return random.choice(hints)
-
 
 class BaseView(discord.ui.View):
-    def __init__(self, personal=True):
-        super().__init__()
+    def __init__(self, ctx, timeout=DEFAULT_VIEW_TIMEOUT, message=None, personal=True):
+        super().__init__(timeout=timeout)
 
+        self.ctx = ctx
         self.personal = personal
 
+        # Allows regular messages to work with on_timeout
+        self.message = message
+
+    async def on_timeout(self):
+        if self.children:
+            msg = (
+                self.message
+                or self.ctx.interaction.message
+                or await self.ctx.interaction.original_message()
+            )
+
+            if not msg.components:
+                return
+
+            for child in self.children:
+                child.disabled = True
+
+            await msg.edit(view=self)
+
     async def interaction_check(self, interaction):
-        if self.personal or (
+        if self.personal is False or (
             interaction.user and interaction.user.id == self.ctx.author.id
         ):
             return True
 
         await interaction.response.send_message(
-            "You are not the author of this command", ephemeral=True
+            "You are not the author of this command!", ephemeral=True
         )
         return False
 
-    async def on_error(self, error, item, interaction):
-        if interaction.response.is_done():
-            await interaction.followup.send("An unknown error happened", ephemeral=True)
-        else:
-            await interaction.response.send_message(
-                "An unknown error happened", ephemeral=True
-            )
+    async def on_error(self, error, item, inter):
+        ctx = self.ctx
 
-        # TODO: remove this in production + log error
-        raise error
+        self = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
+
+        embed = ctx.error_embed(
+            title=f"{icons.danger} Unexpected Error",
+            description="Report this through our support server so we can fix it.",
+        )
+
+        if inter.response.is_done():
+            await inter.followup.send(embed=embed, view=self, ephemeral=True)
+        else:
+            await inter.response.send_message(embed=embed, view=self, ephemeral=True)
+
+        timestamp = int(time.time())
+
+        embed = ctx.embed(
+            title="Unexpected Error (in view)",
+            description=(
+                f"**Server:** {inter.guild} ({inter.guild.id})\n"
+                f"**User:** {inter.user} ({inter.user.id})\n"
+                f"**Done:** {inter.response.is_done()}\n"
+                f"**Timestamp:** <t:{timestamp}:R>"
+            ),
+            color=ERROR_CLR,
+            add_footer=False,
+        )
+
+        await ctx.bot.log_the_error(embed, error)
 
 
 class PageView(BaseView):
     def __init__(self, ctx):
         self.ctx = ctx
 
-        super().__init__()
-
-    async def on_timeout(self):
-        for child in self.children:
-            child.disabled = True
-        await self.response.edit_original_message(view=self)
+        super().__init__(ctx)
 
     async def create_page(self):
-        return self.ctx.bot.embed()
+        return self.ctx.embed()
 
     async def update_buttons(self):
-        pass
+        ...
 
     async def update_message(self, interaction):
         embed = await self.create_page()
@@ -80,23 +122,44 @@ class PageView(BaseView):
     async def start(self):
         embed = await self.create_page()
         await self.update_buttons()
-        self.response = await self.ctx.respond(embed=embed, view=self)
+        await self.ctx.respond(embed=embed, view=self)
 
 
 class ScrollView(PageView):
-    def __init__(self, ctx, max_page: int, compact=True):
+    def __init__(self, ctx, max_page: int, row=0, compact=True):
         super().__init__(ctx)
 
         self.compact = compact
         self.max_page = max_page
         self.page = 0
+        self.row = row
 
-        self.remove_proper_items()
+        self.add_items()
 
-    def remove_proper_items(self):
-        if self.compact:
-            self.remove_item(self.scroll_to_front)
-            self.remove_item(self.scroll_to_back)
+    def add_scroll_btn(self, emoji, callback):
+        btn = discord.ui.Button(
+            emoji=discord.PartialEmoji.from_str(emoji),
+            style=discord.ButtonStyle.grey,
+            row=self.row,
+        )
+        btn.callback = callback
+
+        self.add_item(btn)
+
+        setattr(self, callback.__name__, btn)
+
+        return btn
+
+    def add_items(self):
+        if self.compact is False:
+            self.add_scroll_btn(icons.fast_left_arrow, self.scroll_to_front)
+
+        self.add_scroll_btn(icons.left_arrow, self.scroll_forward)
+
+        self.add_scroll_btn(icons.right_arrow, self.scroll_backward)
+
+        if self.compact is False:
+            self.add_scroll_btn(icons.fast_right_arrow, self.scroll_to_back)
 
     async def update_buttons(self):
         first_page = self.page == 0
@@ -111,27 +174,22 @@ class ScrollView(PageView):
         self.scroll_to_front.disabled = first_page
         self.scroll_to_back.disabled = last_page
 
-    @discord.ui.button(emoji="⏪", style=discord.ButtonStyle.grey)
-    async def scroll_to_front(self, button, interaction):
+    async def scroll_to_front(self, interaction):
         if self.page != 0:
             self.page = 0
             await self.update_all(interaction)
 
-    @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.grey)
-    async def scroll_forward(self, button, interaction):
+    async def scroll_forward(self, interaction):
         if self.page != 0:
             self.page -= 1
             await self.update_all(interaction)
 
-    @discord.ui.button(emoji="▶️", style=discord.ButtonStyle.grey)
-    async def scroll_backward(self, button, interaction):
+    async def scroll_backward(self, interaction):
         if self.page != self.max_page:
             self.page += 1
             await self.update_all(interaction)
 
-    @discord.ui.button(emoji="⏩", style=discord.ButtonStyle.grey)
-    async def scroll_to_back(self, button, interaction):
-        button.disabled = True
+    async def scroll_to_back(self, interaction):
         if self.page != self.max_page:
             self.page = self.max_page - 1
 
@@ -161,12 +219,16 @@ class ViewFromDict(PageView):
     def order(self):
         return list(self.the_dict.keys())
 
+    @property
+    def button(self):
+        return DictButton
+
     async def update_message(self, interaction):
         embed = await self.create_page()
         await interaction.message.edit(embed=embed, view=self)
 
     async def create_page(self):
-        pass
+        ...
 
     async def update_buttons(self, page):
         if self.page is not None:
@@ -184,7 +246,7 @@ class ViewFromDict(PageView):
         start_index = 0
         # Generating the buttons
         for i, name in enumerate(self.order):
-            button = DictButton(label=name, style=discord.ButtonStyle.primary)
+            button = self.button(label=name)
 
             if i == start_index:
                 self.page = name
@@ -193,16 +255,4 @@ class ViewFromDict(PageView):
             self.add_item(button)
 
         embed = await self.create_page()
-        self.response = await self.ctx.respond(embed=embed, view=self)
-
-
-def create_link_view(links: dict[str, str]):
-    """
-    links: {NAME: URL}
-    """
-    view = BaseView()
-
-    for name, url in links.items():
-        view.add_item(discord.ui.Button(label=name, url=url))
-
-    return view
+        await self.ctx.respond(embed=embed, view=self)
