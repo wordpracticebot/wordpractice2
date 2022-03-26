@@ -67,7 +67,7 @@ def cooldown(regular: int, premium: int):
 
         c_time = time.time()
 
-        if user.premium:
+        if user.is_premium:
             c_time += premium
         else:
             c_time += regular

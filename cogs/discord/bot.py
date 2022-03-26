@@ -1,5 +1,8 @@
+import csv
+import json
 import math
 from datetime import datetime, timezone
+from io import BytesIO, StringIO
 
 import discord
 import humanize
@@ -8,14 +11,30 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
-from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH, SCORES_PER_PAGE
+from constants import (
+    COMPILE_INTERVAL,
+    LB_DISPLAY_AMT,
+    LB_LENGTH,
+    PREMIUM_LINK,
+    SCORES_PER_PAGE,
+)
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_typing_average
-from helpers.utils import calculate_consistency, datetime_to_unix
+from helpers.utils import calculate_consistency
 
 TS = "\N{THIN SPACE}"
+
+SCORE_DATA_LABELS = {
+    "Wpm": "wpm",
+    "Raw Wpm": "raw",
+    "Accuracy": "acc",
+    "Correct Words": "cw",
+    "Total Words": "tw",
+    "Experience": "xp",
+    "Unix Timestamp": "unix_timestamp",
+}
 
 
 class GraphView(ViewFromDict):
@@ -29,16 +48,68 @@ class ScoreView(ScrollView):
 
         self.user = user
 
+    def get_formatted_data(self):
+        data = {n: [] for n in SCORE_DATA_LABELS.keys()}
+
+        for s in self.user.scores:
+            for n, v in SCORE_DATA_LABELS.items():
+                data[n].append(getattr(s, v))
+
+        return data
+
+    async def send_as_file(self, buffer, ext, button, interaction):
+        file = discord.File(fp=buffer, filename=f"scores.{ext}")
+
+        await interaction.response.send_message(file=file)
+
+        button.disabled = True
+
+        msg = await self.ctx.interaction.original_message()
+
+        await msg.edit(view=self)
+
+    @discord.ui.button(label="Download as CSV", style=discord.ButtonStyle.grey, row=1)
+    async def csv_download(self, button, interaction):
+        data = self.get_formatted_data()
+
+        buffer = StringIO()
+
+        writer = csv.writer(buffer)
+
+        writer.writerow(data.keys())
+        writer.writerows(zip(*data.values()))
+
+        buffer.seek(0)
+
+        await self.send_as_file(buffer, "csv", button, interaction)
+
+    @discord.ui.button(label="Download as JSON", style=discord.ButtonStyle.grey, row=1)
+    async def json_download(self, button, interaction):
+        data = self.get_formatted_data()
+
+        buffer = BytesIO()
+
+        buffer.write(json.dumps(data).encode())
+
+        buffer.seek(0)
+
+        await self.send_as_file(buffer, "json", button, interaction)
+
     async def create_page(self):
+        total_scores = len(self.user.scores)
+
         start_page = self.page * SCORES_PER_PAGE
-        end_page = min((self.page + 1) * SCORES_PER_PAGE, len(self.user.scores))
+        end_page = min((self.page + 1) * SCORES_PER_PAGE, total_scores)
 
         embed = self.ctx.embed(
-            title=f"{self.user.display_name} | Scores ({start_page + 1} - {end_page})"
+            title=f"{self.user.display_name} | Recent Scores ({start_page + 1} - {end_page} of {total_scores})",
+            description="** **"
+            if self.user.is_premium
+            else f"**[Patrons]({PREMIUM_LINK})** can download their test scores",
         )
 
-        for i, s in enumerate(self.user.scores[start_page:end_page]):
-            timestamp = datetime_to_unix(s.timestamp)
+        for i, s in enumerate(self.user.scores[::-1][start_page:end_page]):
+            timestamp = s.unix_timestamp
 
             embed.add_field(
                 name=f"Score {start_page + i + 1}",
@@ -52,6 +123,13 @@ class ScoreView(ScrollView):
                 inline=False,
             )
         return embed
+
+    async def start(self):
+        if self.user.is_premium is False:
+            self.csv_download.disabled = True
+            self.json_download.disabled = True
+
+        await super().start()
 
 
 class LeaderboardSelect(discord.ui.Select):

@@ -30,7 +30,7 @@ from constants import (
 )
 from helpers.ui import create_link_view
 from helpers.user import generate_user_desc, get_expanded_24_hour_stat
-from helpers.utils import get_start_of_day
+from helpers.utils import datetime_to_unix, get_start_of_day
 from static.badges import get_badge_from_id, get_badges_from_ids
 
 
@@ -39,6 +39,10 @@ class Infraction(EmbeddedDocument):
     mod_id = IntegerField(require=True)
     reason = StringField(required=True)
     timestamp = DateTimeField(default=datetime.utcnow())
+
+    @property
+    def unix_timestamp(self):
+        return datetime_to_unix(self.timestamp)
 
 
 class Score(EmbeddedDocument):
@@ -53,6 +57,10 @@ class Score(EmbeddedDocument):
 
     xp = IntegerField(default=0)
     timestamp = DateTimeField(default=datetime.min)
+
+    @property
+    def unix_timestamp(self):
+        return datetime_to_unix(self.timestamp)
 
 
 class DailyStat(EmbeddedDocument):

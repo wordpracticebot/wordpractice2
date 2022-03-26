@@ -27,7 +27,7 @@ from constants import (
 from helpers.checks import cooldown
 from helpers.converters import quote_amt, word_amt
 from helpers.image import get_base, get_loading_img, get_width_height, wrap_text
-from helpers.ui import BaseView
+from helpers.ui import BaseView, create_link_view
 from helpers.user import get_pacer_display, get_pacer_type_name
 from helpers.utils import cmd_run_before, get_test_stats
 
@@ -373,8 +373,8 @@ class RaceJoinView(BaseView):
 
             try:
                 await message.delete()
-            except Exception as e:
-                print(type(e))
+            except discord.errors.Forbidden:
+                pass
 
             await self.handle_racer_finish(message)
 
@@ -419,15 +419,25 @@ class RaceJoinView(BaseView):
 
         embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
 
-        await self.ctx.respond(embed=embed)
+        view = create_link_view(
+            {
+                "Invite Bot": self.ctx.bot.create_invite_link(),
+                "Community Server": SUPPORT_SERVER_INVITE,
+            }
+        )
 
+        await self.ctx.respond(embed=embed, view=view)
+
+        # Updating the users in the database
         for r in self.racers.values():
             if r.result is not None:
                 await self.ctx.bot.mongo.replace_user_data(r.data)
 
     async def add_racer(self, interaction):
         if len(self.racers) == MAX_RACE_JOIN:
-            return
+            return await interaction.response.send_message(
+                f"The race has reached its maximum capacity of {MAX_RACE_JOIN} racers"
+            )
 
         user = interaction.user
 
