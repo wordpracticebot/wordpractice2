@@ -1,5 +1,4 @@
 import math
-import time
 from datetime import datetime, timezone
 
 import discord
@@ -14,7 +13,7 @@ from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_typing_average
-from helpers.utils import calculate_consistency
+from helpers.utils import calculate_consistency, datetime_to_unix
 
 TS = "\N{THIN SPACE}"
 
@@ -39,7 +38,7 @@ class ScoreView(ScrollView):
         )
 
         for i, s in enumerate(self.user.scores[start_page:end_page]):
-            timestamp = int(time.mktime(s.timestamp.timetuple()))
+            timestamp = datetime_to_unix(s.timestamp)
 
             embed.add_field(
                 name=f"Score {start_page + i + 1}",
@@ -619,7 +618,7 @@ class Bot(commands.Cog):
             tzinfo=timezone.utc,
         )
 
-        unix_timestamp = int(time.mktime(end_of_today.timetuple()))
+        unix_timestamp = int(end_of_today.timestamp())
 
         embed = ctx.embed(
             title="Daily Challenges",
