@@ -294,8 +294,6 @@ class RaceJoinView(BaseView):
             acc=acc,
             cw=cw,
             tw=len(self.quote),
-            u_input=u_input,
-            quote=self.quote,
             xp=xp_earned,
             timestamp=datetime.utcnow(),
         )
@@ -807,8 +805,6 @@ class Typing(commands.Cog):
                 acc=acc,
                 cw=cw,
                 tw=len(quote),
-                u_input=u_input,
-                quote=quote,
                 xp=xp_earned,
                 timestamp=datetime.utcnow(),
             )

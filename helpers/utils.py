@@ -197,7 +197,7 @@ def get_test_input_stats(u_input: list, quote: list):
 
         cc += max(len(u_input[u_index]) - wc, 0)
 
-        word_history.append(f"~~{u_input[u_index]}~~ **({u_input[u_index]})**")
+        word_history.append(f"~~{u_input[u_index]}~~ **({quote[w_index]})**")
 
         if (extra := len(quote[w_index]) - len(u_input[u_index])) > 0:
             extra_cc += extra
@@ -226,9 +226,11 @@ def get_test_stats(u_input, quote, end_time):
     cc, rws, extra_cc, cw = get_test_input_stats(u_input, quote)
 
     # total characters
-    tc = len(" ".join(u_input)) + extra_cc
+    tc = len(" ".join(u_input))
 
-    acc = 0 if tc == 0 else round(cc / tc * 100, 2)
+    extra_tc = tc + extra_cc
+
+    acc = 0 if extra_tc == 0 else round(cc / extra_tc * 100, 2)
     wpm = round(cc / (end_time / 12), 2)
     raw = round(tc / (end_time / 12), 2)
 

@@ -115,7 +115,7 @@ class LeaderboardView(ScrollView):
                 self.placing = p
                 extra = "__"
 
-            username = f"{u['name']}{u['discriminator']} {u['status']}"
+            username = f"{u['name']}#{u['discriminator']} {u['status']}"
 
             embed.add_field(
                 name=f"`{p + 1}.` {extra}{username} - {u['count']} {c.unit}{extra}",
@@ -372,7 +372,7 @@ class ProfileView(BaseView):
 
         wpm, raw, acc, cw, tw, scores = get_typing_average(self.user, 10)
 
-        if len(scores) > 1:
+        if len(scores) > 0:
             con = calculate_consistency([s.wpm + s.raw + s.acc for s in scores])
         else:
             con = 0
@@ -644,6 +644,7 @@ class Bot(commands.Cog):
         await ctx.respond(embed=embed)
 
     @cooldown(6, 2)
+    @commands.slash_command()
     async def scores(self, ctx, user: opt_user()):
         """View and download a user's recent typing scores"""
         user_data = await user_check(ctx, user)

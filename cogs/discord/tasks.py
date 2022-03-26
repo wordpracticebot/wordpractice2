@@ -24,7 +24,9 @@ class Tasks(commands.Cog):
 
     @tasks.loop(minutes=UPDATE_24_HOUR_INTERVAL)
     async def update_24_hour(self):
-        every = 1440 / UPDATE_24_HOUR_INTERVAL - 1
+        every = int(1440 / UPDATE_24_HOUR_INTERVAL) - 1
+
+        self.bot.user_cache = {}
 
         # Have to update each field in two steps because of update conflict
 
@@ -33,7 +35,7 @@ class Tasks(commands.Cog):
             {"$pop": {"last24.0": -1}},
         )
         await self.bot.mongo.db.users.update_many(
-            {f"last24.0.{every}": {"$exists": True}},
+            {f"last24.0.{every-1}": {"$exists": True}},
             {"$push": {"last24.0": 0}},
         )
 
@@ -42,7 +44,7 @@ class Tasks(commands.Cog):
             {"$pop": {"last24.1": -1}},
         )
         await self.bot.mongo.db.users.update_many(
-            {f"last24.1.{every}": {"$exists": True}},
+            {f"last24.1.{every-1}": {"$exists": True}},
             {"$push": {f"last24.1": 0}},
         )
 

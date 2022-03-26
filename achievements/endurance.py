@@ -43,6 +43,9 @@ class Perfectionist(Achievement):
 
     @staticmethod
     def get_scores_in_a_row(user):
+        if user.scores == []:
+            return 0
+
         result = [s.acc == 100 for s in user.scores]
 
         if result[-1] is False:

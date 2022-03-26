@@ -51,12 +51,6 @@ class Score(EmbeddedDocument):
     # total words
     tw = IntegerField(default=0)
 
-    # User input
-    u_input = ListField(StringField, default=[])
-
-    # Quote
-    quote = ListField(StringField, default=[])
-
     xp = IntegerField(default=0)
     timestamp = DateTimeField(default=datetime.min)
 
