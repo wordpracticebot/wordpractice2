@@ -99,7 +99,6 @@ def get_daily_stat(last24_stat: list[int]):
 
 
 def get_expanded_24_hour_stat(stat: list[int]):
-    if len(stat) <= 1:
-        return stat + [0] * (UPDATE_24_HOUR_INTERVAL - 1)
+    i_len = int(1440 / UPDATE_24_HOUR_INTERVAL)
 
-    return stat
+    return stat[:i_len] + [0] * (i_len - len(stat))
