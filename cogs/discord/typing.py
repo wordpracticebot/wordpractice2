@@ -407,7 +407,7 @@ class RaceJoinView(BaseView):
                         f"{long_space} :person_running: Raw Wpm: **{score.raw}**\n"
                         f"{long_space} :dart: Accuracy: **{score.acc}%**"
                     )
-                    user.scores.append(score)
+                    user.add_score(score)
                     user.add_words(score.cw)
                     user.add_xp(score.xp)
 
@@ -858,7 +858,7 @@ class Typing(commands.Cog):
                 timestamp=datetime.utcnow(),
             )
 
-            user.scores.append(score)
+            user.add_score(score)
 
             if wpm > user.highspeed[zone].wpm:
                 user.highspeed[zone] = score

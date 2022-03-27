@@ -203,6 +203,14 @@ class User(UserBase):
 
             self.last24[1] = current
 
+    def add_score(self, score: Score):
+        limit = 200 if self.is_premium else 50
+
+        if len(self.scores) >= limit:
+            del self.scores[: len(self.scores) - limit + 1]
+
+        self.scores.append(score)
+
 
 # Backup for users that have been wiped
 # TODO: add a timestamp and remove backups after 60 days
