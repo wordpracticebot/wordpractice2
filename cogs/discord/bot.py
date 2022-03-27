@@ -105,7 +105,7 @@ class ScoreView(ScrollView):
             title=f"{self.user.display_name} | Recent Scores ({start_page + 1} - {end_page} of {total_scores})",
             description="** **"
             if self.user.is_premium
-            else f"**[Patrons]({PREMIUM_LINK})** can download their test scores",
+            else f"**[Patrons]({PREMIUM_LINK})** can download test scores",
         )
 
         for i, s in enumerate(self.user.scores[::-1][start_page:end_page]):
@@ -573,6 +573,7 @@ class AchievementsView(ViewFromDict):
 
         for a in c.challenges:
             tier_display = ""
+
             # Tiers
             if isinstance(a, list):
                 all_names = [m.name for m in a]
