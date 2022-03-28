@@ -44,7 +44,7 @@ def get_test_zone(cw):
     elif cw in range(21, 51):
         return "medium", "(21-50) words"
 
-    elif cw in range(51, 100):
+    elif cw in range(51, 101):
         return "long", "(51-100) words"
 
     return None
