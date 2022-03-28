@@ -256,21 +256,6 @@ class Misc(commands.Cog):
         await ctx.respond("Here you go!", view=view)
 
     @commands.slash_command()
-    async def patreon(self, ctx):
-        """Get information on wordPractice's Patreon"""
-        embed = ctx.custom_embed(
-            title="wordPractice Patreon",
-            description="Help keep wordPractice running and earn some exclusive perks!",
-            add_footer=False,
-        )
-
-        embed.set_thumbnail(url="https://i.imgur.com/TBfgXGG.png")
-
-        view = create_link_view({"Support our Patreon": PREMIUM_LINK})
-
-        await ctx.respond(embed=embed, view=view)
-
-    @commands.slash_command()
     async def support(self, ctx):
         """Join the wordPractice Discord server"""
         await ctx.respond(SUPPORT_SERVER_INVITE)
