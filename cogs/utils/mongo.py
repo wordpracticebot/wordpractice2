@@ -30,7 +30,7 @@ from constants import (
 )
 from helpers.ui import create_link_view
 from helpers.user import generate_user_desc, get_expanded_24_hour_stat
-from helpers.utils import get_start_of_day
+from helpers.utils import datetime_to_unix, get_start_of_day
 from static.badges import get_badge_from_id, get_badges_from_ids
 
 
@@ -39,6 +39,10 @@ class Infraction(EmbeddedDocument):
     mod_id = IntegerField(require=True)
     reason = StringField(required=True)
     timestamp = DateTimeField(default=datetime.utcnow())
+
+    @property
+    def unix_timestamp(self):
+        return datetime_to_unix(self.timestamp)
 
 
 class Score(EmbeddedDocument):
@@ -53,6 +57,10 @@ class Score(EmbeddedDocument):
 
     xp = IntegerField(default=0)
     timestamp = DateTimeField(default=datetime.min)
+
+    @property
+    def unix_timestamp(self):
+        return datetime_to_unix(self.timestamp)
 
 
 class DailyStat(EmbeddedDocument):
@@ -140,7 +148,7 @@ class UserBase(Document):
     # Settings
     theme = ListField(StringField, default=DEFAULT_THEME)
     language = StringField(default="english")
-    level = StringField(default="easy")
+    level = StringField(default="normal")
     pacer_speed = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"
     pacer_type = IntegerField(default=0)  # 0 = horizontal, 1 = vertical
 
@@ -194,6 +202,14 @@ class User(UserBase):
             current[-1] += xp
 
             self.last24[1] = current
+
+    def add_score(self, score: Score):
+        limit = 200 if self.is_premium else 50
+
+        if len(self.scores) >= limit:
+            del self.scores[: len(self.scores) - limit + 1]
+
+        self.scores.append(score)
 
 
 # Backup for users that have been wiped

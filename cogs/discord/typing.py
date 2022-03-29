@@ -1,5 +1,6 @@
 import asyncio
 import json
+import math
 import random
 import textwrap
 import time
@@ -26,8 +27,14 @@ from constants import (
 )
 from helpers.checks import cooldown
 from helpers.converters import quote_amt, word_amt
-from helpers.image import get_base, get_loading_img, get_width_height, wrap_text
-from helpers.ui import BaseView
+from helpers.image import (
+    get_base,
+    get_highscore_captcha_img,
+    get_loading_img,
+    get_width_height,
+    wrap_text,
+)
+from helpers.ui import BaseView, create_link_view
 from helpers.user import get_pacer_display, get_pacer_type_name
 from helpers.utils import cmd_run_before, get_test_stats
 
@@ -44,7 +51,7 @@ def get_test_zone(cw):
     elif cw in range(21, 51):
         return "medium", "(21-50) words"
 
-    elif cw in range(51, 100):
+    elif cw in range(51, 101):
         return "long", "(51-100) words"
 
     return None
@@ -69,6 +76,103 @@ def get_test_type(test_type_int: int):
         else None
         )
     # fmt: on
+
+
+class HighScoreCaptchaView(BaseView):
+    def __init__(self, ctx, user, target):
+        super().__init__(ctx, timeout=45)
+
+        self.user = user
+        self.target = target
+
+    @discord.ui.button(label="Start Captcha", style=discord.ButtonStyle.success)
+    async def start_captcha(self, button, interaction):
+        button.disabled = True
+
+        await self.message.edit(view=self)
+
+        # Generating the quote for the test
+        quote = await Typing.handle_dictionary_input(self.ctx, 35)
+
+        raw_quote = " ".join(quote)
+
+        word_list, fquote = wrap_text(raw_quote)
+
+        width, height = get_width_height(word_list)
+
+        base_img = get_base(width, height, self.user.theme, fquote)
+
+        captcha_img = get_highscore_captcha_img(base_img, self.user.theme)
+
+        captcha_loading_img = get_loading_img(captcha_img, self.user.theme[1])
+
+        buffer = BytesIO()
+        captcha_loading_img.save(buffer, "png")
+        buffer.seek(0)
+
+        embed = self.ctx.embed(title="High Score Captcha")
+
+        file = discord.File(buffer, filename="captcha.png")
+
+        embed.set_image(url="attachment://captcha.png")
+        embed.set_thumbnail(url="https://i.imgur.com/CjdaXi6.gif")
+
+        await interaction.response.send_message(embed=embed, file=file, delete_after=5)
+
+        load_start = time.time()
+
+        buffer = BytesIO()
+        captcha_img.save(buffer, "png")
+        buffer.seek(0)
+
+        file = discord.File(buffer, filename="test.png")
+
+        embed = self.ctx.embed(title="High Score Captcha")
+
+        embed.set_image(url="attachment://test.png")
+
+        load_time = time.time() - load_start
+
+        await asyncio.sleep(5 - max(load_time, 0))
+
+        await self.ctx.respond(embed=embed, file=file)
+
+        start_time = time.time()
+
+        tc = len(raw_quote)
+
+        # Calculating the expire time based on the target wpm
+        expire_time = (12 * tc) / self.target + 2
+
+        try:
+            message = await self.ctx.bot.wait_for(
+                "message",
+                check=lambda m: m.author == self.ctx.author,
+                timeout=expire_time,
+            )
+        except asyncio.TimeoutError:
+            pass
+
+        end_time = time.time() - start_time
+
+        u_input = message.content.split()
+
+        wpm, raw, acc, *_ = get_test_stats(u_input, quote, end_time)
+
+        # Checking if the test was passed
+        if math.ceil(wpm) >= self.target:
+            embed = self.ctx.embed(title="Passed")
+            return await self.ctx.respond(embed=embed)
+
+        embed = self.ctx.embed(title="Failed")
+
+        return await self.ctx.respond(embed=embed)
+
+    async def start(self):
+        # TODO: write a proper description
+        embed = self.ctx.embed(title="High Score Captcha", description="")
+
+        self.message = await self.ctx.respond(embed=embed, view=self)
 
 
 class TestResultView(BaseView):
@@ -373,8 +477,8 @@ class RaceJoinView(BaseView):
 
             try:
                 await message.delete()
-            except Exception as e:
-                print(type(e))
+            except discord.errors.Forbidden:
+                pass
 
             await self.handle_racer_finish(message)
 
@@ -407,7 +511,7 @@ class RaceJoinView(BaseView):
                         f"{long_space} :person_running: Raw Wpm: **{score.raw}**\n"
                         f"{long_space} :dart: Accuracy: **{score.acc}%**"
                     )
-                    user.scores.append(score)
+                    user.add_score(score)
                     user.add_words(score.cw)
                     user.add_xp(score.xp)
 
@@ -419,15 +523,25 @@ class RaceJoinView(BaseView):
 
         embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
 
-        await self.ctx.respond(embed=embed)
+        view = create_link_view(
+            {
+                "Invite Bot": self.ctx.bot.create_invite_link(),
+                "Community Server": SUPPORT_SERVER_INVITE,
+            }
+        )
 
+        await self.ctx.respond(embed=embed, view=view)
+
+        # Updating the users in the database
         for r in self.racers.values():
             if r.result is not None:
                 await self.ctx.bot.mongo.replace_user_data(r.data)
 
     async def add_racer(self, interaction):
         if len(self.racers) == MAX_RACE_JOIN:
-            return
+            return await interaction.response.send_message(
+                f"The race has reached its maximum capacity of {MAX_RACE_JOIN} racers"
+            )
 
         user = interaction.user
 
@@ -817,6 +931,11 @@ class Typing(commands.Cog):
 
         view.message = await message.reply(embed=embed, view=view, mention_author=False)
 
+        # Test anti cheat system
+
+        if user.verified * 1.2 <= wpm and wpm > 100:
+            await cls.handle_highscore_captcha(ctx, user, wpm)
+
         # Checking if there is a new high score
 
         user.test_amt += 1
@@ -848,7 +967,7 @@ class Typing(commands.Cog):
                 timestamp=datetime.utcnow(),
             )
 
-            user.scores.append(score)
+            user.add_score(score)
 
             if wpm > user.highspeed[zone].wpm:
                 user.highspeed[zone] = score
@@ -861,6 +980,14 @@ class Typing(commands.Cog):
                 await ctx.respond(embed=embed)
 
         await ctx.bot.mongo.replace_user_data(user)
+
+    @classmethod
+    async def handle_highscore_captcha(cls, ctx, user, original_wpm: int):
+        target = original_wpm * 0.8
+
+        view = HighScoreCaptchaView(ctx, user, target)
+
+        await view.start()
 
     @staticmethod
     async def handle_interval_captcha(ctx, user):

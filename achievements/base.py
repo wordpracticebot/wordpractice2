@@ -16,11 +16,10 @@ from static.badges import get_badge_from_id
 
 
 class Achievement:
-    def __init__(self, name: str, desc: str, reward=None, hidden=False):
+    def __init__(self, name: str, desc: str, reward=None):
         self.name = name
         self.desc = desc
         self.reward = reward
-        self.hidden = hidden
 
     @property
     def changer(self):

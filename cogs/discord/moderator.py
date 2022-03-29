@@ -5,7 +5,6 @@ from discord.ext import commands
 from constants import SUPPORT_SERVER_ID
 from helpers.checks import user_check
 from helpers.converters import rqd_user
-from helpers.utils import datetime_to_unix
 
 BAN_AUTOCOMPLETE = [
     "Cheating",
@@ -109,7 +108,7 @@ class Moderator(commands.Cog):
         # TODO: add pagination
 
         for i, inf in enumerate(user_data.infractions):
-            timestamp = datetime_to_unix(inf.timestamp)
+            timestamp = inf.unix_timestamp
 
             embed.add_field(
                 name=f"Infraction {i + 1}",
