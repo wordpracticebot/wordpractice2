@@ -14,6 +14,7 @@ from constants import (
     RULES_LINK,
     SUPPORT_SERVER_INVITE,
     VOTING_SITES,
+    OPENSOURCE_REPO,
 )
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
@@ -237,6 +238,21 @@ class Misc(commands.Cog):
         view = create_link_view(
             {
                 "Rules": RULES_LINK,
+            }
+        )
+
+        await ctx.respond(embed=embed, view=view)
+
+    @commands.slash_command()
+    async def attribution(self, ctx):
+        """View the credits"""
+        embed = ctx.embed(
+            title="Attribution:",
+            description=f"TEST",
+        )
+        view = create_link_view(
+            {
+                "Assets": OPENSOURCE_REPO,
             }
         )
 

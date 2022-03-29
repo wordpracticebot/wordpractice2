@@ -3,3 +3,7 @@ __pycache__/
 .DS_Store
 .venv
 .vscode
+
+#Harold's Stupid Development Env
+pyvenv.cfg
+requirements.txt

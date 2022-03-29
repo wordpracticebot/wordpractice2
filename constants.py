@@ -16,10 +16,10 @@ DEFAULT_VIEW_TIMEOUT = 25  # seconds
 DEFAULT_THEME = default["Material"]["colours"]
 AUTO_MODERATOR_NAME = "Thomas Worker 99"  # :)
 
-SUPPORT_SERVER_ID = 903449744196661270
+SUPPORT_SERVER_ID = 915020785935089714
 
 # Testing
-DEBUG_GUILD = 903449744196661270
+DEBUG_GUILD = 915020785935089714
 
 # Leaderboards
 LB_LENGTH = 1000
@@ -62,6 +62,7 @@ VOTING_SITES = {
     },
 }
 
+OPENSOURCE_REPO = "https://github.com/wordpracticebot/assets"
 # Premium
 PREMIUM_LAUNCHED = False
 PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link

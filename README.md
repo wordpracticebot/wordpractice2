@@ -35,7 +35,7 @@
 
 2. Install the necessary dependencies using `poetry install`
 
-3. Activate the poetry virtual environment using `source .venv/bin/activate`
+3. Activate the poetry virtual environment using `source .venv/bin/activate` For windows, slightly difficult
 
 4. Type `python main.py` to run
 
