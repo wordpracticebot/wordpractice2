@@ -194,7 +194,7 @@ class TestResultView(BaseView):
 
         self.user = user
 
-    @discord.ui.button(label="Next Test", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Next Test", style=discord.ButtonStyle.success)
     async def next_test(self, button, interaction):
         if self.is_dict:
             quote = await Typing.handle_dictionary_input(self.ctx, self.length)
