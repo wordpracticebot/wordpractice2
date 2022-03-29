@@ -166,6 +166,8 @@ class CustomContext(discord.commands.ApplicationContext):
         self.theme = theme
         self.testing = False  # if set to true, cooldowns are avoided
 
+        self.no_completion = False
+
         # Hint is chosen when defining context to ensure a consistent hint throughout each response
         self.hint = random.choice(hints)
 

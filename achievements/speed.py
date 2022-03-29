@@ -1,12 +1,6 @@
 from .base import Achievement, Category, XPReward
 
 
-def highest_speed(user):
-    if user.highspeed == {}:
-        return 0
-    return max([s.wpm for s in user.highspeed.values()])
-
-
 # TODO: add proper rewards and descriptions for all achievements
 class Speed(Achievement):
     def __init__(self, name, wpm):
@@ -15,10 +9,10 @@ class Speed(Achievement):
         self.wpm = wpm
 
     def callback(self, user):
-        return self.changer if highest_speed(user) >= self.wpm else False
+        return self.changer if user.highest_speed >= self.wpm else False
 
     def progress(self, user):
-        return highest_speed(user), self.wpm
+        return user.highest_speed, self.wpm
 
 
 speed = Category(

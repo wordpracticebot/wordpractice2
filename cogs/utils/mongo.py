@@ -38,7 +38,7 @@ class Infraction(EmbeddedDocument):
     mod_name = StringField(required=True)  # NAME#DISCRIMINATOR
     mod_id = IntegerField(require=True)
     reason = StringField(required=True)
-    timestamp = DateTimeField(default=datetime.utcnow())
+    timestamp = DateTimeField(required=True)
 
     @property
     def unix_timestamp(self):
@@ -85,7 +85,7 @@ class UserBase(Document):
     name = StringField(required=True)
     discriminator = IntegerField(required=True)
     avatar = StringField(default=None)
-    created_at = DateTimeField(default=datetime.utcnow())
+    created_at = DateTimeField(required=True)
     premium = BooleanField(default=False)
     views = IntegerField(default=0)  # TODO: update views
 
@@ -111,10 +111,9 @@ class UserBase(Document):
 
     # Typing
     highspeed = DictField(StringField(), EmbeddedField(Score), required=True)
-    verified = FloatField(default=0.0)
+    scores = ListField(EmbeddedField(Score), default=[])
 
     # Other statistics
-    scores = ListField(EmbeddedField(Score), default=[])
     daily_stats = ListField(EmbeddedField(DailyStat), default=[])
     achievements = DictField(
         StringField(), ListField(DateTimeField), default=[]
@@ -130,7 +129,7 @@ class UserBase(Document):
     # Streak of playing
     streak = IntegerField(default=0)  # days
     highest_streak = IntegerField(default=0)
-    last_streak = DateTimeField(default=datetime.utcnow())  # not last bot usage time
+    last_streak = DateTimeField(required=True)  # not last bot usage time
 
     # Voting
     votes = IntegerField(default=0)
@@ -148,7 +147,7 @@ class UserBase(Document):
     # Settings
     theme = ListField(StringField, default=DEFAULT_THEME)
     language = StringField(default="english")
-    level = StringField(default="normal")
+    level = StringField(default="easy")
     pacer_speed = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"
     pacer_type = IntegerField(default=0)  # 0 = horizontal, 1 = vertical
 
@@ -185,6 +184,10 @@ class User(UserBase):
     def is_premium(self):
         return not PREMIUM_LAUNCHED or self.premium
 
+    @property
+    def highest_speed(self):
+        return max(s.wpm for s in self.highspeed.values())
+
     def add_words(self, words: int):
         self.words += words
 
@@ -215,7 +218,7 @@ class User(UserBase):
 # Backup for users that have been wiped
 # TODO: add a timestamp and remove backups after 60 days
 class UserBackup(UserBase):
-    wiped_at = DateTimeField(default=datetime.utcnow())
+    wiped_at = DateTimeField(required=True)
 
     class Meta:
         collection_name = "backup"
@@ -281,6 +284,8 @@ class Mongo(commands.Cog):
                             "medium": default_score,
                             "long": default_score,
                         },
+                        created_at=datetime.utcnow(),
+                        last_streak=datetime.utcnow(),
                     )
 
                     await self.replace_user_data(u)
@@ -340,7 +345,7 @@ class Mongo(commands.Cog):
         data.pop("_id")
 
         # Building object from_mongo does not work when trying to commit
-        u = self.UserBackup(**data)
+        u = self.UserBackup(**data, wiped_at=datetime.utcnow())
 
         try:
             await u.commit()
@@ -385,7 +390,9 @@ class Mongo(commands.Cog):
     ):
         mod, mod_id = self.get_auto_mod(mod)
 
-        inf = self.Infraction(mod_name=mod, mod_id=mod_id, reason=reason)
+        inf = self.Infraction(
+            mod_name=mod, mod_id=mod_id, reason=reason, timestamp=datetime.utcnow()
+        )
 
         await self.update_user(
             user, {"$push": {"infractions": inf.to_mongo()}, "$set": {"banned": True}}

@@ -175,26 +175,28 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_completion(self, ctx):
+        if ctx.no_completion:
+            return
+
         user = await self.bot.mongo.fetch_user(ctx.author, create=True)
 
         new_user = copy.deepcopy(user)
 
         now = datetime.utcnow()
 
-        days_between = (
-            now - new_user.last_streak.replace(hour=now.hour, minute=now.minute)
-        ).days
+        days_between = (now - new_user.last_streak).days
 
         # Updating the user's playing streak
 
         if days_between > 1:
             new_user.streak = 1
+
         elif days_between == 1:
             new_user.streak += 1
             if new_user.streak > new_user.highest_streak:
                 new_user.highest_streak = new_user.streak
 
-        if days_between > 0:
+        if days_between >= 1:
             new_user.last_streak = now
 
         a_earned = {}

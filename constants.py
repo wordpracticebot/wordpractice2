@@ -40,6 +40,8 @@ RACE_JOIN_EXPIRE_TIME = 120  # seconds
 TEST_EXPIRE_TIME = 180  # seconds
 TEST_RANGE = (1, 100)
 CAPTCHA_INTERVAL = 20  # tests
+CAPTCHA_WPM_DEC = 0.2
+CAPTCHA_ACC_PERC = 90
 
 # Typing test image
 FONT_SIZE = 21

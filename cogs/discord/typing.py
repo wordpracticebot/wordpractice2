@@ -18,7 +18,9 @@ from humanfriendly import format_timespan
 import icons
 import word_list
 from constants import (
+    CAPTCHA_ACC_PERC,
     CAPTCHA_INTERVAL,
+    CAPTCHA_WPM_DEC,
     MAX_RACE_JOIN,
     RACE_JOIN_EXPIRE_TIME,
     SUPPORT_SERVER_INVITE,
@@ -42,6 +44,10 @@ from helpers.utils import cmd_run_before, get_test_stats
 def load_test_file(name):
     with open(f"./word_list/{name}", "r") as f:
         return json.load(f)
+
+
+def author_is_user(ctx):
+    return lambda m: m.author.id == ctx.author.id
 
 
 def get_test_zone(cw):
@@ -79,11 +85,23 @@ def get_test_type(test_type_int: int):
 
 
 class HighScoreCaptchaView(BaseView):
-    def __init__(self, ctx, user, target):
-        super().__init__(ctx, timeout=45)
+    def __init__(self, ctx, user, original_wpm):
+        super().__init__(ctx, timeout=60)
 
         self.user = user
-        self.target = target
+        self.original_wpm = original_wpm
+        self.done = False
+
+    def is_done(self):
+        return self.done
+
+    @property
+    def target(self):
+        return int(self.original_wpm * (1 - CAPTCHA_WPM_DEC))
+
+    async def on_timeout(self):
+        await super().on_timeout()
+        self.done = True
 
     @discord.ui.button(label="Start Captcha", style=discord.ButtonStyle.success)
     async def start_captcha(self, button, interaction):
@@ -147,7 +165,7 @@ class HighScoreCaptchaView(BaseView):
         try:
             message = await self.ctx.bot.wait_for(
                 "message",
-                check=lambda m: m.author == self.ctx.author,
+                check=author_is_user(self.ctx),
                 timeout=expire_time,
             )
         except asyncio.TimeoutError:
@@ -157,20 +175,35 @@ class HighScoreCaptchaView(BaseView):
 
         u_input = message.content.split()
 
-        wpm, raw, acc, *_ = get_test_stats(u_input, quote, end_time)
+        raw, acc = get_test_stats(u_input, quote, end_time)[1:3]
 
         # Checking if the test was passed
-        if math.ceil(wpm) >= self.target:
+        if math.ceil(raw) >= self.target and math.ceil(acc) >= CAPTCHA_ACC_PERC:
             embed = self.ctx.embed(title="Passed")
-            return await self.ctx.respond(embed=embed)
+            await self.ctx.respond(embed=embed)
 
-        embed = self.ctx.embed(title="Failed")
+            await self.ctx.bot.mongo.replace_user_data(self.user)
+        else:
+            embed = self.ctx.embed(title="Failed")
 
-        return await self.ctx.respond(embed=embed)
+            await self.ctx.respond(embed=embed)
+
+        self.ctx.no_completion = False
+
+        self.ctx.bot.dispatch("application_command_completion", self.ctx)
 
     async def start(self):
-        # TODO: write a proper description
-        embed = self.ctx.embed(title="High Score Captcha", description="")
+        embed = self.ctx.embed(
+            title="High Score Captcha",
+            description=(
+                f"You got a new high score of **{self.original_wpm}**!\n\n"
+                "Please complete a short typing test captcha so we can make\n"
+                "sure you aren't being dishonest.\n\n"
+                "You won't have to take this test again until you beat your\n"
+                f"new high score by **{int(CAPTCHA_WPM_DEC*100)}%**.\n\n"
+                f"Type at least **{self.target}** raw wpm with **{CAPTCHA_ACC_PERC}%+** accuracy to pass."
+            ),
+        )
 
         self.message = await self.ctx.respond(embed=embed, view=self)
 
@@ -842,7 +875,7 @@ class Typing(commands.Cog):
         try:
             message = await ctx.bot.wait_for(
                 "message",
-                check=lambda m: m.author == ctx.author,
+                check=author_is_user(ctx),
                 timeout=TEST_EXPIRE_TIME,
             )
         except asyncio.TimeoutError:
@@ -931,11 +964,6 @@ class Typing(commands.Cog):
 
         view.message = await message.reply(embed=embed, view=view, mention_author=False)
 
-        # Test anti cheat system
-
-        if user.verified * 1.2 <= wpm and wpm > 100:
-            await cls.handle_highscore_captcha(ctx, user, wpm)
-
         # Checking if there is a new high score
 
         user.test_amt += 1
@@ -979,15 +1007,17 @@ class Typing(commands.Cog):
 
                 await ctx.respond(embed=embed)
 
+                # Test high score anti cheat system
+
+                if user.highest_speed * (1 + CAPTCHA_WPM_DEC) >= wpm >= 100:
+                    # Preventing on_application_command_completion from being invoked
+                    ctx.no_completion = True
+
+                    view = HighScoreCaptchaView(ctx, user, wpm)
+
+                    return await view.start()
+
         await ctx.bot.mongo.replace_user_data(user)
-
-    @classmethod
-    async def handle_highscore_captcha(cls, ctx, user, original_wpm: int):
-        target = original_wpm * 0.8
-
-        view = HighScoreCaptchaView(ctx, user, target)
-
-        await view.start()
 
     @staticmethod
     async def handle_interval_captcha(ctx, user):
@@ -1013,7 +1043,7 @@ class Typing(commands.Cog):
         # Waiting for user input
         try:
             message = await ctx.bot.wait_for(
-                "message", check=lambda m: m.author == ctx.author, timeout=120
+                "message", check=author_is_user(ctx), timeout=120
             )
         except asyncio.TimeoutError:
             embed = ctx.error_embed(
