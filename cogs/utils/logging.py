@@ -2,7 +2,7 @@ import logging
 import sys
 
 from discord.ext import commands
-
+from constants import PROD_OR_DEV
 
 class Logging(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -14,7 +14,7 @@ class Logging(commands.Cog):
         self.log.setLevel(logging.INFO)
         handler = logging.StreamHandler(sys.stdout)
         fmt = logging.Formatter(
-            "[{asctime}] [{levelname}] {name}: {message}",
+                "[" + PROD_OR_DEV + "] [{asctime}] [{levelname}] {name}: {message}",
             "%Y-%m-%d %H:%M:%S",
             style="{",
         )

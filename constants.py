@@ -62,7 +62,9 @@ VOTING_SITES = {
     },
 }
 
+# Development
 OPENSOURCE_REPO = "https://github.com/wordpracticebot/assets"
+PROD_OR_DEV = "DEV"
 # Premium
 PREMIUM_LAUNCHED = False
 PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
