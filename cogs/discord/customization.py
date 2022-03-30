@@ -350,7 +350,7 @@ class Customization(commands.Cog):
 
         embed.add_field(
             name=":paintbrush: Theme",
-            value=f">>> {theme_icon} {theme_name} ({user.theme[0]} {user.theme[1]})"
+            value=f"{theme_icon} {theme_name} ({user.theme[0]} {user.theme[1]})"
             + (
                 ""
                 if user.is_premium
@@ -361,12 +361,12 @@ class Customization(commands.Cog):
 
         embed.add_field(
             name="** **\n:earth_americas: Language",
-            value=f"> {user.language.capitalize()} ({user.level.capitalize()})",
+            value=f"{user.language.capitalize()} ({user.level.capitalize()})",
             inline=False,
         )
 
         embed.add_field(
-            name="** **\n:timer: Pacer", value=f"> {pacer_name}", inline=False
+            name="** **\n:timer: Pacer", value=f"{pacer_name}", inline=False
         )
 
         embed.set_thumbnail(url="https://i.imgur.com/2vUD4NF.png")

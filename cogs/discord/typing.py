@@ -21,6 +21,7 @@ from constants import (
     CAPTCHA_ACC_PERC,
     CAPTCHA_INTERVAL,
     CAPTCHA_WPM_DEC,
+    MAX_CAPTCHA_ATTEMPTS,
     MAX_RACE_JOIN,
     RACE_JOIN_EXPIRE_TIME,
     SUPPORT_SERVER_INVITE,
@@ -84,30 +85,40 @@ def get_test_type(test_type_int: int):
     # fmt: on
 
 
+HIGH_SCORE_CAPTCHA_TIMEOUT = 60
+
+
+class RetryView(BaseView):
+    def __init__(self, ctx, captcha_callback):
+        super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT)
+
+        self.captcha_callback = captcha_callback
+
+    @discord.ui.button(label="Retry", style=discord.ButtonStyle.success)
+    async def retry_captcha(self, button, interaction):
+        await self.captcha_callback(self, button, interaction)
+
+
 class HighScoreCaptchaView(BaseView):
     def __init__(self, ctx, user, original_wpm):
-        super().__init__(ctx, timeout=60)
+        super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT)
 
         self.user = user
         self.original_wpm = original_wpm
-        self.done = False
-
-    def is_done(self):
-        return self.done
+        self.attempts = 0
 
     @property
     def target(self):
         return int(self.original_wpm * (1 - CAPTCHA_WPM_DEC))
 
-    async def on_timeout(self):
-        await super().on_timeout()
-        self.done = True
-
     @discord.ui.button(label="Start Captcha", style=discord.ButtonStyle.success)
     async def start_captcha(self, button, interaction):
+        await self.handle_captcha(self, button, interaction)
+
+    async def handle_captcha(self, view, button, interaction):
         button.disabled = True
 
-        await self.message.edit(view=self)
+        await self.message.edit(view=view)
 
         # Generating the quote for the test
         quote = await Typing.handle_dictionary_input(self.ctx, 35)
@@ -162,6 +173,8 @@ class HighScoreCaptchaView(BaseView):
         # Calculating the expire time based on the target wpm
         expire_time = (12 * tc) / self.target + 2
 
+        finished_test = True
+
         try:
             message = await self.ctx.bot.wait_for(
                 "message",
@@ -169,28 +182,76 @@ class HighScoreCaptchaView(BaseView):
                 timeout=expire_time,
             )
         except asyncio.TimeoutError:
-            pass
+            finished_test = False
 
-        end_time = time.time() - start_time
+        if finished_test:
+            end_time = time.time() - start_time
 
-        u_input = message.content.split()
+            u_input = message.content.split()
 
-        raw, acc = get_test_stats(u_input, quote, end_time)[1:3]
+            _, raw, _, cc, _, word_history = get_test_stats(u_input, quote, end_time)
 
-        # Checking if the test was passed
-        if math.ceil(raw) >= self.target and math.ceil(acc) >= CAPTCHA_ACC_PERC:
-            embed = self.ctx.embed(title="Passed")
+            ratio = cc / len(" ".join(quote))
+
+            acc = round(ratio * 100, 2)
+            raw = round(raw * ratio, 2)
+
+            # Checking if the test was passed
+            if math.ceil(raw) >= self.target and math.ceil(acc) >= CAPTCHA_ACC_PERC:
+                embed = self.ctx.embed(
+                    title="Passed", description="You passed the high score captcha!"
+                )
+
+                embed.add_field(
+                    name=":x: Attempts",
+                    value=f"{self.attempts} / {MAX_CAPTCHA_ATTEMPTS}",
+                )
+
+                embed = self.add_results(embed, raw, acc, word_history)
+
+                await self.ctx.respond(embed=embed)
+
+                await self.ctx.bot.mongo.replace_user_data(self.user)
+
+                return self.invoke_completion()
+
+        self.attempts += 1
+
+        attempts_left = MAX_CAPTCHA_ATTEMPTS - self.attempts
+
+        embed = self.ctx.error_embed(title="Failed")
+
+        if finished_test:
+            embed = self.add_results(embed, raw, acc, word_history)
+
+        if attempts_left == 0:
+            embed.description = "You have no more attempts left"
+
             await self.ctx.respond(embed=embed)
 
-            await self.ctx.bot.mongo.replace_user_data(self.user)
-        else:
-            embed = self.ctx.embed(title="Failed")
+            return self.invoke_completion()
 
-            await self.ctx.respond(embed=embed)
+        plural = "s" if attempts_left > 1 else ""
 
+        embed.description = f"You have **{attempts_left}** attempt{plural} left."
+
+        view = RetryView(self.ctx, self.handle_captcha)
+
+        view.message = await self.ctx.respond(embed=embed, view=view)
+
+    def invoke_completion(self):
         self.ctx.no_completion = False
 
         self.ctx.bot.dispatch("application_command_completion", self.ctx)
+
+    def add_results(self, embed, raw, acc, word_history):
+        embed.add_field(name=":person_running: Raw Wpm", value=f"{raw} / {self.target}")
+
+        embed.add_field(name=":dart: Accuracy", value=f"{acc}% / {CAPTCHA_ACC_PERC}%")
+
+        embed.add_field(name="Word History", value=word_history, inline=False)
+
+        return embed
 
     async def start(self):
         embed = self.ctx.embed(
@@ -227,7 +288,7 @@ class TestResultView(BaseView):
 
         self.user = user
 
-    @discord.ui.button(label="Next Test", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Next Test", style=discord.ButtonStyle.success)
     async def next_test(self, button, interaction):
         if self.is_dict:
             quote = await Typing.handle_dictionary_input(self.ctx, self.length)
@@ -881,7 +942,10 @@ class Typing(commands.Cog):
         except asyncio.TimeoutError:
             embed = ctx.error_embed(
                 title="Typing Test Expired",
-                description=f"You did not complete the typing test within {format_timespan(TEST_EXPIRE_TIME)}.\n\nConsider lowering the test length so that you can finish it.",
+                description=(
+                    f"You did not complete the typing test within {format_timespan(TEST_EXPIRE_TIME)}.\n\n"
+                    "Consider lowering the test length so that you can finish it."
+                ),
             )
             await ctx.respond(embed=embed)
             return None
