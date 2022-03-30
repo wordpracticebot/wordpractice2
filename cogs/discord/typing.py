@@ -115,7 +115,7 @@ class HighScoreCaptchaView(BaseView):
         file = discord.File(buffer, filename="captcha.png")
 
         embed.set_image(url="attachment://captcha.png")
-        embed.set_thumbnail(url="https://i.imgur.com/CjdaXi6.gif")
+        embed.set_thumbnail(url="https://i.imgur.com/CjdaXi6.gif") #TODO: dead link
 
         await interaction.response.send_message(embed=embed, file=file, delete_after=5)
 
