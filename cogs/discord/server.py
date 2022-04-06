@@ -1,7 +1,6 @@
-import discord
+from config import SUPPORT_GUILD_ID
 from discord.ext import commands
 
-from constants import SUPPORT_SERVER_ID
 from helpers.checks import cooldown
 
 
@@ -15,7 +14,7 @@ class Server(commands.Cog):
         self.bot = bot
 
     @cooldown(10, 3)
-    @commands.slash_command(guild_ids=[SUPPORT_SERVER_ID])
+    @commands.slash_command(guild_ids=[SUPPORT_GUILD_ID])
     async def roles(self, ctx):
         """Update your wordPractice roles on the server"""
         pass

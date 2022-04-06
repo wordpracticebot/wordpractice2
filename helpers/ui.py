@@ -105,7 +105,7 @@ class PageView(BaseView):
 
         super().__init__(ctx)
 
-    async def create_page(self):
+    async def create_page(self) -> discord.Embed:
         return self.ctx.embed()
 
     async def update_buttons(self):
@@ -227,9 +227,6 @@ class ViewFromDict(PageView):
         embed = await self.create_page()
         await interaction.message.edit(embed=embed, view=self)
 
-    async def create_page(self):
-        ...
-
     async def update_buttons(self, page):
         if self.page is not None:
             prev_index = self.order.index(self.page)
@@ -251,6 +248,9 @@ class ViewFromDict(PageView):
             if i == start_index:
                 self.page = name
                 button.toggle_success()
+
+            else:
+                button.toggle_regular()
 
             self.add_item(button)
 

@@ -21,6 +21,7 @@ from umongo.fields import (
 )
 from umongo.frameworks import MotorAsyncIOInstance
 
+from config import DATABASE_NAME, DATABASE_URI
 from constants import (
     AUTO_MODERATOR_NAME,
     DEFAULT_THEME,
@@ -114,7 +115,6 @@ class UserBase(Document):
     scores = ListField(EmbeddedField(Score), default=[])
 
     # Other statistics
-    daily_stats = ListField(EmbeddedField(DailyStat), default=[])
     achievements = DictField(
         StringField(), ListField(DateTimeField), default=[]
     )  # id: timestamp
@@ -214,6 +214,9 @@ class User(UserBase):
 
         self.scores.append(score)
 
+        if self.best24 is None or score.wpm > self.best24.wpm:
+            self.best24 = score
+
 
 # Backup for users that have been wiped
 # TODO: add a timestamp and remove backups after 60 days
@@ -227,9 +230,7 @@ class UserBackup(UserBase):
 class Mongo(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.db = AsyncIOMotorClient(bot.config.DATABASE_URI, io_loop=bot.loop)[
-            bot.config.DATABASE_NAME
-        ]
+        self.db = AsyncIOMotorClient(DATABASE_URI, io_loop=bot.loop)[DATABASE_NAME]
 
         instance = MotorAsyncIOInstance(self.db)
 

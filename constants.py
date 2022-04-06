@@ -8,18 +8,12 @@ ERROR_CLR = 0xFF5858
 PERMISSONS = 412317248576
 SUPPORT_SERVER_INVITE = "https://discord.gg/wordpractice"
 
-# TODO: add the correct privacy policy and rule links
-PRIVACY_POLICY_LINK = "https://www.google.com"
-RULES_LINK = "https://www.google.com"
+PRIVACY_POLICY_LINK = "https://wordpracticebot.github.io/privacy-policy/"
+RULES_LINK = "https://wordpracticebot.github.io/privacy-policy/rules"
 
 DEFAULT_VIEW_TIMEOUT = 25  # seconds
 DEFAULT_THEME = default["Material"]["colours"]
 AUTO_MODERATOR_NAME = "Thomas Worker 99"  # :)
-
-SUPPORT_SERVER_ID = 903449744196661270
-
-# Testing
-DEBUG_GUILD = 903449744196661270
 
 # Leaderboards
 LB_LENGTH = 1000
@@ -30,9 +24,6 @@ UPDATE_24_HOUR_INTERVAL = 5  # minutes
 # Achievements
 BAR_SIZE = 10
 ACHIEVEMENTS_SHOWN = 4
-
-# Scores
-SCORES_PER_PAGE = 3
 
 # Typing test
 MAX_RACE_JOIN = 10
@@ -46,7 +37,7 @@ MAX_CAPTCHA_ATTEMPTS = 2
 
 # Typing test image
 FONT_SIZE = 21
-TOP_BORDER = 4
+TOP_BORDER = 5
 SIDE_BORDER = 10
 SPACING = 5
 WRAP_WIDTH = 45

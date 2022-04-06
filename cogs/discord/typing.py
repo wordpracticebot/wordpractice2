@@ -144,7 +144,7 @@ class HighScoreCaptchaView(BaseView):
         file = discord.File(buffer, filename="captcha.png")
 
         embed.set_image(url="attachment://captcha.png")
-        embed.set_thumbnail(url="https://i.imgur.com/CjdaXi6.gif")
+        embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
 
         await interaction.response.send_message(embed=embed, file=file, delete_after=5)
 
@@ -524,7 +524,7 @@ class RaceJoinView(BaseView):
         file = discord.File(buffer, filename="loading.png")
 
         embed.set_image(url="attachment://loading.png")
-        embed.set_thumbnail(url="https://i.imgur.com/CjdaXi6.gif")
+        embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
 
         await interaction.response.send_message(embed=embed, file=file, delete_after=5)
 
@@ -815,13 +815,6 @@ class Typing(commands.Cog):
 
         await self.show_race_start(ctx, False, quote)
 
-    @commands.max_concurrency(1, per=commands.BucketType.user)
-    @cooldown(6, 2)
-    @commands.user_command(name="Typing Challenge")
-    async def race_challenge(self, ctx, member: discord.Member):
-        # TODO: send a dropdown to choose race
-        pass
-
     @staticmethod
     async def handle_dictionary_input(ctx, length: int):
         if length not in range(TEST_RANGE[0], TEST_RANGE[1] + 1):
@@ -903,7 +896,7 @@ class Typing(commands.Cog):
         file = discord.File(buffer, filename="loading.png")
 
         embed.set_image(url="attachment://loading.png")
-        embed.set_thumbnail(url="https://i.imgur.com/CjdaXi6.gif")
+        embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
 
         await send(embed=embed, file=file, delete_after=5)
 

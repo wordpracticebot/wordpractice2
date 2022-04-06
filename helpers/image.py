@@ -45,8 +45,8 @@ def get_base(width, height, colours, fquote):
     return img
 
 
-def get_highscore_captcha_img(img, text_colour):
-    return img
+def get_highscore_captcha_img(base_img, text_colour):
+    return base_img
 
 
 def get_loading_img(img, text_colour):

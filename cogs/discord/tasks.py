@@ -1,16 +1,32 @@
 import asyncio
+import json
 import time
 from datetime import datetime, timedelta
 
 import numpy as np
 from discord.ext import commands, tasks
 
+from config import DBL_TOKEN, TESTING
 from constants import COMPILE_INTERVAL, UPDATE_24_HOUR_INTERVAL
+
+
+def to_json(value):
+    if json.__name__ == "ujson":
+        return json.dumps(value, ensure_ascii=True)
+    return json.dumps(value, separators=(",", ":"), ensure_ascii=True)
 
 
 class Tasks(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+        # For guild and shard count
+        self.headers = {
+            "User-Agent": "wordPractice",
+            "Content-Type": "application/json",
+            "Authorization": DBL_TOKEN,
+        }
+        self.url = "https://top.gg/api/bots/stats"
 
         for u in [
             self.update_leaderboards,
@@ -46,6 +62,11 @@ class Tasks(commands.Cog):
         await self.bot.mongo.db.users.update_many(
             {f"last24.1.{every-1}": {"$exists": True}},
             {"$push": {f"last24.1": 0}},
+        )
+
+        # Resetting the best score in the last 24 hours
+        await self.bot.mongo.db.users.update_many(
+            {"best24": {"$ne": None}}, {"$set": {"best24": None}}
         )
 
     @tasks.loop(minutes=COMPILE_INTERVAL)
@@ -90,8 +111,25 @@ class Tasks(commands.Cog):
 
     @tasks.loop(minutes=30)
     async def post_guild_count(self):
-        # TODO: post guid count to top.gg
-        pass
+        if TESTING is False:
+            return
+
+        await self.bot.wait_until_ready()
+
+        # Making sure that all the guilds and shards have been loaded
+        await asyncio.sleep(5)
+
+        payload = {
+            "server_count": len(self.bot.guilds),
+            "shard_count": len(self.bot.shards),
+        }
+
+        payload = to_json(payload)
+
+        async with self.bot.session.request(
+            "POST", self.url, headers=self.headers, data=payload
+        ) as resp:
+            assert resp.status == 200
 
     @tasks.loop(hours=24)
     async def daily_restart(self):

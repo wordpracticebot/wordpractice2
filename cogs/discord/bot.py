@@ -11,13 +11,7 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
-from constants import (
-    COMPILE_INTERVAL,
-    LB_DISPLAY_AMT,
-    LB_LENGTH,
-    PREMIUM_LINK,
-    SCORES_PER_PAGE,
-)
+from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH, PREMIUM_LINK
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
@@ -36,10 +30,62 @@ SCORE_DATA_LABELS = {
     "Unix Timestamp": "unix_timestamp",
 }
 
+SCORES_PER_PAGE = 3
+
+
+class SeasonView(ViewFromDict):
+    def __init__(self, ctx, user):
+        categories = {
+            "Information": self.get_info_embed,
+            "Leaderboard": self.get_lb_embed,
+            "Progress": self.get_progress_embed,
+        }
+
+        super().__init__(ctx, categories)
+
+        self.user = user
+
+    def get_lb_embed(self):
+        embed = self.ctx.embed(title="Leaderboard Embed")
+        return embed
+
+    def get_info_embed(self):
+        embed = self.ctx.embed(title="Season Information")
+
+        embed.set_thumbnail(url="https://i.imgur.com/0Mzb6Js.png")
+
+        return embed
+
+    def get_progress_embed(self):
+        embed = self.ctx.embed(
+            title="Season Prizes",
+        )
+
+        return embed
+
+    async def create_page(self):
+        return self.the_dict[self.page]()
+
 
 class GraphView(ViewFromDict):
     def __init__(self, ctx, user):
-        pass
+        test_amts = [10, 25, 50, 100]
+
+        super().__init__(ctx, {f"{i} Tests": i for i in test_amts})
+
+        self.user = user
+
+    @property
+    def user_scores(self):
+        return self.user.scores[::-1][: self.the_dict[self.page]]
+
+    async def create_page(self):
+
+        embed = self.ctx.embed(
+            title="Graph",
+        )
+
+        return embed
 
 
 class ScoreView(ScrollView):
@@ -174,7 +220,7 @@ class LeaderboardButton(discord.ui.Button):
 
 class LeaderboardView(ScrollView):
     def __init__(self, ctx, user):
-        super().__init__(ctx, int(LB_DISPLAY_AMT / 10), row=2, compact=False)
+        super().__init__(ctx, int(LB_DISPLAY_AMT / 10), row=2, compact=True)
 
         self.timeout = 60
 
@@ -737,11 +783,10 @@ class Bot(commands.Cog):
     @commands.slash_command()
     async def season(self, ctx):
         """Information about the monthly season and your progress in it"""
-        embed = ctx.embed(title="Season Information")
+        user = await self.bot.mongo.fetch_user(ctx.author)
 
-        embed.set_thumbnail(url="https://i.imgur.com/0Mzb6Js.png")
-
-        await ctx.respond(embed=embed)
+        view = SeasonView(ctx, user)
+        await view.start()
 
     @cooldown(6, 2)
     @commands.slash_command()

@@ -3,6 +3,8 @@ import sys
 
 from discord.ext import commands
 
+from config import TESTING
+
 
 class Logging(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -12,9 +14,13 @@ class Logging(commands.Cog):
 
         self.log = logging.getLogger()
         self.log.setLevel(logging.INFO)
+
+        prod_or_dev = "DEV" if TESTING else "PROD"
+
         handler = logging.StreamHandler(sys.stdout)
+
         fmt = logging.Formatter(
-            "[{asctime}] [{levelname}] {name}: {message}",
+            f"[{prod_or_dev}] " + "[{asctime}] [{levelname}] {name}: {message}",
             "%Y-%m-%d %H:%M:%S",
             style="{",
         )

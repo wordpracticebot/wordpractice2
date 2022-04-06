@@ -14,6 +14,7 @@ from discord import InteractionType
 from discord.ext import commands
 
 import cogs
+import config
 from constants import (
     ERROR_CLR,
     LB_LENGTH,
@@ -189,9 +190,7 @@ class CustomContext(discord.commands.ApplicationContext):
 
 
 class WordPractice(commands.AutoShardedBot):
-    def __init__(self, config, **kwargs):
-
-        self.config = config
+    def __init__(self, **kwargs):
 
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
@@ -353,19 +352,19 @@ class WordPractice(commands.AutoShardedBot):
 
     @discord.utils.cached_property
     def cmd_wh(self):
-        return discord.Webhook.from_url(self.config.COMMAND_LOG, session=self.session)
+        return discord.Webhook.from_url(config.COMMAND_LOG, session=self.session)
 
     @discord.utils.cached_property
     def test_wh(self):
-        return discord.Webhook.from_url(self.config.TEST_LOG, session=self.session)
+        return discord.Webhook.from_url(config.TEST_LOG, session=self.session)
 
     @discord.utils.cached_property
     def impt_wh(self):
-        return discord.Webhook.from_url(self.config.IMPORTANT_LOG, session=self.session)
+        return discord.Webhook.from_url(config.IMPORTANT_LOG, session=self.session)
 
     @discord.utils.cached_property
     def error_wh(self):
-        return discord.Webhook.from_url(self.config.ERROR_LOG, session=self.session)
+        return discord.Webhook.from_url(config.ERROR_LOG, session=self.session)
 
     async def on_ready(self):
         print("Ready!")
@@ -375,4 +374,4 @@ class WordPractice(commands.AutoShardedBot):
         await self.session.close()
 
     def run(self):
-        super().run(self.config.BOT_TOKEN, reconnect=True)
+        super().run(config.BOT_TOKEN, reconnect=True)
