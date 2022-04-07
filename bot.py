@@ -20,6 +20,8 @@ from constants import (
     LB_LENGTH,
     PERMISSONS,
     PRIMARY_CLR,
+    PRIVACY_POLICY_LINK,
+    RULES_LINK,
     SUPPORT_SERVER_INVITE,
 )
 from helpers.ui import BaseView, CustomEmbed
@@ -141,19 +143,29 @@ class WelcomeView(BaseView):
         user = await self.ctx.bot.mongo.fetch_user(interaction.user, create=True)
 
         # TODO: add some kind of basic bot tutorial here
-        embed = self.ctx.default_embed(
-            title="Rules Accepted",
-        )
+        embed = self.ctx.default_embed(title="Rules Accepted", description="")
 
         await interaction.message.edit(embed=embed, view=None)
 
         await _handle_after_welcome_check(self.ctx.bot, interaction, user)
 
     async def start(self):
-        # TODO: add the proper rules and privacy policy
         embed = self.ctx.default_embed(
-            title="wordPractice Rules",
+            title="Welcome to wordPractice!",
+            description=(
+                "I'm the most feature dense typing test Discord Bot. I allow\n"
+                "you to practice your typing skills while having fun!\n\n"
+                "**Rules and Privacy Policy**\n"
+                "Please take a second to read our privacy policy and rules\n"
+                "below."
+            ),
         )
+
+        item = discord.ui.Button(label="Privacy Policy", url=PRIVACY_POLICY_LINK)
+        self.add_item(item)
+
+        item = discord.ui.Button(label="Rules", url=RULES_LINK)
+        self.add_item(item)
 
         self.embed = embed
 

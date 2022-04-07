@@ -1054,6 +1054,8 @@ class Typing(commands.Cog):
                 timestamp=datetime.utcnow(),
             )
 
+            check = user.highest_speed * (1 + CAPTCHA_WPM_DEC)
+
             user.add_score(score)
 
             if wpm > user.highspeed[zone].wpm:
@@ -1068,7 +1070,7 @@ class Typing(commands.Cog):
 
                 # Test high score anti cheat system
 
-                if user.highest_speed * (1 + CAPTCHA_WPM_DEC) >= wpm >= 100:
+                if check <= wpm >= 100:
                     # Preventing on_application_command_completion from being invoked
                     ctx.no_completion = True
 

@@ -31,7 +31,7 @@ from constants import (
 )
 from helpers.ui import create_link_view
 from helpers.user import generate_user_desc, get_expanded_24_hour_stat
-from helpers.utils import datetime_to_unix, get_start_of_day
+from helpers.utils import datetime_to_unix
 from static.badges import get_badge_from_id, get_badges_from_ids
 
 
@@ -62,19 +62,6 @@ class Score(EmbeddedDocument):
     @property
     def unix_timestamp(self):
         return datetime_to_unix(self.timestamp)
-
-
-class DailyStat(EmbeddedDocument):
-    # Daily statistics are not saved if all of the statistics are 0
-
-    # TODO: update daily stats in tasks
-
-    # Stats
-    xp = IntegerField()
-    words = IntegerField()
-
-    # Timestamp of the exact start of the day
-    start_of_day = DateTimeField(default=get_start_of_day())
 
 
 class UserBase(Document):
@@ -236,7 +223,7 @@ class Mongo(commands.Cog):
 
         g = globals()
 
-        for n in ("Infraction", "Score", "UserBase", "User", "UserBackup", "DailyStat"):
+        for n in ("Infraction", "Score", "UserBase", "User", "UserBackup"):
             setattr(self, n, instance.register(g[n]))
             getattr(self, n).bot = bot
 
