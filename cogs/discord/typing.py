@@ -131,7 +131,7 @@ class HighScoreCaptchaView(BaseView):
 
         base_img = get_base(width, height, self.user.theme, fquote)
 
-        captcha_img = get_highscore_captcha_img(base_img, self.user.theme)
+        captcha_img = get_highscore_captcha_img(base_img, self.user.theme[1])
 
         captcha_loading_img = get_loading_img(captcha_img, self.user.theme[1])
 
@@ -249,7 +249,9 @@ class HighScoreCaptchaView(BaseView):
 
         embed.add_field(name=":dart: Accuracy", value=f"{acc}% / {CAPTCHA_ACC_PERC}%")
 
-        embed.add_field(name="Word History", value=word_history, inline=False)
+        embed.add_field(
+            name="Word History", value=word_history or "** **", inline=False
+        )
 
         return embed
 

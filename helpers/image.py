@@ -1,11 +1,17 @@
+import random
 from textwrap import TextWrapper
 
+import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 from constants import SIDE_BORDER, SPACING, TOP_BORDER, WRAP_WIDTH
 from static.assets import arial
 
 WRAPPER = TextWrapper(width=WRAP_WIDTH)
+
+
+def quantize_img(img):
+    return img.quantize(method=Image.NONE)
 
 
 def get_width_height(word_list):
@@ -46,7 +52,36 @@ def get_base(width, height, colours, fquote):
 
 
 def get_highscore_captcha_img(base_img, text_colour):
-    return base_img
+    img = np.array(base_img)
+
+    rows, cols, _ = img.shape
+
+    width, height = base_img.size
+
+    img_output = np.zeros(img.shape, dtype=img.dtype)
+
+    get_random_coord = lambda: (
+        random.randint(SIDE_BORDER, width),
+        random.randint(TOP_BORDER, height),
+    )
+
+    for i in range(rows):
+        for n in range(cols):
+            x = int(3.1 * np.cos(2 * np.pi * i / 22))
+
+            img_output[i, n] = img[i, (n + x) % cols]
+
+    img = Image.fromarray(img_output)
+
+    d = ImageDraw.Draw(img)
+
+    for _ in range(3):
+        d.line(
+            (get_random_coord(), get_random_coord()),
+            fill=text_colour,
+            width=1,
+        )
+    return img
 
 
 def get_loading_img(img, text_colour):
@@ -54,16 +89,7 @@ def get_loading_img(img, text_colour):
 
     blurred = img.filter(ImageFilter.GaussianBlur(radius=6))
 
-    # Creating the image mask
-    mask = Image.new("L", img.size)
-
-    d = ImageDraw.Draw(mask)
-
-    d.rectangle([0, 0, width, height], fill=255)
-
-    img2 = Image.composite(blurred, img, mask)
-
-    d = ImageDraw.Draw(img2)
+    d = ImageDraw.Draw(blurred)
 
     msg = "Ready?"
 
@@ -71,4 +97,4 @@ def get_loading_img(img, text_colour):
 
     d.text(((width - w) / 2, (height - h) / 2), msg, fill=text_colour, font=arial)
 
-    return img2
+    return blurred
