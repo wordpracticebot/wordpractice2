@@ -27,7 +27,7 @@ ACHIEVEMENTS_SHOWN = 4
 
 # Typing test
 MAX_RACE_JOIN = 10
-RACE_JOIN_EXPIRE_TIME = 12  # seconds
+RACE_JOIN_EXPIRE_TIME = 120  # seconds
 TEST_EXPIRE_TIME = 180  # seconds
 TEST_RANGE = (1, 100)
 CAPTCHA_INTERVAL = 20  # tests
@@ -59,7 +59,7 @@ VOTING_SITES = {
 }
 
 # Premium
-PREMIUM_LAUNCHED = True
+PREMIUM_LAUNCHED = False
 PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
 
 # Daily challenges
