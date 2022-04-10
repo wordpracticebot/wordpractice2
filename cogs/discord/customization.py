@@ -273,12 +273,6 @@ class Customization(commands.Cog):
 
     @cooldown(8, 3)
     @pacer_group.command()
-    async def rawaverage(self, ctx):
-        """Set your typing test pacer to your raw average speed"""
-        await self.handle_update_pacer_speed(ctx, "Raw Average", "rawavg")
-
-    @cooldown(8, 3)
-    @pacer_group.command()
     async def off(self, ctx):
         """Turn off your typing test pacer"""
         await self.handle_update_pacer_speed(ctx, "Off", "")

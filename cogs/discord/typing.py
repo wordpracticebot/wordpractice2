@@ -953,6 +953,9 @@ class Typing(commands.Cog):
 
         start_time = time.time()
 
+        if not cmd_run_before(ctx, user):
+            await ctx.respond("Type the text above!", ephemeral=True)
+
         # Waiting for the input from the user
 
         try:

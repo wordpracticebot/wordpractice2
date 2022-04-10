@@ -29,9 +29,6 @@ def get_pacer_display(pacer: str):
     if pacer == "avg":
         return "Average"
 
-    if pacer == "rawavg":
-        return "Raw Average"
-
     if pacer == "pb":
         return "Personal Best"
 

@@ -16,7 +16,7 @@ from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_typing_average
-from helpers.utils import calculate_consistency
+from helpers.utils import calculate_consistency, cmd_run_before
 
 TS = "\N{THIN SPACE}"
 
@@ -780,6 +780,11 @@ class Bot(commands.Cog):
         )
 
         await ctx.respond(embed=embed)
+
+        if not cmd_run_before(ctx, user):
+            await ctx.followup.send(
+                "Challenges restart at the same time every day!", ephemeral=True
+            )
 
     @cooldown(6, 2)
     @commands.slash_command()

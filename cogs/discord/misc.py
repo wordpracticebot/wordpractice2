@@ -17,7 +17,7 @@ from constants import (
 )
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
-from helpers.utils import format_slash_command
+from helpers.utils import cmd_run_before, format_slash_command
 
 
 def _add_commands(embed, cmds):
@@ -320,6 +320,11 @@ class Misc(commands.Cog):
             view.add_item(button)
 
         await ctx.respond(embed=embed, view=view)
+
+        if not cmd_run_before(ctx, user):
+            await ctx.followup.send(
+                "Voting is a great way to support wordPractice!", ephemeral=True
+            )
 
 
 def setup(bot):

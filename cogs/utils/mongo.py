@@ -136,7 +136,7 @@ class UserBase(Document):
     theme = ListField(StringField, default=DEFAULT_THEME)
     language = StringField(default="english")
     level = StringField(default="easy")
-    pacer_speed = StringField(default="")  # "", "avg", "rawavg", "pb", "INTEGER"
+    pacer_speed = StringField(default="")  # "", "avg", "pb", "INTEGER"
     pacer_type = IntegerField(default=0)  # 0 = horizontal, 1 = vertical
 
 
