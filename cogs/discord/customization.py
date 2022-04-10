@@ -19,7 +19,8 @@ from static import themes
 
 def get_theme_preview_file(theme):
     word_list, fquote = wrap_text(
-        "This is a preview of your theme. Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut nulla quas eius temporibus ex facilis ipsum culpa quod non possimus."
+        "This is a preview of your theme. Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut nulla quas eius temporibus ex facilis ipsum culpa quod non possimus.",
+        DEFAULT_WRAP,
     )
 
     width, height = get_width_height(word_list, DEFAULT_WRAP)
