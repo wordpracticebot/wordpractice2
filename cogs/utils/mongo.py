@@ -27,6 +27,7 @@ from constants import (
     DEFAULT_THEME,
     PREMIUM_LAUNCHED,
     SUPPORT_SERVER_INVITE,
+    TEST_ZONES,
     VOTING_SITES,
 )
 from helpers.ui import create_link_view
@@ -267,11 +268,7 @@ class Mongo(commands.Cog):
                         name=user.name,
                         discriminator=user.discriminator,
                         avatar=user.avatar.key if user.avatar else None,
-                        highspeed={
-                            "short": default_score,
-                            "medium": default_score,
-                            "long": default_score,
-                        },
+                        highspeed={s: default_score for s in TEST_ZONES.keys()},
                         created_at=datetime.utcnow(),
                         last_streak=datetime.utcnow(),
                     )

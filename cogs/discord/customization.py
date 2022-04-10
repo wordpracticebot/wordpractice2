@@ -7,7 +7,7 @@ from discord.ext import commands
 
 import icons
 import word_list
-from constants import PREMIUM_LINK
+from constants import DEFAULT_WRAP, PREMIUM_LINK
 from helpers.checks import cooldown, premium_command, user_check
 from helpers.converters import opt_user, rgb_to_hex, rqd_colour
 from helpers.errors import ImproperArgument
@@ -22,7 +22,7 @@ def get_theme_preview_file(theme):
         "This is a preview of your theme. Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut nulla quas eius temporibus ex facilis ipsum culpa quod non possimus."
     )
 
-    width, height = get_width_height(word_list)
+    width, height = get_width_height(word_list, DEFAULT_WRAP)
 
     img = get_base(width, height, theme, fquote)
 

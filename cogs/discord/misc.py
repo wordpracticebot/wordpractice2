@@ -217,8 +217,11 @@ class Misc(commands.Cog):
         """View the privacy policy"""
         embed = ctx.embed(
             title="Privacy Policy",
-            description=f"If you have any questions, join our [support server]({SUPPORT_SERVER_INVITE})",
+            description=f"If you have any questions, join\nour [support server]({SUPPORT_SERVER_INVITE})",
+            add_footer=False,
         )
+        embed.set_thumbnail(url="https://i.imgur.com/CBl34Rv.png")
+
         view = create_link_view(
             {
                 "Privacy Policy": PRIVACY_POLICY_LINK,
@@ -232,8 +235,12 @@ class Misc(commands.Cog):
         """View the rules"""
         embed = ctx.embed(
             title="Rules",
-            description=f"If you have any questions, join our [support server]({SUPPORT_SERVER_INVITE})",
+            description=f"If you have any questions, join\nour [support server]({SUPPORT_SERVER_INVITE})",
+            add_footer=False,
         )
+
+        embed.set_thumbnail(url="https://i.imgur.com/HCntMH9.png")
+
         view = create_link_view(
             {
                 "Rules": RULES_LINK,

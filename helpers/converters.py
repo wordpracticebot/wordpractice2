@@ -5,8 +5,7 @@ from discord.commands import Option
 from discord.ext import commands
 from PIL import ImageColor
 
-import word_list
-from constants import TEST_RANGE
+from constants import TEST_RANGE, TEST_ZONES
 
 RGB_STRING = re.compile(
     r"^\(?(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d),(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d),(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d)\)?$"
@@ -50,6 +49,6 @@ word_amt = lambda: Option(
 quote_amt = lambda: Option(
     str,
     "Choose a quote length",
-    choices=list(word_list.quotes["lengths"].keys()),
+    choices=list(TEST_ZONES.keys()),
     required=True,
 )

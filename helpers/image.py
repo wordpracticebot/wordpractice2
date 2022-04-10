@@ -1,24 +1,21 @@
 import random
-from textwrap import TextWrapper
+import textwrap
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-from constants import SIDE_BORDER, SPACING, TOP_BORDER, WRAP_WIDTH
+from constants import SIDE_BORDER, SPACING, TOP_BORDER
 from static.assets import arial
-
-WRAPPER = TextWrapper(width=WRAP_WIDTH)
 
 
 def quantize_img(img):
     return img.quantize(method=Image.NONE)
 
-
-def get_width_height(word_list):
+def get_width_height(word_list, wrap_width):
     largest_item = max(word_list, key=lambda x: arial.getsize(x)[0])
 
     width = (
-        max(WRAP_WIDTH * arial.getsize(" ")[0], arial.getsize(largest_item)[0])
+        max(wrap_width * arial.getsize(" ")[0], arial.getsize(largest_item)[0])
         + SIDE_BORDER * 2
     )
 
@@ -32,8 +29,8 @@ def get_width_height(word_list):
     )
 
 
-def wrap_text(text):
-    word_list = WRAPPER.wrap(text=text)
+def wrap_text(text, wrap_width):
+    word_list = textwrap.wrap(text=text, width=wrap_width)
 
     joined = "\n".join(word_list)
 
@@ -67,7 +64,7 @@ def get_highscore_captcha_img(base_img, text_colour):
 
     for i in range(rows):
         for n in range(cols):
-            x = int(2.78 * np.cos(2 * np.pi * i / 22.9))
+            x = int(2.75 * np.cos(2 * np.pi * i / 22.9))
 
             img_output[i, n] = img[i, (n + x) % cols]
 
@@ -75,7 +72,7 @@ def get_highscore_captcha_img(base_img, text_colour):
 
     d = ImageDraw.Draw(img)
 
-    for _ in range(4):
+    for _ in range(3):
         d.line(
             (get_random_coord(), get_random_coord()),
             fill=text_colour,

@@ -6,7 +6,7 @@ import textwrap
 import time
 from datetime import datetime
 from io import BytesIO
-from itertools import cycle, groupby, islice
+from itertools import groupby
 
 import discord
 from captcha.image import ImageCaptcha
@@ -21,12 +21,14 @@ from constants import (
     CAPTCHA_ACC_PERC,
     CAPTCHA_INTERVAL,
     CAPTCHA_WPM_DEC,
+    DEFAULT_WRAP,
     MAX_CAPTCHA_ATTEMPTS,
     MAX_RACE_JOIN,
     RACE_JOIN_EXPIRE_TIME,
     SUPPORT_SERVER_INVITE,
     TEST_EXPIRE_TIME,
     TEST_RANGE,
+    TEST_ZONES,
 )
 from helpers.checks import cooldown
 from helpers.converters import quote_amt, word_amt
@@ -51,15 +53,10 @@ def author_is_user(ctx):
     return lambda m: m.author.id == ctx.author.id
 
 
-def get_test_zone(cw):
-    if cw in range(10, 21):
-        return "short", "(10-20) words"
-
-    elif cw in range(21, 51):
-        return "medium", "(21-50) words"
-
-    elif cw in range(51, 101):
-        return "long", "(51-100) words"
+def get_test_zone_name(cw):
+    for n, r in TEST_ZONES.items():
+        if cw in r:
+            return n, f"({r[0]}-{r[-1]}) words"
 
     return None
 
@@ -88,11 +85,21 @@ def get_test_type(test_type_int: int):
 HIGH_SCORE_CAPTCHA_TIMEOUT = 60
 
 
+def invoke_completion(ctx):
+    ctx.no_completion = False
+    ctx.bot.dispatch("application_command_completion", ctx)
+
+
 class RetryView(BaseView):
     def __init__(self, ctx, captcha_callback):
         super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT)
 
         self.captcha_callback = captcha_callback
+
+    async def on_timeout(self):
+        await super().on_timeout()
+
+        invoke_completion(self.ctx)
 
     @discord.ui.button(label="Retry", style=discord.ButtonStyle.success)
     async def retry_captcha(self, button, interaction):
@@ -106,6 +113,11 @@ class HighScoreCaptchaView(BaseView):
         self.user = user
         self.original_wpm = original_wpm
         self.attempts = 0
+
+    async def on_timeout(self):
+        await super().on_timeout()
+
+        invoke_completion(self.ctx)
 
     @property
     def target(self):
@@ -121,13 +133,13 @@ class HighScoreCaptchaView(BaseView):
         await self.message.edit(view=view)
 
         # Generating the quote for the test
-        quote = await Typing.handle_dictionary_input(self.ctx, 35)
+        quote, wrap_width = await Typing.handle_dictionary_input(self.ctx, 35)
 
         raw_quote = " ".join(quote)
 
-        word_list, fquote = wrap_text(raw_quote)
+        word_list, fquote = wrap_text(raw_quote, wrap_width)
 
-        width, height = get_width_height(word_list)
+        width, height = get_width_height(word_list, wrap_width)
 
         base_img = get_base(width, height, self.user.theme, fquote)
 
@@ -213,7 +225,7 @@ class HighScoreCaptchaView(BaseView):
 
                 await self.ctx.bot.mongo.replace_user_data(self.user)
 
-                return self.invoke_completion()
+                return invoke_completion(self.ctx)
 
         self.attempts += 1
 
@@ -229,7 +241,7 @@ class HighScoreCaptchaView(BaseView):
 
             await self.ctx.respond(embed=embed)
 
-            return self.invoke_completion()
+            return invoke_completion(self.ctx)
 
         plural = "s" if attempts_left > 1 else ""
 
@@ -238,11 +250,6 @@ class HighScoreCaptchaView(BaseView):
         view = RetryView(self.ctx, self.handle_captcha)
 
         view.message = await self.ctx.respond(embed=embed, view=view)
-
-    def invoke_completion(self):
-        self.ctx.no_completion = False
-
-        self.ctx.bot.dispatch("application_command_completion", self.ctx)
 
     def add_results(self, embed, raw, acc, word_history):
         embed.add_field(name=":person_running: Raw Wpm", value=f"{raw} / {self.target}")
@@ -272,7 +279,7 @@ class HighScoreCaptchaView(BaseView):
 
 
 class TestResultView(BaseView):
-    def __init__(self, ctx, user, is_dict, quote, length):
+    def __init__(self, ctx, user, is_dict, quote, wrap_width, length):
         super().__init__(ctx)
 
         # Adding link buttons because they can't be added with a decorator
@@ -287,6 +294,7 @@ class TestResultView(BaseView):
         self.length = length
         self.is_dict = is_dict
         self.quote = quote
+        self.wrap_width = wrap_width
 
         self.user = user
 
@@ -307,8 +315,10 @@ class TestResultView(BaseView):
 
     @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
+        test_info = (self.quote, self.wrap_width)
+
         result = await Typing.personal_test_input(
-            self.user, self.ctx, 2, self.quote, interaction.response.send_message
+            self.user, self.ctx, 2, test_info, interaction.response.send_message
         )
 
         if result is None:
@@ -406,11 +416,12 @@ class RaceLeaveButton(discord.ui.Button):
 
 
 class RaceJoinView(BaseView):
-    def __init__(self, ctx, is_dict, quote):
+    def __init__(self, ctx, is_dict, quote, wrap_width):
         super().__init__(ctx, timeout=None, personal=False)
 
         self.is_dict = is_dict
         self.quote = quote
+        self.wrap_width = wrap_width
         self.racers = {}  # id: user object (for preserve uniqueness)
 
         self.race_msg = None
@@ -508,9 +519,9 @@ class RaceJoinView(BaseView):
 
         raw_quote = " ".join(self.quote)
 
-        word_list, fquote = wrap_text(raw_quote)
+        word_list, fquote = wrap_text(raw_quote, self.wrap_width)
 
-        width, height = get_width_height(word_list)
+        width, height = get_width_height(word_list, self.wrap_width)
 
         base_img = get_base(width, height, author_theme, fquote)
 
@@ -696,6 +707,7 @@ class RaceJoinView(BaseView):
 
         if is_author:
             self.stop()
+            self.timeout_race.stop()
             await self.do_race(interaction)
 
         else:
@@ -786,36 +798,36 @@ class Typing(commands.Cog):
     @tt_group.command()
     async def dictionary(self, ctx, length: word_amt()):
         """Take a dictionary typing test"""
-        quote = await self.handle_dictionary_input(ctx, length)
+        quote_info = await self.handle_dictionary_input(ctx, length)
 
-        await self.do_typing_test(ctx, True, quote, length, ctx.respond)
+        await self.do_typing_test(ctx, True, quote_info, length, ctx.respond)
 
     @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(5, 1)
     @tt_group.command()
     async def quote(self, ctx, length: quote_amt()):
         """Take a quote typing test"""
-        quote = await self.handle_quote_input(length)
+        quote_info = await self.handle_quote_input(length)
 
-        await self.do_typing_test(ctx, False, quote, length, ctx.respond)
+        await self.do_typing_test(ctx, False, quote_info, length, ctx.respond)
 
     @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(6, 2)
     @race_group.command()
     async def dictionary(self, ctx, length: word_amt()):
         """Take a multiplayer dictionary typing test"""
-        quote = await self.handle_dictionary_input(ctx, length)
+        quote_info = await self.handle_dictionary_input(ctx, length)
 
-        await self.show_race_start(ctx, True, quote)
+        await self.show_race_start(ctx, True, quote_info)
 
     @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(6, 2)
     @race_group.command()
     async def quote(self, ctx, length: quote_amt()):
         """Take a multiplayer quote typing test"""
-        quote = await self.handle_quote_input(length)
+        quote_info = await self.handle_quote_input(length)
 
-        await self.show_race_start(ctx, False, quote)
+        await self.show_race_start(ctx, False, quote_info)
 
     @staticmethod
     async def handle_dictionary_input(ctx, length: int):
@@ -826,29 +838,38 @@ class Typing(commands.Cog):
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
-        words = load_test_file(word_list.languages[user.language]["levels"][user.level])
+        lang_data = word_list.languages[user.language]
 
-        return random.sample(words, length)
+        words = load_test_file(lang_data["levels"][user.level])
+
+        return random.sample(words, length), lang_data.get("wrap", DEFAULT_WRAP)
 
     @staticmethod
     async def handle_quote_input(length: str):
-        test_range = word_list.quotes["lengths"][length]
-
         quotes = load_test_file("quotes.json")
 
-        start = random.randint(0, len(quotes) - 1)
+        # Getting the maximum amount of words for that test zone
+        max_words = TEST_ZONES[length][-1]
 
-        # Selecting consecutive items from list of sentences
-        sections = list(
-            islice(cycle(quotes), start, start + random.randint(*test_range))
-        )
+        # Selecting consecutive items from list of sentences within max word amount
+        start = random.randint(0, len(quotes))
 
-        return [word for p in sections for word in p.split()]
+        words = []
+
+        last = None
+
+        while last is None or len(last) + len(words) <= max_words:
+            if last is not None:
+                words += last
+
+            last = quotes[(len(words) + start) % len(quotes)].split()
+
+        return words, DEFAULT_WRAP
 
     @staticmethod
-    async def show_race_start(ctx, is_dict, quote):
+    async def show_race_start(ctx, is_dict, quote_info):
         # Storing is_dict and quote in RaceJoinView because do_race method will be called inside it
-        view = RaceJoinView(ctx, is_dict, quote)
+        view = RaceJoinView(ctx, is_dict, *quote_info)
         await view.start()
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
@@ -858,7 +879,9 @@ class Typing(commands.Cog):
             await ctx.respond("Start the race by joining it", ephemeral=True)
 
     @staticmethod
-    async def personal_test_input(user, ctx, test_type_int, quote, send):
+    async def personal_test_input(user, ctx, test_type_int, quote_info, send):
+        quote, wrap_width = quote_info
+
         # Loading embed
 
         test_type = get_test_type(test_type_int)
@@ -883,9 +906,9 @@ class Typing(commands.Cog):
 
         raw_quote = " ".join(quote)
 
-        word_list, fquote = wrap_text(raw_quote)
+        word_list, fquote = wrap_text(raw_quote, wrap_width)
 
-        width, height = get_width_height(word_list)
+        width, height = get_width_height(word_list, wrap_width)
 
         base_img = get_base(width, height, user.theme, fquote)
 
@@ -950,14 +973,18 @@ class Typing(commands.Cog):
         return message, end_time, pacer_name, raw_quote
 
     @classmethod
-    async def do_typing_test(cls, ctx, is_dict, quote, length, send):
+    async def do_typing_test(cls, ctx, is_dict, quote_info, length, send):
+        quote, _ = quote_info
+
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
         # Prompting a captcha at intervals to prevent automated accounts
         if (user.test_amt + 1) % CAPTCHA_INTERVAL == 0:
             return await cls.handle_interval_captcha(ctx, user)
 
-        result = await cls.personal_test_input(user, ctx, int(is_dict), quote, send)
+        result = await cls.personal_test_input(
+            user, ctx, int(is_dict), quote_info, send
+        )
 
         if result is None:
             return
@@ -1019,7 +1046,7 @@ class Typing(commands.Cog):
             name=":1234: Words", value=f"{len(quote)} ({len(raw_quote)} chars)"
         )
 
-        view = TestResultView(ctx, user, is_dict, quote, length)
+        view = TestResultView(ctx, user, is_dict, *quote_info, length)
 
         view.message = await message.reply(embed=embed, view=view, mention_author=False)
 
@@ -1030,7 +1057,7 @@ class Typing(commands.Cog):
         user.add_xp(xp_earned)
         user.add_words(cw)
 
-        result = get_test_zone(cw)
+        result = get_test_zone_name(cw)
 
         if acc < 75:
             await ctx.respond(

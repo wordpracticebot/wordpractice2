@@ -90,7 +90,9 @@ class GraphView(ViewFromDict):
 
 class ScoreView(ScrollView):
     def __init__(self, ctx, user):
-        super().__init__(ctx, math.ceil(len(user.scores) / SCORES_PER_PAGE))
+        page_amt = math.ceil(len(user.scores) / SCORES_PER_PAGE)
+
+        super().__init__(ctx, page_amt, compct=page_amt < 7)
 
         self.user = user
 
@@ -149,7 +151,7 @@ class ScoreView(ScrollView):
 
         embed = self.ctx.embed(
             title=f"{self.user.display_name} | Recent Scores ({start_page + 1} - {end_page} of {total_scores})",
-            description="** **"
+            description=" "
             if self.user.is_premium
             else f"**[Patrons]({PREMIUM_LINK})** can download test scores",
         )
@@ -515,7 +517,7 @@ class ProfileView(BaseView):
             value=(f"{hs3.wpm}\n{hs3.acc}%\n**{placing}**"),
         )
 
-        wpm, raw, acc, cw, tw, scores = get_typing_average(self.user, 10)
+        wpm, raw, acc, cw, tw, scores = get_typing_average(self.user)
 
         if len(scores) > 0:
             con = calculate_consistency([s.wpm + s.raw + s.acc for s in scores])

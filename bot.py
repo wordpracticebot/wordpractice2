@@ -23,6 +23,7 @@ from constants import (
     PRIVACY_POLICY_LINK,
     RULES_LINK,
     SUPPORT_SERVER_INVITE,
+    TEST_ZONES,
 )
 from helpers.ui import BaseView, CustomEmbed
 from static.hints import hints
@@ -267,9 +268,7 @@ class WordPractice(commands.AutoShardedBot):
                 desc="Short, Medium and Long Test",
                 emoji="\N{RUNNER}",
                 stats=[
-                    LBCategory(self, "Short", "wpm", "$highspeed.short.wpm", lambda u: u.highspeed["short"].wpm),
-                    LBCategory(self, "Medium", "wpm", "$highspeed.medium.wpm", lambda u: u.highspeed["medium"].wpm),
-                    LBCategory(self, "Long", "wpm", "$highspeed.long.wpm", lambda u: u.highspeed["long"].wpm),
+                    LBCategory(self, s.capitalize(), "wpm", f"$highspeed.{s}.wpm", lambda u: u.highspeed[s].wpm) for s in TEST_ZONES.keys()
                 ],
                 default=0,
             ),

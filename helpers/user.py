@@ -45,7 +45,7 @@ def get_pacer_type_name(pacer_type: int):
     return "Vertical"
 
 
-def get_typing_average(user, amount: int):
+def get_typing_average(user, amount: int = 10):
     """
     user: user data
     amount: how many scores to get the statistics of

@@ -105,5 +105,3 @@ languages = {
         },
     },
 }
-
-quotes = {"lengths": {"short": (1, 2), "medium": (3, 4), "long": [5, 6]}}
