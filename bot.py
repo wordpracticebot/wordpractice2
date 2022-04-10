@@ -265,7 +265,7 @@ class WordPractice(commands.AutoShardedBot):
             ),
             Leaderboard(
                 title="High Score",
-                desc="Short, Medium and Long Test",
+                desc=f"{', '.join(TEST_ZONES.keys())} Test",
                 emoji="\N{RUNNER}",
                 stats=[
                     LBCategory(self, s.capitalize(), "wpm", f"$highspeed.{s}.wpm", lambda u: u.highspeed[s].wpm) for s in TEST_ZONES.keys()

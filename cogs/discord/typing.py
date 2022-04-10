@@ -67,9 +67,13 @@ def get_xp_earned(cc):
     return round(1 + (cc * 2))
 
 
-def get_test_type(test_type_int: int):
+def get_test_type(test_type_int: int, length: int):
+    zone = next(
+        (f"{t.capitalize()} " for t, v in TEST_ZONES.items() if length in v), ""
+    )
+
     # fmt: off
-    return (
+    return zone + (
         "Quote"
         if test_type_int == 0
 
@@ -470,7 +474,7 @@ class RaceJoinView(BaseView):
         )
 
     def get_race_embed(self):
-        test_type = get_test_type(int(self.is_dict))
+        test_type = get_test_type(int(self.is_dict), len(self.quote))
 
         embed = self.ctx.embed(
             title=f"{test_type} Race",
@@ -884,9 +888,9 @@ class Typing(commands.Cog):
 
         # Loading embed
 
-        test_type = get_test_type(test_type_int)
-
         word_count = len(quote)
+
+        test_type = get_test_type(test_type_int, word_count)
 
         pacer_type_name = get_pacer_type_name(user.pacer_type)
 
