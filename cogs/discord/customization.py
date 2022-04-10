@@ -109,7 +109,7 @@ class ThemeSelect(discord.ui.Select):
 
 def get_difficulty_choices(name):
     """Finds language difficulty options from selected language"""
-    return word_list.languages.get(name, {"levels": []})["levels"]
+    return word_list.languages.get(name, [])
 
 
 class Customization(commands.Cog):

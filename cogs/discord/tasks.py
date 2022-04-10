@@ -111,7 +111,7 @@ class Tasks(commands.Cog):
 
     @tasks.loop(minutes=30)
     async def post_guild_count(self):
-        if TESTING is False:
+        if TESTING or DBL_TOKEN is None:
             return
 
         await self.bot.wait_until_ready()

@@ -45,8 +45,10 @@ from helpers.utils import cmd_run_before, get_test_stats
 
 
 def load_test_file(name):
-    with open(f"./word_list/{name}", "r") as f:
-        return json.load(f)
+    with open(f"./word_list/{name}", "r", encoding="utf-8-sig") as f:
+        data = json.load(f)
+
+    return data["words"], data.get("wrap", DEFAULT_WRAP)
 
 
 def author_is_user(ctx):
@@ -838,15 +840,13 @@ class Typing(commands.Cog):
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
-        lang_data = word_list.languages[user.language]
+        words, wrap = load_test_file(word_list.languages[user.language][user.level])
 
-        words = load_test_file(lang_data["levels"][user.level])
-
-        return random.sample(words, length), lang_data.get("wrap", DEFAULT_WRAP)
+        return random.sample(words, length), wrap
 
     @staticmethod
     async def handle_quote_input(length: str):
-        quotes = load_test_file("quotes.json")
+        quotes, wrap = load_test_file("quotes.json")
 
         # Getting the maximum amount of words for that test zone
         max_words = TEST_ZONES[length][-1]
@@ -864,7 +864,7 @@ class Typing(commands.Cog):
 
             last = quotes[(len(words) + start) % len(quotes)].split()
 
-        return words, DEFAULT_WRAP
+        return words, wrap
 
     @staticmethod
     async def show_race_start(ctx, is_dict, quote_info):
@@ -1110,7 +1110,7 @@ class Typing(commands.Cog):
     @staticmethod
     async def handle_interval_captcha(ctx, user):
         # Getting the quote for the captcha
-        words = load_test_file(word_list.languages["english"]["levels"]["easy"])
+        words, _ = load_test_file(word_list.languages["english"]["easy"])
         captcha_word = random.choice(words)
 
         # Generating the captcha image
