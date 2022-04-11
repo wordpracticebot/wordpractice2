@@ -39,7 +39,7 @@ from helpers.image import (
     get_width_height,
     wrap_text,
 )
-from helpers.ui import BaseView, create_link_view
+from helpers.ui import BaseView, create_link_view, get_log_embed
 from helpers.user import get_pacer_display, get_pacer_type_name
 from helpers.utils import cmd_run_before, get_test_stats
 
@@ -133,6 +133,22 @@ class HighScoreCaptchaView(BaseView):
     async def start_captcha(self, button, interaction):
         await self.handle_captcha(self, button, interaction)
 
+    async def flag_captcha_fail(self, wpm):
+        embed = get_log_embed(
+            self.ctx,
+            title="High Score Captcha Fail",
+            additional=(
+                f"**Orignal Wpm:** {self.original_wpm}\n"
+                f"**Attempts:** {self.attempts}\n"
+                f"**Wpm:** {wpm}"
+            ),
+        )
+
+        await self.ctx.bot.test_wh.send(embed=embed)
+
+        if self.original_wpm:
+            await self.ctx.bot.impt_wh.send(embed=embed)
+
     async def handle_captcha(self, view, button, interaction):
         button.disabled = True
 
@@ -202,6 +218,8 @@ class HighScoreCaptchaView(BaseView):
         except asyncio.TimeoutError:
             finished_test = False
 
+        raw = None
+
         if finished_test:
             end_time = time.time() - start_time
 
@@ -247,7 +265,9 @@ class HighScoreCaptchaView(BaseView):
 
             await self.ctx.respond(embed=embed)
 
-            return invoke_completion(self.ctx)
+            invoke_completion(self.ctx)
+
+            return await self.flag_captcha_fail(raw)
 
         plural = "s" if attempts_left > 1 else ""
 
@@ -256,6 +276,8 @@ class HighScoreCaptchaView(BaseView):
         view = RetryView(self.ctx, self.handle_captcha)
 
         view.message = await self.ctx.respond(embed=embed, view=view)
+
+        await self.flag_captcha_fail(raw)
 
     def add_results(self, embed, raw, acc, word_history):
         embed.add_field(name=":person_running: Raw Wpm", value=f"{raw} / {self.target}")
@@ -1066,15 +1088,20 @@ class Typing(commands.Cog):
 
         result = get_test_zone_name(cw)
 
-        if acc < 75:
-            await ctx.respond(
-                "Warning: Tests below 75% accuracy are not saved", ephemeral=True
-            )
+        warning = ""
+
+        if raw > 350:
+            warning = "Please try not to spam the test."
+
+        elif acc < 75:
+            warning = "Tests below 75% accuracy are not saved."
 
         elif result is None:
-            await ctx.respond(
-                "Warning: Tests below 10 correct words are not saved", ephemeral=True
-            )
+            warning = "Tests below 10 correct words are not saved."
+
+        if warning:
+            await ctx.respond(f"Warning: {warning}", ephemeral=True)
+
         else:
             zone, zone_range = result
 

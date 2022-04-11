@@ -1,6 +1,7 @@
 import time
 
 import discord
+from discord.utils import escape_markdown
 
 import icons
 from constants import DEFAULT_VIEW_TIMEOUT, ERROR_CLR, SUPPORT_SERVER_INVITE
@@ -84,11 +85,15 @@ class BaseView(discord.ui.View):
 
         timestamp = int(time.time())
 
+        user = escape_markdown(user)
+
+        guild = escape_markdown(guild)
+
         embed = ctx.embed(
             title="Unexpected Error (in view)",
             description=(
-                f"**Server:** {inter.guild} ({inter.guild.id})\n"
-                f"**User:** {inter.user} ({inter.user.id})\n"
+                f"**Server:** {guild} ({inter.guild.id})\n"
+                f"**User:** {user} ({inter.user.id})\n"
                 f"**Done:** {inter.response.is_done()}\n"
                 f"**Timestamp:** <t:{timestamp}:R>"
             ),
@@ -256,3 +261,24 @@ class ViewFromDict(PageView):
 
         embed = await self.create_page()
         await self.ctx.respond(embed=embed, view=self)
+
+
+def get_log_embed(ctx, title, additional: str, error=False):
+    name = escape_markdown(str(ctx.author))
+    guild = escape_markdown(str(ctx.guild))
+
+    timestamp = int(time.time())
+
+    embed_gen = ctx.error_embed if error else ctx.default_embed
+
+    embed = embed_gen(
+        title=title,
+        description=(
+            f"**User:** {name} ({ctx.author.id})\n"
+            f"**Server:** {guild} ({ctx.guild.id})\n"
+            f"{additional}\n"
+            f"**Timestamp:** <t:{timestamp}:R>"
+        ),
+    )
+
+    return embed

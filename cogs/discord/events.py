@@ -15,7 +15,7 @@ from achievements import check_all
 from achievements.challenges import get_daily_challenges
 from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument
-from helpers.ui import create_link_view
+from helpers.ui import create_link_view, get_log_embed
 from helpers.user import get_user_cmds_run
 from helpers.utils import format_slash_command
 from static.assets import achievement_base, uni_sans_heavy
@@ -42,21 +42,9 @@ class Events(commands.Cog):
     async def log_interaction(self, ctx):
         # Logging the interaction
 
-        timestamp = int(time.time())
-
         command = format_slash_command(ctx.command)
 
-        name = escape_markdown(str(ctx.author))
-        guild = escape_markdown(str(ctx.guild))
-
-        embed = ctx.default_embed(
-            description=(
-                f"**User:** {name} ({ctx.author.id})\n"
-                f"**Server:** {guild} ({ctx.guild.id})\n"
-                f"**Command:** {command}\n"
-                f"**Timestamp:** <t:{timestamp}:R>"
-            ),
-        )
+        embed = get_log_embed(ctx, title=None, additional=f"**Command:** {command}")
 
         await self.bot.cmd_wh.send(embed=embed)
 
@@ -128,21 +116,13 @@ class Events(commands.Cog):
 
         await ctx.respond(embed=embed, view=view)
 
-        timestamp = int(time.time())
-
         command = format_slash_command(ctx.command)
 
-        name = escape_markdown(str(ctx.author))
-        guild = escape_markdown(str(ctx.guild))
-
-        embed = ctx.error_embed(
+        embed = get_log_embed(
+            ctx,
             title="Unexpected Error",
-            description=(
-                f"**User:** {name} ({ctx.author.id})\n"
-                f"**Server:** {guild} ({ctx.guild.id})\n"
-                f"**Command:** {command}\n"
-                f"**Timestamp:** <t:{timestamp}:R>"
-            ),
+            additional=f"**Command:** {command}",
+            error=True,
         )
 
         await self.bot.log_the_error(embed, error)
