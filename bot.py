@@ -173,17 +173,32 @@ class WelcomeView(BaseView):
         await self.ctx.respond(embed=embed, view=self)
 
 
+def get_embed_theme(user):
+    return int(user.theme[1].replace("#", "0x"), 16) if user else None
+
+
 class CustomContext(discord.commands.ApplicationContext):
     def __init__(self, bot, interaction, theme):
         super().__init__(bot, interaction)
 
-        self.theme = theme
+        self._theme = theme
         self.testing = False  # if set to true, cooldowns are avoided
 
         self.no_completion = False
 
         # Hint is chosen when defining context to ensure a consistent hint throughout each response
         self.hint = random.choice(hints)
+
+    @property
+    def theme(self):
+        cached_user = self.bot.mongo.get_user_from_cache(self.author.id)
+
+        new_theme = get_embed_theme(cached_user)
+
+        if new_theme is not None:
+            self._theme = new_theme
+
+        return self._theme
 
     def embed(self, **kwargs):
         color = kwargs.pop("color", self.theme or PRIMARY_CLR)
@@ -305,10 +320,11 @@ class WordPractice(commands.AutoShardedBot):
     async def get_application_context(self, interaction, cls=None):
         user = await self.mongo.fetch_user(interaction.user)
 
-        theme = int(user.theme[1].replace("#", "0x"), 16) if user else None
+        theme = get_embed_theme(user)
 
         if cls is None:
             cls = CustomContext
+
         return cls(self, interaction, theme)
 
     def load_exts(self):

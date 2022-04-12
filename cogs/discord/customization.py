@@ -63,9 +63,11 @@ class EquipSelect(discord.ui.Select):
 
         await interaction.message.edit(embed=embed, view=None)
 
-        await self.ctx.bot.mongo.update_user(
-            self.ctx.author, {"$set": {"status": option}}
-        )
+        user = await self.ctx.bot.mongo.fetch_user(self.ctx.author)
+
+        user.status = option
+
+        await self.ctx.bot.mongo.replace_user_data(user)
 
 
 class ThemeSelect(discord.ui.Select):
@@ -103,9 +105,11 @@ class ThemeSelect(discord.ui.Select):
 
         await interaction.message.edit(embed=embed, file=file, view=None)
 
-        await self.ctx.bot.mongo.update_user(
-            self.ctx.author, {"$set": {"theme": theme_value}}
-        )
+        user = await self.ctx.bot.mongo.fetch_user(self.ctx.author)
+
+        user.theme = theme_value
+
+        await self.ctx.bot.mongo.replace_user_data(user)
 
 
 def get_difficulty_choices(name):
@@ -183,7 +187,11 @@ class Customization(commands.Cog):
 
         await ctx.respond(embed=embed, file=file)
 
-        await self.bot.mongo.update_user(ctx.author, {"$set": {"theme": colours}})
+        user = await self.bot.mongo.fetch_user(ctx.author)
+
+        user.theme = colours
+
+        await self.bot.mongo.replace_user_data(user)
 
     @cooldown(8, 3)
     @theme_group.command()
@@ -222,10 +230,12 @@ class Customization(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-        # Updating the language after to be more responsive
-        await self.bot.mongo.update_user(
-            ctx.author, {"$set": {"language": name, "level": difficulty}}
-        )
+        user = await self.bot.mongo.fetch_user(ctx.author)
+
+        user.language = name
+        user.level = difficulty
+
+        await self.bot.mongo.replace_user_data(user)
 
     async def handle_update_pacer_speed(self, ctx, name, value):
         embed = ctx.embed(
@@ -233,7 +243,11 @@ class Customization(commands.Cog):
         )
         await ctx.respond(embed=embed)
 
-        await ctx.bot.mongo.update_user(ctx.author, {"$set": {"pacer_speed": value}})
+        user = await self.bot.mongo.fetch_user(ctx.author)
+
+        user.pacer_speed = value
+
+        await self.bot.mongo.replace_user_data(user)
 
     @cooldown(8, 3)
     @pacer_group.command()
@@ -257,7 +271,11 @@ class Customization(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-        await ctx.bot.mongo.update_user(ctx.author, {"$set": {"pacer_type": update}})
+        user = await self.bot.mongo.fetch_user(ctx.author)
+
+        user.pacer_type = update
+
+        await self.bot.mongo.replace_user_data(user)
 
     @cooldown(8, 3)
     @pacer_group.command()

@@ -85,9 +85,9 @@ class BaseView(discord.ui.View):
 
         timestamp = int(time.time())
 
-        user = escape_markdown(user)
+        user = escape_markdown(str(inter.user))
 
-        guild = escape_markdown(guild)
+        guild = escape_markdown(str(inter.guild))
 
         embed = ctx.embed(
             title="Unexpected Error (in view)",

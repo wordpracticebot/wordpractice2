@@ -238,6 +238,14 @@ class Mongo(commands.Cog):
 
         return mod, mod_id
 
+    def get_user_from_cache(self, user_id: int):
+        u = self.bot.user_cache.get(user_id)
+
+        if u is not None:
+            u = self.User.build_from_mongo(pickle.loads(u))
+
+        return u
+
     async def fetch_user(self, user: Union[discord.Member, int], create=False):
         if isinstance(user, int):
             user_id = user
@@ -245,9 +253,7 @@ class Mongo(commands.Cog):
             user_id = user.id
 
         # Checking if the user is in the cache
-        u = self.bot.user_cache.get(user_id)
-        if u is not None:
-            u = self.User.build_from_mongo(pickle.loads(u))
+        u = self.get_user_from_cache(user_id)
 
         if u is None:
             u = await self.User.find_one({"id": user_id})

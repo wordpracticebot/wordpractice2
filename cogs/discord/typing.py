@@ -635,7 +635,6 @@ class RaceJoinView(BaseView):
             long_space = "\N{IDEOGRAPHIC SPACE}"
 
             for r in g:
-                user = r.data
                 score = r.result
 
                 if r.result is None:
@@ -646,9 +645,6 @@ class RaceJoinView(BaseView):
                         f"{long_space} :person_running: Raw Wpm: **{score.raw}**\n"
                         f"{long_space} :dart: Accuracy: **{score.acc}%**"
                     )
-                    user.add_score(score)
-                    user.add_words(score.cw)
-                    user.add_xp(score.xp)
 
                 embed.add_field(
                     name=f"{place_display} {r.data.display_name}",
@@ -670,7 +666,14 @@ class RaceJoinView(BaseView):
         # Updating the users in the database
         for r in self.racers.values():
             if r.result is not None:
-                await self.ctx.bot.mongo.replace_user_data(r.data)
+                # Refetching user to account for state changes
+                user = await self.ctx.bot.mongo.fetch_user(r.user)
+
+                user.add_score(score)
+                user.add_words(score.cw)
+                user.add_xp(score.xp)
+
+                await self.ctx.bot.mongo.replace_user_data(user)
 
     async def add_racer(self, interaction):
         if len(self.racers) == MAX_RACE_JOIN:
@@ -1078,6 +1081,8 @@ class Typing(commands.Cog):
         view = TestResultView(ctx, user, is_dict, *quote_info, length)
 
         view.message = await message.reply(embed=embed, view=view, mention_author=False)
+
+        user = await ctx.bot.mongo.fetch_user(ctx.author)
 
         # Checking if there is a new high score
 
