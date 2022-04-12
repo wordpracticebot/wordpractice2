@@ -252,6 +252,9 @@ class WordPractice(commands.AutoShardedBot):
 
         # Leaderboards
 
+        def get_hs(s):
+            return lambda u: u.highspeed[s].wpm
+
         # fmt: off
         self.lbs = [
             Leaderboard(
@@ -280,12 +283,12 @@ class WordPractice(commands.AutoShardedBot):
             ),
             Leaderboard(
                 title="High Score",
-                desc=f"{', '.join(TEST_ZONES.keys())} Test",
+                desc=f"{', '.join(t.capitalize() for t in TEST_ZONES.keys())} Test",
                 emoji="\N{RUNNER}",
                 stats=[
-                    LBCategory(self, s.capitalize(), "wpm", f"$highspeed.{s}.wpm", lambda u: u.highspeed[s].wpm) for s in TEST_ZONES.keys()
+                    LBCategory(self, s.capitalize(), "wpm", f"$highspeed.{s}.wpm", get_hs(s)) for s in TEST_ZONES.keys()
                 ],
-                default=0,
+                default=1,
             ),
         ]
         # fmt: on
