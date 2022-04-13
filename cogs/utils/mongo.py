@@ -31,7 +31,7 @@ from constants import (
     VOTING_SITES,
 )
 from helpers.ui import create_link_view
-from helpers.user import generate_user_desc, get_expanded_24_hour_stat
+from helpers.user import get_expanded_24_hour_stat
 from helpers.utils import datetime_to_unix
 from static.badges import get_badge_from_id, get_badges_from_ids
 
@@ -163,10 +163,6 @@ class User(UserBase):
     @property
     def display_name(self):
         return self.username + (f" {self.status_emoji}" if self.status else "")
-
-    @property
-    def desc(self):
-        return generate_user_desc(self)
 
     @property
     def is_premium(self):

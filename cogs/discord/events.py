@@ -211,6 +211,7 @@ class Events(commands.Cog):
             if new_a is False:
                 done_checking = True
 
+        # Daily challenges
         if new_user.is_daily_complete is False:
 
             challenges, reward = get_daily_challenges()
@@ -223,6 +224,8 @@ class Events(commands.Cog):
             if challenge_completed:
                 new_user = reward.changer(new_user)
                 new_user.is_daily_complete = True
+
+        # Season rewards
 
         # Updating the user's executed commands
 

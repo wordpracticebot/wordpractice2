@@ -139,14 +139,15 @@ class HighScoreCaptchaView(BaseView):
             title="High Score Captcha Fail",
             additional=(
                 f"**Orignal Wpm:** {self.original_wpm}\n"
-                f"**Attempts:** {self.attempts}\n"
-                f"**Wpm:** {wpm}"
+                f"**Wpm:** {wpm}\n"
+                f"**Attempts:** {self.attempts} / {MAX_CAPTCHA_ATTEMPTS}"
             ),
+            error=True
         )
 
         await self.ctx.bot.test_wh.send(embed=embed)
 
-        if self.original_wpm:
+        if self.original_wpm >= 180:
             await self.ctx.bot.impt_wh.send(embed=embed)
 
     async def handle_captcha(self, view, button, interaction):
@@ -326,8 +327,15 @@ class TestResultView(BaseView):
 
         self.user = user
 
+    async def disable_btn(self, button):
+        button.disabled = True
+
+        await self.message.edit(view=self)
+
     @discord.ui.button(label="Next Test", style=discord.ButtonStyle.success)
     async def next_test(self, button, interaction):
+        await self.disable_btn(button)
+
         if self.is_dict:
             quote = await Typing.handle_dictionary_input(self.ctx, self.length)
         else:
@@ -343,6 +351,8 @@ class TestResultView(BaseView):
 
     @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
+        await self.disable_btn(button)
+
         test_info = (self.quote, self.wrap_width)
 
         result = await Typing.personal_test_input(

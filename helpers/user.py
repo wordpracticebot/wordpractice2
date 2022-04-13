@@ -5,12 +5,6 @@ from constants import UPDATE_24_HOUR_INTERVAL
 from static.themes import default
 
 
-def generate_user_desc(user):
-    """Generate a description from user data"""
-    # TODO: Finish generation of descriptions
-    return "Nothing much is known about this user"
-
-
 def get_user_cmds_run(bot, user) -> set:
     return bot.cmds_run.get(user.id, set()) | set(user.cmds_run)
 
