@@ -1,5 +1,4 @@
 import copy
-import time
 from collections import defaultdict
 from datetime import datetime
 from io import BytesIO
@@ -7,7 +6,6 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 from discord.ext.commands import errors
-from discord.utils import escape_markdown
 from PIL import ImageDraw
 
 import icons
@@ -56,7 +54,8 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
-        if isinstance(error, (discord.commands.CheckFailure, commands.CheckFailure)):
+        if isinstance(error, (discord.errors.CheckFailure, commands.CheckFailure)):
+
             if isinstance(error, errors.BotMissingPermissions):
                 embed = ctx.error_embed(
                     title=f"{icons.caution} Bot Missing Permissions",
@@ -78,8 +77,9 @@ class Events(commands.Cog):
                     "Permission Error",
                     "I am missing the correct permissions",
                 )
-            except:  # bare exception :eyes:
+            except Exception:
                 pass
+
             return
 
         if isinstance(error, errors.UserInputError):

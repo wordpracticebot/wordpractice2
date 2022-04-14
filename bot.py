@@ -337,7 +337,7 @@ class WordPractice(commands.AutoShardedBot):
             try:
                 self.load_extension(ext)
             except Exception:
-                print(f"Failed to load extension: {ext}", file=sys.stderr)
+                self.log.warning(f"Failed to load extension: {ext}")
                 traceback.print_exc()
 
     def create_invite_link(self):
@@ -358,7 +358,7 @@ class WordPractice(commands.AutoShardedBot):
 
         await self.error_wh.send(embed=embed, file=file)
 
-        print(msg)
+        self.log.warning(msg)
 
     async def handle_new_user(self, ctx):
         view = WelcomeView(ctx)
@@ -366,6 +366,7 @@ class WordPractice(commands.AutoShardedBot):
 
     async def on_interaction(self, interaction):
         if interaction.type is InteractionType.application_command:
+
             temp_ctx = await self.get_application_context(interaction)
 
             user = await self.mongo.fetch_user(interaction.user)
@@ -397,7 +398,7 @@ class WordPractice(commands.AutoShardedBot):
         return discord.Webhook.from_url(config.ERROR_LOG, session=self.session)
 
     async def on_ready(self):
-        print("Ready!")
+        self.log.info("The bot is ready!")
 
     async def close(self):
         await super().close()

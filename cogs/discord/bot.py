@@ -38,7 +38,7 @@ class SeasonView(ViewFromDict):
         categories = {
             "Information": self.get_info_embed,
             "Leaderboard": self.get_lb_embed,
-            "Progress": self.get_progress_embed,
+            "Badge Progress": self.get_badge_embed,
         }
 
         super().__init__(ctx, categories)
@@ -52,11 +52,39 @@ class SeasonView(ViewFromDict):
     def get_info_embed(self):
         embed = self.ctx.embed(title="Season Information")
 
+        embed.add_field(
+            name="What is the season?",
+            value=(
+                "Seasons are a month-long competition open to all wordPractice\n"
+                "users. Users compete to earn the most XP before the season ends\n"
+                "to win exclusive prizes."
+            ),
+            inline=False,
+        )
+
+        embed.add_field(
+            name="How do you earn XP?",
+            value=(
+                f"XP ({icons.xp}) can be earned through completing typing tests, daily challenges,\n"
+                "voting and much more. "
+            ),
+            inline=False,
+        )
+
+        embed.add_field(
+            name="What are season badges?",
+            value=(
+                "Users can earn season badges by progressing through the season.\n"
+                "Season badges are exclusive and change every season."
+            ),
+            inline=False,
+        )
+
         embed.set_thumbnail(url="https://i.imgur.com/0Mzb6Js.png")
 
         return embed
 
-    def get_progress_embed(self):
+    def get_badge_embed(self):
         embed = self.ctx.embed(
             title="Season Prizes",
         )

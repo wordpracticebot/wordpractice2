@@ -142,7 +142,7 @@ class HighScoreCaptchaView(BaseView):
                 f"**Wpm:** {wpm}\n"
                 f"**Attempts:** {self.attempts} / {MAX_CAPTCHA_ATTEMPTS}"
             ),
-            error=True
+            error=True,
         )
 
         await self.ctx.bot.test_wh.send(embed=embed)
@@ -819,14 +819,21 @@ class RaceJoinView(BaseView):
         self.timeout_race.start()
 
 
-class Typing(commands.Cog):
+class Typing(
+    commands.Cog,
+):
     """Typing test related commands"""
 
     emoji = "\N{KEYBOARD}"
     order = 2
 
+    test_mc = commands.MaxConcurrency(1, per=commands.BucketType.user, wait=False)
+
     def __init__(self, bot):
         self.bot = bot
+
+        for cmd in self.walk_commands():
+            cmd._max_concurrency = self.test_mc
 
     tt_group = SlashCommandGroup("tt", "Take a typing test")
     race_group = SlashCommandGroup(
@@ -834,7 +841,6 @@ class Typing(commands.Cog):
         f"Take a multiplayer typing test. Up to {MAX_RACE_JOIN} other users can join your race.",
     )
 
-    @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(5, 1)
     @tt_group.command()
     async def dictionary(self, ctx, length: word_amt()):
@@ -843,7 +849,6 @@ class Typing(commands.Cog):
 
         await self.do_typing_test(ctx, True, quote_info, length, ctx.respond)
 
-    @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(5, 1)
     @tt_group.command()
     async def quote(self, ctx, length: quote_amt()):
@@ -852,7 +857,6 @@ class Typing(commands.Cog):
 
         await self.do_typing_test(ctx, False, quote_info, length, ctx.respond)
 
-    @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(6, 2)
     @race_group.command()
     async def dictionary(self, ctx, length: word_amt()):
@@ -861,7 +865,6 @@ class Typing(commands.Cog):
 
         await self.show_race_start(ctx, True, quote_info)
 
-    @commands.max_concurrency(1, per=commands.BucketType.user)
     @cooldown(6, 2)
     @race_group.command()
     async def quote(self, ctx, length: quote_amt()):

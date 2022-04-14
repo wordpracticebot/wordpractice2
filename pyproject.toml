@@ -14,11 +14,11 @@ humanfriendly = "^10.0"
 black = "^21.11b1"
 Pillow = "^8.4.0"
 isort = "^5.10.1"
-py-cord = {git = "https://github.com/Pycord-Development/pycord"}
 humanize = "^4.0.0"
 numpy = "^1.22.3"
 captcha = "^0.4"
 python-decouple = "^3.6"
+py-cord = "2.0.0b7"
 
 [tool.poetry.dev-dependencies]
 
