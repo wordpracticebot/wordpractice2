@@ -19,7 +19,7 @@
 
 2. Copy the content from `.env.example` into `.env` and fill it with the necessary information.
 
-3. Configure any variables in `config.py` and `icons.py`
+3. Configure any variables in `constants.py` and `icons.py`
 
 ### 3. Running
 

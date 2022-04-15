@@ -12,7 +12,7 @@ import icons
 from achievements import check_all
 from achievements.challenges import get_daily_challenges
 from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
-from helpers.errors import ImproperArgument
+from helpers.errors import ImproperArgument, OnGoingTest
 from helpers.ui import create_link_view, get_log_embed
 from helpers.user import get_user_cmds_run
 from helpers.utils import format_slash_command
@@ -65,10 +65,8 @@ class Events(commands.Cog):
 
         error = error.original
 
-        if isinstance(error, errors.MaxConcurrencyReached):
-            return await ctx.respond(
-                "Another instance of this command is still being run!", ephemeral=True
-            )
+        if isinstance(error, OnGoingTest):
+            return await self.bot.handle_ongoing_test_error(ctx.respond)
 
         if isinstance(error, discord.errors.Forbidden):
             try:

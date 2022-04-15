@@ -5,6 +5,7 @@ from discord.utils import escape_markdown
 
 import icons
 from constants import DEFAULT_VIEW_TIMEOUT, ERROR_CLR, SUPPORT_SERVER_INVITE
+from helpers.errors import OnGoingTest
 
 
 def create_link_view(links: dict[str, str]):
@@ -69,19 +70,25 @@ class BaseView(discord.ui.View):
         return False
 
     async def on_error(self, error, item, inter):
-        ctx = self.ctx
+        if inter.response.is_done():
+            send = inter.followup.send
+        else:
+            send = inter.response.send_message
+
+        if isinstance(error, OnGoingTest):
+            return await self.ctx.bot.handle_ongoing_test_error(send)
 
         self = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
 
-        embed = ctx.error_embed(
+        embed = self.ctx.error_embed(
             title=f"{icons.danger} Unexpected Error",
             description="Report this through our support server so we can fix it.",
         )
 
         if inter.response.is_done():
-            await inter.followup.send(embed=embed, view=self, ephemeral=True)
+            await send(embed=embed, view=self, ephemeral=True)
         else:
-            await inter.response.send_message(embed=embed, view=self, ephemeral=True)
+            await send(embed=embed, view=self, ephemeral=True)
 
         timestamp = int(time.time())
 
@@ -89,7 +96,7 @@ class BaseView(discord.ui.View):
 
         guild = escape_markdown(str(inter.guild))
 
-        embed = ctx.embed(
+        embed = self.ctx.embed(
             title="Unexpected Error (in view)",
             description=(
                 f"**Server:** {guild} ({inter.guild.id})\n"
@@ -101,7 +108,7 @@ class BaseView(discord.ui.View):
             add_footer=False,
         )
 
-        await ctx.bot.log_the_error(embed, error)
+        await self.ctx.bot.log_the_error(embed, error)
 
 
 class PageView(BaseView):

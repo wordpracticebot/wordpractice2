@@ -348,6 +348,12 @@ class WordPractice(commands.AutoShardedBot):
             scopes=("bot", "applications.commands"),
         )
 
+    async def handle_ongoing_test_error(self, send):
+        await send(
+            "You are currently in another test, please finish it before starting a new one!",
+            ephemeral=True,
+        )
+
     async def log_the_error(self, embed, error):
         msg = "".join(
             traceback.format_exception(type(error), error, error.__traceback__)
