@@ -32,6 +32,7 @@ from constants import (
 )
 from helpers.checks import cooldown
 from helpers.converters import quote_amt, word_amt
+from helpers.errors import OnGoingTest
 from helpers.image import (
     get_base,
     get_highscore_captcha_img,
@@ -151,6 +152,8 @@ class HighScoreCaptchaView(BaseView):
             await self.ctx.bot.impt_wh.send(embed=embed)
 
     async def handle_captcha(self, view, button, interaction):
+        Typing.active_start(self.ctx.author.id)
+
         button.disabled = True
 
         await self.message.edit(view=view)
@@ -218,6 +221,8 @@ class HighScoreCaptchaView(BaseView):
             )
         except asyncio.TimeoutError:
             finished_test = False
+
+        Typing.active_end(self.ctx.author.id)
 
         raw = None
 
@@ -351,6 +356,8 @@ class TestResultView(BaseView):
 
     @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
+        Typing.active_start(self.ctx.author.id)
+
         await self.disable_btn(button)
 
         test_info = (self.quote, self.wrap_width)
@@ -360,6 +367,7 @@ class TestResultView(BaseView):
         )
 
         if result is None:
+            Typing.active_end(self.ctx.author.id)
             return
 
         message, end_time, pacer_name, raw_quote = result
@@ -422,6 +430,8 @@ class TestResultView(BaseView):
 
         await self.ctx.respond("Warning: Practice tests are not saved")
 
+        Typing.active_end(self.ctx.author.id)
+
 
 class RaceMember:
     def __init__(self, user, data):
@@ -470,8 +480,14 @@ class RaceJoinView(BaseView):
             1, 10, commands.BucketType.user
         )
 
+    def end_all_racers(self):
+        for r in self.racers:
+            Typing.active_end(r)
+
     async def remove_racer(self, interaction):
         user = interaction.user
+
+        Typing.active_end(user.id)
 
         # If the author leaves, the race is ended
         is_author = user.id == self.ctx.author.id
@@ -482,6 +498,8 @@ class RaceJoinView(BaseView):
         )
 
         if is_author:
+            self.end_all_racers()
+
             embed = self.ctx.error_embed(
                 title=f"{icons.caution} Race Ended",
                 description="The race leader left the race",
@@ -521,6 +539,8 @@ class RaceJoinView(BaseView):
         return embed
 
     async def handle_racer_finish(self, m):
+        Typing.active_end(m.author.id)
+
         end_time = time.time() - self.start_time
 
         r = self.racers[m.author.id]
@@ -728,6 +748,8 @@ class RaceJoinView(BaseView):
                     child.disabled = True
 
         else:
+            Typing.active_start(user.id)
+
             bucket = self.race_join_cooldown.get_bucket(interaction.message)
 
             retry_after = bucket.update_rate_limit()
@@ -777,6 +799,8 @@ class RaceJoinView(BaseView):
             self.stop()
 
     async def send_expire_race_message(self):
+        self.end_all_racers()
+
         timespan = format_timespan(RACE_JOIN_EXPIRE_TIME)
 
         embed = self.ctx.error_embed(
@@ -806,6 +830,8 @@ class RaceJoinView(BaseView):
         return embed
 
     async def start(self):
+        Typing.active_start(self.ctx.author.id)
+
         embed = self.get_race_join_embed()
 
         race_join_button = RaceJoinButton()
@@ -827,19 +853,30 @@ class Typing(
     emoji = "\N{KEYBOARD}"
     order = 2
 
-    test_mc = commands.MaxConcurrency(1, per=commands.BucketType.user, wait=False)
+    # Not using MaxConcurrency because it's based on context so it doesn't work with users who join race
+    active_tests = []
 
     def __init__(self, bot):
         self.bot = bot
-
-        for cmd in self.walk_commands():
-            cmd._max_concurrency = self.test_mc
 
     tt_group = SlashCommandGroup("tt", "Take a typing test")
     race_group = SlashCommandGroup(
         "race",
         f"Take a multiplayer typing test. Up to {MAX_RACE_JOIN} other users can join your race.",
     )
+
+    @classmethod
+    def active_start(cls, user_id: int):
+        # If the user is currently in a test
+        if user_id in cls.active_tests:
+            raise OnGoingTest()
+
+        cls.active_tests.append(user_id)
+
+    @classmethod
+    def active_end(cls, user_id: int):
+        if user_id in cls.active_tests:
+            cls.active_tests.remove(user_id)
 
     @cooldown(5, 1)
     @tt_group.command()
@@ -1019,6 +1056,8 @@ class Typing(
 
     @classmethod
     async def do_typing_test(cls, ctx, is_dict, quote_info, length, send):
+        cls.active_start(ctx.author.id)
+
         quote, _ = quote_info
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
@@ -1032,6 +1071,7 @@ class Typing(
         )
 
         if result is None:
+            cls.active_end(ctx.author.id)
             return
 
         message, end_time, pacer_name, raw_quote = result
@@ -1094,6 +1134,8 @@ class Typing(
         view = TestResultView(ctx, user, is_dict, *quote_info, length)
 
         view.message = await message.reply(embed=embed, view=view, mention_author=False)
+
+        cls.active_end(ctx.author.id)
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 

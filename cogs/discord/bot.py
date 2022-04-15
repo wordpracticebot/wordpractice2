@@ -37,7 +37,7 @@ class SeasonView(ViewFromDict):
     def __init__(self, ctx, user):
         categories = {
             "Information": self.get_info_embed,
-            "Leaderboard": self.get_lb_embed,
+            "Prizes": self.get_prize_embed,
             "Badge Progress": self.get_badge_embed,
         }
 
@@ -45,8 +45,8 @@ class SeasonView(ViewFromDict):
 
         self.user = user
 
-    def get_lb_embed(self):
-        embed = self.ctx.embed(title="Leaderboard Embed")
+    def get_prize_embed(self):
+        embed = self.ctx.embed(title="Season Prizes")
         return embed
 
     def get_info_embed(self):
@@ -54,30 +54,25 @@ class SeasonView(ViewFromDict):
 
         embed.add_field(
             name="What is the season?",
-            value=(
-                "Seasons are a month-long competition open to all wordPractice\n"
-                "users. Users compete to earn the most XP before the season ends\n"
-                "to win exclusive prizes."
-            ),
+            value="Seasons are a month-long competition open to all wordPractice. users. Users compete to earn the most XP before the season ends to win exclusive prizes.",
             inline=False,
         )
 
         embed.add_field(
-            name="How do you earn XP?",
-            value=(
-                f"XP ({icons.xp}) can be earned through completing typing tests, daily challenges,\n"
-                "voting and much more. "
-            ),
+            name="How do I earn XP?",
+            value=f"XP ({icons.xp}) can be earned through completing typing tests, daily challenges, voting and much more.",
             inline=False,
         )
 
         embed.add_field(
             name="What are season badges?",
-            value=(
-                "Users can earn season badges by progressing through the season.\n"
-                "Season badges are exclusive and change every season."
-            ),
+            value="Users can earn season badges by progressing through the season. Season badges are exclusive and change every season.",
             inline=False,
+        )
+
+        embed.add_field(
+            name="How do I view the season leaderboads?",
+            value="The season leaderboard can be viewed with `/leaderboard` under the season category.",
         )
 
         embed.set_thumbnail(url="https://i.imgur.com/0Mzb6Js.png")
@@ -86,7 +81,7 @@ class SeasonView(ViewFromDict):
 
     def get_badge_embed(self):
         embed = self.ctx.embed(
-            title="Season Prizes",
+            title="Season Badge Progress",
         )
 
         return embed

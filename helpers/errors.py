@@ -12,3 +12,7 @@ class ImproperArgument(commands.BadArgument):
         super().__init__(*args, **kwargs)
 
         self.options = options
+
+
+class OnGoingTest(commands.CommandError):
+    pass
