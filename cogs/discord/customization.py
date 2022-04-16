@@ -58,7 +58,7 @@ class EquipSelect(discord.ui.Select):
 
         user.status = option
 
-        await self.ctx.bot.mongo.replace_user_data(user)
+        await self.ctx.bot.mongo.replace_user_data(user, self.ctx.author)
 
 
 class ThemeSelect(discord.ui.Select):
@@ -100,7 +100,7 @@ class ThemeSelect(discord.ui.Select):
 
         user.theme = theme_value
 
-        await self.ctx.bot.mongo.replace_user_data(user)
+        await self.ctx.bot.mongo.replace_user_data(user, self.ctx.author)
 
 
 def get_difficulty_choices(name):
@@ -182,7 +182,7 @@ class Customization(commands.Cog):
 
         user.theme = colours
 
-        await self.bot.mongo.replace_user_data(user)
+        await self.bot.mongo.replace_user_data(user, ctx.author)
 
     @cooldown(8, 3)
     @theme_group.command()
@@ -226,7 +226,7 @@ class Customization(commands.Cog):
         user.language = name
         user.level = difficulty
 
-        await self.bot.mongo.replace_user_data(user)
+        await self.bot.mongo.replace_user_data(user, ctx.author)
 
     async def handle_update_pacer_speed(self, ctx, name, value):
         embed = ctx.embed(
@@ -238,7 +238,7 @@ class Customization(commands.Cog):
 
         user.pacer_speed = value
 
-        await self.bot.mongo.replace_user_data(user)
+        await self.bot.mongo.replace_user_data(user, ctx.author)
 
     @cooldown(8, 3)
     @pacer_group.command()
@@ -266,7 +266,7 @@ class Customization(commands.Cog):
 
         user.pacer_type = update
 
-        await self.bot.mongo.replace_user_data(user)
+        await self.bot.mongo.replace_user_data(user, ctx.author)
 
     @cooldown(8, 3)
     @pacer_group.command()

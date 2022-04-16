@@ -20,6 +20,30 @@ def create_link_view(links: dict[str, str]):
     return view
 
 
+def get_log_embed(ctx, title, additional: str, error=False, author=None):
+    if author is None:
+        author = ctx.author
+
+    name = escape_markdown(str(author))
+    guild = escape_markdown(str(ctx.guild))
+
+    timestamp = int(time.time())
+
+    embed_gen = ctx.error_embed if error else ctx.default_embed
+
+    embed = embed_gen(
+        title=title,
+        description=(
+            f"**User:** {name} ({author.id})\n"
+            f"**Server:** {guild} ({ctx.guild.id})\n"
+            f"{additional}\n"
+            f"**Timestamp:** <t:{timestamp}:R>"
+        ),
+    )
+
+    return embed
+
+
 class CustomEmbed(discord.Embed):
     def __init__(self, bot, hint=None, add_footer=True, **kwargs):
         if add_footer:
@@ -96,16 +120,11 @@ class BaseView(discord.ui.View):
 
         guild = escape_markdown(str(inter.guild))
 
-        embed = self.ctx.embed(
-            title="Unexpected Error (in view)",
-            description=(
-                f"**Server:** {guild} ({inter.guild.id})\n"
-                f"**User:** {user} ({inter.user.id})\n"
-                f"**Done:** {inter.response.is_done()}\n"
-                f"**Timestamp:** <t:{timestamp}:R>"
-            ),
-            color=ERROR_CLR,
-            add_footer=False,
+        embed = get_log_embed(
+            self.ctx,
+            title="nexpected Error (in view)",
+            additional=f"**Done:** {inter.response.is_done()}",
+            error=True,
         )
 
         await self.ctx.bot.log_the_error(embed, error)
@@ -278,27 +297,3 @@ class ViewFromDict(PageView):
 
         embed = await self.create_page()
         await self.ctx.respond(embed=embed, view=self)
-
-
-def get_log_embed(ctx, title, additional: str, error=False, author=None):
-    if author is None:
-        author = ctx.author
-
-    name = escape_markdown(str(author))
-    guild = escape_markdown(str(ctx.guild))
-
-    timestamp = int(time.time())
-
-    embed_gen = ctx.error_embed if error else ctx.default_embed
-
-    embed = embed_gen(
-        title=title,
-        description=(
-            f"**User:** {name} ({author.id})\n"
-            f"**Server:** {guild} ({ctx.guild.id})\n"
-            f"{additional}\n"
-            f"**Timestamp:** <t:{timestamp}:R>"
-        ),
-    )
-
-    return embed

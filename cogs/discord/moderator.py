@@ -121,19 +121,6 @@ class Moderator(commands.Cog):
         else:
             await self.bot.mongo.replace_user_data(user_data)
 
-        mod = escape_markdown(str(ctx.author))
-
-        # Logging the ban
-        embed = get_log_embed(
-            ctx,
-            title="User Banned",
-            additional=f"**Moderator:** {mod} ({ctx.author.id})\n**Reason:** {reason}",
-            error=True,
-            author=user,
-        )
-
-        await self.bot.impt_wh.send(embed=embed)
-
         # Dming the user that they've been banned
         # Messaging is held off until the end because it is the least important
 

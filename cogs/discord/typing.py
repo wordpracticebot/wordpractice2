@@ -25,6 +25,7 @@ from constants import (
     MAX_RACE_JOIN,
     RACE_JOIN_EXPIRE_TIME,
     SUPPORT_SERVER_INVITE,
+    SUSPICIOUS_THRESHOLD,
     TEST_EXPIRE_TIME,
     TEST_RANGE,
     TEST_ZONES,
@@ -202,7 +203,7 @@ class HighScoreCaptchaView(BaseView):
 
         await self.ctx.bot.test_wh.send(embed=embed)
 
-        if self.original_wpm >= 180:
+        if self.original_wpm >= SUSPICIOUS_THRESHOLD:
             await self.ctx.bot.impt_wh.send(embed=embed)
 
     async def handle_captcha(self, view, button, interaction):
@@ -299,7 +300,7 @@ class HighScoreCaptchaView(BaseView):
 
                 await self.ctx.respond(embed=embed)
 
-                await self.ctx.bot.mongo.replace_user_data(self.user)
+                await self.ctx.bot.mongo.replace_user_data(self.user, self.ctx.author)
 
                 return invoke_completion(self.ctx)
 
@@ -729,7 +730,7 @@ class RaceJoinView(BaseView):
                 user.add_words(score.cw)
                 user.add_xp(score.xp)
 
-                await self.ctx.bot.mongo.replace_user_data(user)
+                await self.ctx.bot.mongo.replace_user_data(user, r.user)
 
         # Logging the race
 
@@ -1241,7 +1242,7 @@ class Typing(commands.Cog):
                     show_hs_captcha = True
 
         if show_hs_captcha is False:
-            await ctx.bot.mongo.replace_user_data(user)
+            await ctx.bot.mongo.replace_user_data(user, ctx.author)
 
         # Logging the test
         additional = get_log_additional(wpm, raw, acc, word_display, xp_earned)
@@ -1264,7 +1265,7 @@ class Typing(commands.Cog):
             hs_embed = test_embed.copy()
             hs_embed.title = "High Score"
 
-            if wpm >= 180:
+            if wpm >= SUSPICIOUS_THRESHOLD:
                 await ctx.bot.impt_wh.send(embed=hs_embed)
 
             embeds.append(hs_embed)
@@ -1315,7 +1316,7 @@ class Typing(commands.Cog):
 
             user.test_amt += 1
 
-            await ctx.bot.mongo.replace_user_data(user)
+            await ctx.bot.mongo.replace_user_data(user, ctx.author)
 
             embed = get_log_embed(
                 ctx, title="Interval Captcha Passed", additional=word_display

@@ -64,3 +64,5 @@ PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
 
 # Daily challenges
 CHALLENGE_AMT = 2
+
+SUSPICIOUS_THRESHOLD = 180

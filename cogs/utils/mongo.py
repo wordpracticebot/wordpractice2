@@ -29,6 +29,7 @@ from constants import (
     TEST_ZONES,
     VOTING_SITES,
 )
+from helpers.ui import get_log_embed
 from helpers.user import get_expanded_24_hour_stat
 from helpers.utils import datetime_to_unix
 from static.badges import get_badge_from_id, get_badges_from_ids
@@ -418,7 +419,9 @@ class Mongo(commands.Cog):
             # Caching new user data
             self.bot.user_cache[new_user.id] = pickle.dumps(new_user.to_mongo())
 
-    def add_ban(self, user_data, reason: str, mod=None):
+    async def add_ban(self, ctx, user, user_data, reason: str, mod=None):
+        # Technically not actually banning the user because it's not updated in the database
+
         mod, mod_id = self.get_auto_mod(mod)
 
         inf = self.Infraction(
@@ -427,6 +430,17 @@ class Mongo(commands.Cog):
 
         user_data.infractions.append(inf)
         user_data.banned = True
+
+        # Logging the ban
+        embed = get_log_embed(
+            ctx,
+            title="User Banned",
+            additional=f"**Moderator:** {mod} ({mod_id})\n**Reason:** {reason}",
+            error=True,
+            author=user,
+        )
+
+        await self.bot.impt_wh.send(embed=embed)
 
         return user_data
 
