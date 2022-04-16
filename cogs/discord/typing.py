@@ -1147,6 +1147,8 @@ class Typing(commands.Cog):
             icon_url=ctx.author.display_avatar.url,
         )
 
+        word_display = get_word_display(quote, raw_quote)
+
         embed = add_test_stats_to_embed(
             embed,
             wpm,
@@ -1161,10 +1163,6 @@ class Typing(commands.Cog):
             word_display,
             xp_earned,
         )
-
-        # Statistics
-
-        word_display = get_word_display(quote, raw_quote)
 
         view = TestResultView(ctx, user, is_dict, *quote_info, length)
 

@@ -2,10 +2,14 @@ import discord
 from discord.commands import Option
 from discord.commands.permissions import CommandPermission
 from discord.ext import commands
+from discord.utils import escape_markdown
 
+import icons
 from config import MODERATORS, SUPPORT_GUILD_ID
+from constants import SUPPORT_SERVER_INVITE
 from helpers.checks import user_check
 from helpers.converters import rqd_user
+from helpers.ui import BaseView, create_link_view, get_log_embed
 
 BAN_AUTOCOMPLETE = [
     "Cheating",
@@ -22,6 +26,38 @@ mod_command = commands.slash_command(
         CommandPermission(id=user_id, type=2, permission=True) for user_id in MODERATORS
     ],
 )
+
+
+class RestoreConfirm(BaseView):
+    def __init__(self, ctx, user, backup):
+        super().__init__(ctx)
+
+        self.user = user
+        self.backup = backup
+
+    @discord.ui.button(label="Confirm Restore", style=discord.ButtonStyle.grey, row=1)
+    async def confirm_restore(self, button, interaction):
+        embed = self.ctx.embed(
+            title=f"{icons.success} Restored user's accouunt", add_footer=False
+        )
+
+        await interaction.message.edit(embed=embed, view=None)
+
+        await self.ctx.bot.mongo.replace_user_data(self.user)
+
+        await self.backup.delete()
+
+    async def start(self):
+        embed = self.ctx.embed(
+            title="Restore Account",
+            description=(
+                "Are you sure you want to restore account?\n\n"
+                f"All current data will be restored to data from <t:{self.backup.unix_wiped_at}:f>"
+            ),
+            add_footer=False,
+        )
+
+        await self.ctx.respond(embed=embed, view=self)
 
 
 class Moderator(commands.Cog):
@@ -69,11 +105,6 @@ class Moderator(commands.Cog):
         if user_data.banned:
             raise commands.BadArgument("That user is already banned")
 
-        await self.bot.mongo.ban_user(user, reason, ctx.author)
-
-        if wipe:
-            await self.bot.mongo.wipe_user(user_data, ctx.author)
-
         embed = ctx.error_embed(
             title="User Banned",
             description=f"Reason: {reason}",
@@ -81,13 +112,48 @@ class Moderator(commands.Cog):
 
         await ctx.respond(embed=embed)
 
+        # Banning and wiping the user
+
+        user_data = self.bot.mongo.add_ban(user_data, reason, ctx.author)
+
+        if wipe:
+            await self.bot.mongo.wipe_user(user_data, ctx.author)
+        else:
+            await self.bot.mongo.replace_user_data(user_data)
+
+        mod = escape_markdown(str(ctx.author))
+
+        # Logging the ban
+        embed = get_log_embed(
+            ctx,
+            title="User Banned",
+            additional=f"**Moderator:** {mod} ({ctx.author.id})\n**Reason:** {reason}",
+            error=True,
+            author=user,
+        )
+
+        await self.bot.impt_wh.send(embed=embed)
+
+        # Dming the user that they've been banned
+        # Messaging is held off until the end because it is the least important
+
+        embed = ctx.error_embed(
+            title="You were banned",
+            description=(
+                f"Reason: {reason}\n\n"
+                "Join the support server and create a ticket to request a ban appeal"
+            ),
+        )
+
+        view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
+
+        try:
+            await user.send(embed=embed, view=view)
+        except Exception:
+            pass
+
     @mod_command
-    async def unban(
-        self,
-        ctx,
-        user: rqd_user(),
-        restore: Option(bool, "Whether the user's account should be restored"),
-    ):
+    async def unban(self, ctx, user: rqd_user()):
         """Unban a user"""
         user_data = await self.handle_moderator_user(ctx, user)
 
@@ -135,6 +201,17 @@ class Moderator(commands.Cog):
         """Restore a user's account"""
 
         user_data = await self.handle_moderator_user(ctx, user)
+
+        result = await self.bot.mongo.restore_user(user_data)
+
+        if result is False:
+            embed = ctx.error_embed(title=f"{icons.caution} User backup not found")
+
+            return await ctx.respond(embed=embed)
+
+        view = RestoreConfirm(ctx, *result)
+
+        await view.start()
 
 
 def setup(bot):

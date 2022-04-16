@@ -26,14 +26,24 @@ from constants import (
     AUTO_MODERATOR_NAME,
     DEFAULT_THEME,
     PREMIUM_LAUNCHED,
-    SUPPORT_SERVER_INVITE,
     TEST_ZONES,
     VOTING_SITES,
 )
-from helpers.ui import create_link_view
 from helpers.user import get_expanded_24_hour_stat
 from helpers.utils import datetime_to_unix
 from static.badges import get_badge_from_id, get_badges_from_ids
+
+
+def get_meta_data(user):
+    return {
+        "id": user.id,
+        "name": user.name,
+        "discriminator": user.discriminator,
+        "avatar": user.avatar,
+        "created_at": user.created_at,
+        "infractions": user.infractions,
+        "banned": user.banned,
+    }
 
 
 class Infraction(EmbeddedDocument):
@@ -209,6 +219,10 @@ class UserBackup(UserBase):
     class Meta:
         collection_name = "backup"
 
+    @property
+    def unix_wiped_at(self):
+        return datetime_to_unix(self.wiped_at)
+
 
 class Mongo(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -322,16 +336,25 @@ class Mongo(commands.Cog):
         )
         await self.bot.impt_wh.send(embed=embed)
 
+        # Saving a backup in the database
+
+        backup = await self.UserBackup.find_one({"id": user.id})
+
+        # TODO: max it replace the data instead of deleting
+        if backup is not None:
+            await backup.delete()
+
+        # Building object from_mongo does not work when trying to commit
+        backup = self.UserBackup(**user.dump(), wiped_at=datetime.utcnow())
+
+        try:
+            await backup.commit()
+        except pymongo.errors.DuplicateKeyError:
+            pass
+
         # Resetting the user's data
 
-        meta_data = {
-            "id": user.id,
-            "name": user.name,
-            "discriminator": user.discriminator,
-            "avatar": user.avatar,
-            "created_at": user.created_at,
-            "banned": user.banned,
-        }
+        meta_data = get_meta_data(user)
 
         # Resetting the user's account
         new_data = self.User(
@@ -346,25 +369,22 @@ class Mongo(commands.Cog):
 
         await self.replace_user_data(user)
 
-        # Saving a backup in the database
-
+    async def restore_user(self, user):
         backup = await self.UserBackup.find_one({"id": user.id})
 
         if backup is None:
-            data = user.to_mongo()
+            return False
 
-            # Renaming fields to work as arguments
+        meta_data = get_meta_data(user)
 
-            data["id"] = data["_id"]
-            data.pop("_id")
+        backup_data = backup.dump()
+        del backup_data["wiped_at"]
 
-            # Building object from_mongo does not work when trying to commit
-            backup = self.UserBackup(**data, wiped_at=datetime.utcnow())
+        for field, value in backup_data.items():
+            if field not in meta_data:
+                user[field] = value
 
-        try:
-            await backup.commit()
-        except pymongo.errors.DuplicateKeyError:
-            pass
+        return user, backup
 
     async def update_user(self, user, query: dict):
         if isinstance(user, int):
@@ -398,52 +418,17 @@ class Mongo(commands.Cog):
             # Caching new user data
             self.bot.user_cache[new_user.id] = pickle.dumps(new_user.to_mongo())
 
-    # TODO: add temporary bans
-    async def ban_user(
-        self, user, reason: str, mod: Union[discord.Member, discord.User] = None
-    ):
+    def add_ban(self, user_data, reason: str, mod=None):
         mod, mod_id = self.get_auto_mod(mod)
 
         inf = self.Infraction(
             mod_name=mod, mod_id=mod_id, reason=reason, timestamp=datetime.utcnow()
         )
 
-        await self.update_user(
-            user, {"$push": {"infractions": inf.to_mongo()}, "$set": {"banned": True}}
-        )
+        user_data.infractions.append(inf)
+        user_data.banned = True
 
-        timestamp = round(time.time())
-
-        # Logging ban
-        embed = self.bot.error_embed(
-            title="User Banned",
-            description=(
-                f"**User:** {user} ({user.id})\n"
-                f"**Moderator:** {mod} ({mod_id})\n"
-                f"**Reason:** {reason}\n"
-                f"**Timestamp:** <t:{timestamp}:R>"
-            ),
-        )
-
-        await self.bot.impt_wh.send(embed=embed)
-
-        # Dming the user that they've been banned
-        # Messaging is held off until the end because it is the least important
-
-        embed = self.bot.error_embed(
-            title="You were banned",
-            description=(
-                f"Reason: {reason}\n\n"
-                "Join the support server and create a ticket to request a ban appeal"
-            ),
-        )
-
-        view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
-
-        try:
-            await user.send(embed=embed, view=view)
-        except Exception:
-            pass
+        return user_data
 
 
 def setup(bot):
