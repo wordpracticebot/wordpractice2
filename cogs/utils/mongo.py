@@ -241,6 +241,14 @@ class Mongo(commands.Cog):
 
         return u
 
+    @property
+    def default_score(self):
+        # Schemas are instantiated when mongo cog is initialized
+        # Default scores must be passed in at initialization to access schema
+        score = dict(self.Score.schema.as_marshmallow_schema()().load({}))
+
+        return {s: score for s in TEST_ZONES.keys()}
+
     async def fetch_user(self, user: Union[discord.Member, int], create=False):
         if isinstance(user, int):
             user_id = user
@@ -258,18 +266,12 @@ class Mongo(commands.Cog):
                     if create is False:
                         return u
 
-                    # Schemas are instantiated when mongo cog is initialized
-                    # Default scores must be passed in at initialization to access schema
-                    default_score = dict(
-                        self.Score.schema.as_marshmallow_schema()().load({})
-                    )
-
                     u = self.User(
                         id=user.id,
                         name=user.name,
                         discriminator=user.discriminator,
                         avatar=user.avatar.key if user.avatar else None,
-                        highspeed={s: default_score for s in TEST_ZONES.keys()},
+                        highspeed=self.default_score,
                         created_at=datetime.utcnow(),
                         last_streak=datetime.utcnow(),
                     )
@@ -305,7 +307,6 @@ class Mongo(commands.Cog):
             "avatar": user.avatar.key if user.avatar else None,
         }
 
-    # TODO: reset fields from account and update backup if it exists
     async def wipe_user(self, user, mod: Union[discord.Member, discord.User] = None):
         mod, mod_id = self.get_auto_mod(mod)
 
@@ -321,20 +322,47 @@ class Mongo(commands.Cog):
         )
         await self.bot.impt_wh.send(embed=embed)
 
-        # Saving backup in database
+        # Resetting the user's data
 
-        data = user.to_mongo()
+        meta_data = {
+            "id": user.id,
+            "name": user.name,
+            "discriminator": user.discriminator,
+            "avatar": user.avatar,
+            "created_at": user.created_at,
+            "banned": user.banned,
+        }
 
-        # Renaming fields to work as arguments
+        # Resetting the user's account
+        new_data = self.User(
+            **meta_data,
+            last_streak=datetime.utcnow(),
+            highspeed=self.default_score,
+        )
 
-        data["id"] = data["_id"]
-        data.pop("_id")
+        for field, value in new_data.dump().items():
+            if field not in meta_data:
+                user[field] = value
 
-        # Building object from_mongo does not work when trying to commit
-        u = self.UserBackup(**data, wiped_at=datetime.utcnow())
+        await self.replace_user_data(user)
+
+        # Saving a backup in the database
+
+        backup = await self.UserBackup.find_one({"id": user.id})
+
+        if backup is None:
+            data = user.to_mongo()
+
+            # Renaming fields to work as arguments
+
+            data["id"] = data["_id"]
+            data.pop("_id")
+
+            # Building object from_mongo does not work when trying to commit
+            backup = self.UserBackup(**data, wiped_at=datetime.utcnow())
 
         try:
-            await u.commit()
+            await backup.commit()
         except pymongo.errors.DuplicateKeyError:
             pass
 

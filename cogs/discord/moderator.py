@@ -34,12 +34,13 @@ class Moderator(commands.Cog):
         if user.id == ctx.author.id:
             raise commands.BadArgument("You cannot perform this action on yourself")
 
-        user = await user_check(ctx, user)
+        return await user_check(ctx, user)
 
-    # TODO: finish wipe command and allow for user to be wiped in ban command
     @mod_command
     async def wipe(self, ctx, user: rqd_user()):
         """Wipe a user"""
+        await ctx.defer()
+
         user_data = await self.handle_moderator_user(ctx, user)
 
         await self.bot.mongo.wipe_user(user_data, ctx.author)
@@ -61,6 +62,8 @@ class Moderator(commands.Cog):
         wipe: Option(bool, "Whether the user's account should be wiped"),
     ):
         """Ban a user"""
+        await ctx.defer()
+
         user_data = await self.handle_moderator_user(ctx, user)
 
         if user_data.banned:
@@ -79,7 +82,12 @@ class Moderator(commands.Cog):
         await ctx.respond(embed=embed)
 
     @mod_command
-    async def unban(self, ctx, user: rqd_user()):
+    async def unban(
+        self,
+        ctx,
+        user: rqd_user(),
+        restore: Option(bool, "Whether the user's account should be restored"),
+    ):
         """Unban a user"""
         user_data = await self.handle_moderator_user(ctx, user)
 
