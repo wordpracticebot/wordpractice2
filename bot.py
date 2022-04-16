@@ -161,15 +161,24 @@ class WelcomeView(BaseView):
             ),
         )
 
+        self.accept.disabled = True
+
+        # Adding the links
+
         item = discord.ui.Button(label="Privacy Policy", url=PRIVACY_POLICY_LINK)
-        self.add_item(item)
-
         item = discord.ui.Button(label="Rules", url=RULES_LINK)
-        self.add_item(item)
 
-        self.embed = embed
+        self.add_item(item)
+        self.add_item(item)
 
         await self.ctx.respond(embed=embed, view=self)
+
+        # Enabling rules to be accepted after 5 seconds
+        await asyncio.sleep(5)
+
+        self.accept.disabled = False
+
+        await self.ctx.interaction.edit_original_message(view=self)
 
 
 def get_embed_theme(user):
