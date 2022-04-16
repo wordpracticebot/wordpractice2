@@ -240,7 +240,7 @@ def get_test_stats(u_input, quote, end_time):
     adjusted_history = [
         rws[i]
         for i in range(len(rws))
-        if [sum(list(map(len, rws))[: j + 1]) for j in range(len(rws))][i] + 1 <= 900
+        if [sum(list(map(len, rws))[: j + 1]) for j in range(len(rws))][i] + 1 <= 825
     ]
 
     word_history = " ".join(adjusted_history)

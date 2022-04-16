@@ -64,6 +64,10 @@ def get_test_zone_name(cw):
     return None
 
 
+def get_word_display(quote, raw_quote):
+    return f"{len(quote)} ({len(raw_quote)} chars)"
+
+
 def get_xp_earned(cc):
     return round(1 + (cc * 2))
 
@@ -423,7 +427,7 @@ class TestResultView(BaseView):
         embed.add_field(name=":timer: Pacer", value=pacer_name)
 
         embed.add_field(
-            name=":1234: Words", value=f"{len(self.quote)} ({len(raw_quote)} chars)"
+            name=":1234: Words", value=get_word_display(self.quote, raw_quote)
         )
 
         await message.reply(embed=embed, mention_author=False)
@@ -464,12 +468,15 @@ class RaceLeaveButton(discord.ui.Button):
 
 
 class RaceJoinView(BaseView):
-    def __init__(self, ctx, is_dict, quote, wrap_width):
+    def __init__(self, ctx, user, is_dict, quote, wrap_width):
         super().__init__(ctx, timeout=None, personal=False)
+
+        self.user = user
 
         self.is_dict = is_dict
         self.quote = quote
         self.wrap_width = wrap_width
+
         self.racers = {}  # id: user object (for preserve uniqueness)
 
         self.race_msg = None
@@ -479,6 +486,14 @@ class RaceJoinView(BaseView):
         self.race_join_cooldown = commands.CooldownMapping.from_cooldown(
             1, 10, commands.BucketType.user
         )
+
+        self.add_author_to_race()
+
+    def add_author_to_race(self):
+        author = self.ctx.author
+
+        race_member = RaceMember(author, self.user)
+        self.racers[author.id] = race_member
 
     def end_all_racers(self):
         for r in self.racers:
@@ -695,7 +710,9 @@ class RaceJoinView(BaseView):
 
         # Updating the users in the database
         for r in self.racers.values():
-            if r.result is not None:
+            score = r.result
+
+            if score is not None:
                 # Refetching user to account for state changes
                 user = await self.ctx.bot.mongo.fetch_user(r.user)
 
@@ -705,13 +722,46 @@ class RaceJoinView(BaseView):
 
                 await self.ctx.bot.mongo.replace_user_data(user)
 
+        # Logging the race
+
+        embeds = []
+
+        raw_quote = " ".join(self.quote)
+
+        word_display = get_word_display(self.quote, raw_quote)
+
+        race_size_display = f"\n**Race Size:** {len(self.racers)}"
+
+        for r in self.racers.values():
+            score = r.result
+
+            if score is not None:
+                additional = Typing.get_log_additional(
+                    score.wpm, score.raw, score.acc, word_display, score.xp
+                )
+
+                embed = get_log_embed(
+                    self.ctx,
+                    title="Race",
+                    additional=additional + race_size_display,
+                    author=r.user,
+                )
+
+                embeds.append(embed)
+
+        for i in range(0, len(embeds), 10):
+            show_embeds = embeds[i : i + 10]
+
+            await self.ctx.bot.test_wh.send(embeds=show_embeds)
+
     async def add_racer(self, interaction):
-        if len(self.racers) == MAX_RACE_JOIN:
+        if len(self.racers) == MAX_RACE_JOIN - 1:
             return await interaction.response.send_message(
                 f"The race has reached its maximum capacity of {MAX_RACE_JOIN} racers"
             )
 
         user = interaction.user
+        is_author = user.id == self.ctx.author.id
 
         user_data = await self.ctx.bot.mongo.fetch_user(user)
 
@@ -724,7 +774,7 @@ class RaceJoinView(BaseView):
                 "You are banned", ephemeral=True
             )
 
-        if user.id in self.racers:
+        if is_author is False and user.id in self.racers:
             return await interaction.response.send_message(
                 "You are already in this race!", ephemeral=True
             )
@@ -735,9 +785,8 @@ class RaceJoinView(BaseView):
         )
 
         # If the author joins, the race starts
-        is_author = user.id == self.ctx.author.id
 
-        if is_author and len(self.racers) == 0:
+        if is_author and len(self.racers) <= 1:
             return await interaction.response.send_message(
                 "You cannot start this race until another user joins!", ephemeral=True
             )
@@ -748,8 +797,6 @@ class RaceJoinView(BaseView):
                     child.disabled = True
 
         else:
-            Typing.active_start(user.id)
-
             bucket = self.race_join_cooldown.get_bucket(interaction.message)
 
             retry_after = bucket.update_rate_limit()
@@ -762,7 +809,9 @@ class RaceJoinView(BaseView):
                     ephemeral=True,
                 )
 
-        self.racers[user.id] = RaceMember(user, user_data)
+            Typing.active_start(user.id)
+
+            self.racers[user.id] = RaceMember(user, user_data)
 
         embed = self.get_race_join_embed(is_author)
 
@@ -781,7 +830,10 @@ class RaceJoinView(BaseView):
     def get_formatted_users(self):
         if len(self.racers) == 0:
             return "There are no other racers"
-        raw_content = ", ".join(f"{r.user}" for r in self.racers.values())
+
+        race_users = [f"{r.user}" for r in self.racers.values()]
+
+        raw_content = ", ".join(race_users)
 
         content = "\n".join(textwrap.wrap(text=raw_content, width=64))
 
@@ -860,7 +912,7 @@ class Typing(commands.Cog):
     tt_group = SlashCommandGroup("tt", "Take a typing test")
     race_group = SlashCommandGroup(
         "race",
-        f"Take a multiplayer typing test. Up to {MAX_RACE_JOIN} other users can join your race.",
+        f"Take a multiplayer typing test. Up to {MAX_RACE_JOIN-1} other users can join your race.",
     )
 
     @classmethod
@@ -896,6 +948,7 @@ class Typing(commands.Cog):
     @race_group.command()
     async def dictionary(self, ctx, length: word_amt()):
         """Take a multiplayer dictionary typing test"""
+
         quote_info = await self.handle_dictionary_input(ctx, length)
 
         await self.show_race_start(ctx, True, quote_info)
@@ -904,6 +957,7 @@ class Typing(commands.Cog):
     @race_group.command()
     async def quote(self, ctx, length: quote_amt()):
         """Take a multiplayer quote typing test"""
+
         quote_info = await self.handle_quote_input(length)
 
         await self.show_race_start(ctx, False, quote_info)
@@ -945,8 +999,10 @@ class Typing(commands.Cog):
 
     @staticmethod
     async def show_race_start(ctx, is_dict, quote_info):
+        user = await ctx.bot.mongo.fetch_user(ctx.author)
+
         # Storing is_dict and quote in RaceJoinView because do_race method will be called inside it
-        view = RaceJoinView(ctx, is_dict, *quote_info)
+        view = RaceJoinView(ctx, user, is_dict, *quote_info)
         await view.start()
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
@@ -1098,6 +1154,8 @@ class Typing(commands.Cog):
 
         # Statistics
 
+        word_display = get_word_display(quote, raw_quote)
+
         space = " "
 
         embed.add_field(name=":person_walking: Wpm", value=wpm)
@@ -1125,9 +1183,7 @@ class Typing(commands.Cog):
 
         embed.add_field(name=":timer: Pacer", value=pacer_name)
 
-        embed.add_field(
-            name=":1234: Words", value=f"{len(quote)} ({len(raw_quote)} chars)"
-        )
+        embed.add_field(name=":1234: Words", value=word_display)
 
         view = TestResultView(ctx, user, is_dict, *quote_info, length)
 
@@ -1136,6 +1192,10 @@ class Typing(commands.Cog):
         cls.active_end(ctx.author.id)
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
+
+        # For logging
+        is_hs = False
+        show_hs_captcha = False
 
         # Checking if there is a new high score
 
@@ -1189,15 +1249,58 @@ class Typing(commands.Cog):
 
                 # Test high score anti cheat system
 
+                is_hs = True
+
                 if check <= wpm >= 100:
                     # Preventing on_application_command_completion from being invoked
                     ctx.no_completion = True
 
                     view = HighScoreCaptchaView(ctx, user, wpm)
 
-                    return await view.start()
+                    await view.start()
 
-        await ctx.bot.mongo.replace_user_data(user)
+                    show_hs_captcha = True
+
+        if show_hs_captcha is False:
+            await ctx.bot.mongo.replace_user_data(user)
+
+        # Logging the test
+        additional = cls.get_log_additional(wpm, raw, acc, word_display, xp_earned)
+
+        additional += f"\n**Word History:**\n> {word_history}"
+
+        await cls.log_typing_test(ctx, "Typing Test", wpm, additional, is_hs)
+
+    @staticmethod
+    def get_log_additional(wpm, raw, acc, word_display, xp_earned):
+        return (
+            f"**Wpm:** {wpm}\n"
+            f"**Raw:** {raw}\n"
+            f"**Accuracy:** {acc}\n"
+            f"**Word Amount:** {word_display}\n"
+            f"**XP:** {xp_earned}"
+        )
+
+    @staticmethod
+    async def log_typing_test(ctx, name, wpm, additional: str, is_hs: bool):
+        test_embed = get_log_embed(
+            ctx,
+            title=name,
+            additional=additional,
+        )
+
+        embeds = [test_embed]
+
+        if is_hs:
+            hs_embed = test_embed.copy()
+            hs_embed.title = "High Score"
+
+            if wpm >= 180:
+                await ctx.bot.impt_wh.send(embed=hs_embed)
+
+            embeds.append(hs_embed)
+
+        await ctx.bot.test_wh.send(embeds=embeds)
 
     @staticmethod
     async def handle_interval_captcha(ctx, user):
@@ -1232,6 +1335,8 @@ class Typing(commands.Cog):
             )
             return await ctx.respond(embed=embed)
 
+        word_display = f"**Word:** {captcha_word}"
+
         # Evaluating the success of the captcha
         if message.content.lower() == captcha_word:
             embed = ctx.embed(
@@ -1241,11 +1346,26 @@ class Typing(commands.Cog):
 
             user.test_amt += 1
 
-            return await ctx.bot.mongo.replace_user_data(user)
+            await ctx.bot.mongo.replace_user_data(user)
 
-        embed = ctx.error_embed(title=f"{icons.caution} Captcha Failed")
+            embed = get_log_embed(
+                ctx, title="Interval Captcha Passed", additional=word_display
+            )
 
-        await ctx.respond(embed=embed)
+        else:
+            embed = ctx.error_embed(title=f"{icons.caution} Captcha Failed")
+
+            await ctx.respond(embed=embed)
+
+            embed = get_log_embed(
+                ctx,
+                title="Interval Captcha Failed",
+                additional=word_display,
+                error=False,
+            )
+
+        # Logging the captcha
+        await ctx.bot.test_wh.send(embed=embed)
 
 
 def setup(bot):

@@ -280,8 +280,11 @@ class ViewFromDict(PageView):
         await self.ctx.respond(embed=embed, view=self)
 
 
-def get_log_embed(ctx, title, additional: str, error=False):
-    name = escape_markdown(str(ctx.author))
+def get_log_embed(ctx, title, additional: str, error=False, author=None):
+    if author is None:
+        author = ctx.author
+
+    name = escape_markdown(str(author))
     guild = escape_markdown(str(ctx.guild))
 
     timestamp = int(time.time())
@@ -291,7 +294,7 @@ def get_log_embed(ctx, title, additional: str, error=False):
     embed = embed_gen(
         title=title,
         description=(
-            f"**User:** {name} ({ctx.author.id})\n"
+            f"**User:** {name} ({author.id})\n"
             f"**Server:** {guild} ({ctx.guild.id})\n"
             f"{additional}\n"
             f"**Timestamp:** <t:{timestamp}:R>"

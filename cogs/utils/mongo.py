@@ -30,7 +30,7 @@ from constants import (
     TEST_ZONES,
     VOTING_SITES,
 )
-from helpers.ui import create_link_view
+from helpers.ui import create_link_view, get_log_embed
 from helpers.user import get_expanded_24_hour_stat
 from helpers.utils import datetime_to_unix
 from static.badges import get_badge_from_id, get_badges_from_ids
