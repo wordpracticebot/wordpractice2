@@ -11,27 +11,18 @@ from constants import DEFAULT_WRAP, PREMIUM_LINK
 from helpers.checks import cooldown, premium_command, user_check
 from helpers.converters import opt_user, rgb_to_hex, rqd_colour
 from helpers.errors import ImproperArgument
-from helpers.image import get_base, get_width_height, wrap_text
+from helpers.image import get_base_img, save_img_as_discord_png
 from helpers.ui import BaseView
 from helpers.user import get_pacer_display, get_pacer_type_name, get_theme_display
 from static import themes
 
 
 def get_theme_preview_file(theme):
-    word_list, fquote = wrap_text(
-        "This is a preview of your theme. Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut nulla quas eius temporibus ex facilis ipsum culpa quod non possimus.",
-        DEFAULT_WRAP,
-    )
+    raw_quote = "This is a preview of your theme. Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut nulla quas eius temporibus ex facilis ipsum culpa quod non possimus."
 
-    width, height = get_width_height(word_list, DEFAULT_WRAP)
+    base_img = get_base_img(raw_quote, DEFAULT_WRAP, theme)
 
-    img = get_base(width, height, theme, fquote)
-
-    buffer = BytesIO()
-    img.save(buffer, "png")
-    buffer.seek(0)
-
-    return discord.File(buffer, filename="preview.png")
+    return save_img_as_discord_png(base_img, "preview")
 
 
 class EquipSelect(discord.ui.Select):

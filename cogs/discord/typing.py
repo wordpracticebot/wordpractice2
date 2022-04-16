@@ -5,7 +5,6 @@ import random
 import textwrap
 import time
 from datetime import datetime
-from io import BytesIO
 from itertools import groupby
 
 import discord
@@ -34,15 +33,16 @@ from helpers.checks import cooldown
 from helpers.converters import quote_amt, word_amt
 from helpers.errors import OnGoingTest
 from helpers.image import (
-    get_base,
+    get_base_img,
     get_highscore_captcha_img,
     get_loading_img,
-    get_width_height,
-    wrap_text,
+    save_img_as_discord_png,
 )
 from helpers.ui import BaseView, create_link_view, get_log_embed
 from helpers.user import get_pacer_display, get_pacer_type_name
 from helpers.utils import cmd_run_before, get_test_stats
+
+HIGH_SCORE_CAPTCHA_TIMEOUT = 60
 
 
 def load_test_file(name):
@@ -93,12 +93,62 @@ def get_test_type(test_type_int: int, length: int):
     # fmt: on
 
 
-HIGH_SCORE_CAPTCHA_TIMEOUT = 60
-
-
 def invoke_completion(ctx):
     ctx.no_completion = False
     ctx.bot.dispatch("application_command_completion", ctx)
+
+
+def get_log_additional(wpm, raw, acc, word_display, xp_earned):
+    return (
+        f"**Wpm:** {wpm}\n"
+        f"**Raw:** {raw}\n"
+        f"**Accuracy:** {acc}\n"
+        f"**Word Amount:** {word_display}\n"
+        f"**XP:** {xp_earned}"
+    )
+
+
+def add_test_stats_to_embed(
+    embed,
+    wpm,
+    raw,
+    acc,
+    end_time,
+    tw,
+    cw,
+    word_history,
+    language,
+    pacer_name,
+    word_display,
+    xp_earned=None,
+):
+    space = " "
+
+    embed.add_field(name=":person_walking: Wpm", value=wpm)
+    embed.add_field(name=":person_running: Raw Wpm", value=raw)
+    embed.add_field(name=":dart: Accuracy", value=f"{acc}%")
+
+    embed.add_field(name=":clock1: Time", value=f"{end_time}s")
+
+    if xp_earned is not None:
+        embed.add_field(name=f"{icons.xp} Experience", value=xp_earned)
+
+    embed.add_field(name=f":x: Mistakes", value=tw - cw)
+
+    embed.add_field(
+        name="** **",
+        value=f"**Word History**\n> {word_history}\n\n```ini\n{space*13}[ Test Settings ]```\n** **",
+        inline=False,
+    )
+
+    # Settings
+    embed.add_field(name=":earth_americas: Language", value=language.capitalize())
+    embed.add_field(name=":timer: Pacer", value=pacer_name)
+    embed.add_field(name=":1234: Words", value=word_display)
+
+    embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
+
+    return embed
 
 
 class RetryView(BaseView):
@@ -167,23 +217,17 @@ class HighScoreCaptchaView(BaseView):
 
         raw_quote = " ".join(quote)
 
-        word_list, fquote = wrap_text(raw_quote, wrap_width)
-
-        width, height = get_width_height(word_list, wrap_width)
-
-        base_img = get_base(width, height, self.user.theme, fquote)
+        base_img = get_base_img(raw_quote, wrap_width, self.user.theme)
 
         captcha_img = get_highscore_captcha_img(base_img, self.user.theme[1])
 
         captcha_loading_img = get_loading_img(captcha_img, self.user.theme[1])
 
-        buffer = BytesIO()
-        captcha_loading_img.save(buffer, "png")
-        buffer.seek(0)
+        file = save_img_as_discord_png(captcha_loading_img, "captcha")
+
+        # Generating the loading embed
 
         embed = self.ctx.embed(title="High Score Captcha")
-
-        file = discord.File(buffer, filename="captcha.png")
 
         embed.set_image(url="attachment://captcha.png")
         embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
@@ -192,11 +236,9 @@ class HighScoreCaptchaView(BaseView):
 
         load_start = time.time()
 
-        buffer = BytesIO()
-        captcha_img.save(buffer, "png")
-        buffer.seek(0)
+        file = save_img_as_discord_png(captcha_img, "test")
 
-        file = discord.File(buffer, filename="test.png")
+        # Generating the test embed
 
         embed = self.ctx.embed(title="High Score Captcha")
 
@@ -395,39 +437,20 @@ class TestResultView(BaseView):
             icon_url=self.ctx.author.display_avatar.url,
         )
 
-        embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
+        word_display = get_word_display(self.quote, raw_quote)
 
-        # Statistics
-
-        space = " "
-
-        embed.add_field(name=":person_walking: Wpm", value=wpm)
-
-        embed.add_field(name=":person_running: Raw Wpm", value=raw)
-
-        embed.add_field(name=":dart: Accuracy", value=f"{acc}%")
-
-        embed.add_field(name=":clock1: Time", value=f"{end_time}s")
-
-        embed.add_field(name=f":x: Mistakes", value=len(u_input) - cw)
-
-        embed.add_field(name="** **", value="** **")
-
-        embed.add_field(
-            name="** **",
-            value=f"**Word History**\n> {word_history}\n\n```ini\n{space*13}[ Test Settings ]```\n** **",
-            inline=False,
-        )
-
-        # Settings
-        embed.add_field(
-            name=":earth_americas: Language", value=self.user.language.capitalize()
-        )
-
-        embed.add_field(name=":timer: Pacer", value=pacer_name)
-
-        embed.add_field(
-            name=":1234: Words", value=get_word_display(self.quote, raw_quote)
+        embed = add_test_stats_to_embed(
+            embed,
+            wpm,
+            raw,
+            acc,
+            end_time,
+            len(u_input),
+            cw,
+            word_history,
+            self.user.language,
+            pacer_name,
+            word_display,
         )
 
         await message.reply(embed=embed, mention_author=False)
@@ -439,9 +462,7 @@ class TestResultView(BaseView):
 
 class RaceMember:
     def __init__(self, user, data):
-        """
-        user: user object
-        """
+        # user object
         self.user = user
 
         # User's database document
@@ -592,22 +613,14 @@ class RaceJoinView(BaseView):
 
         raw_quote = " ".join(self.quote)
 
-        word_list, fquote = wrap_text(raw_quote, self.wrap_width)
-
-        width, height = get_width_height(word_list, self.wrap_width)
-
-        base_img = get_base(width, height, author_theme, fquote)
+        base_img = get_base_img(raw_quote, self.wrap_width, author_theme)
 
         loading_img = get_loading_img(base_img, author_theme[1])
 
-        buffer = BytesIO()
-        loading_img.save(buffer, "png")
-        buffer.seek(0)
+        file = save_img_as_discord_png(loading_img, "loading")
 
         # Loading image
         embed = self.get_race_embed()
-
-        file = discord.File(buffer, filename="loading.png")
 
         embed.set_image(url="attachment://loading.png")
         embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
@@ -616,11 +629,7 @@ class RaceJoinView(BaseView):
 
         load_start = time.time()
 
-        buffer = BytesIO()
-        base_img.save(buffer, "png")
-        buffer.seek(0)
-
-        file = discord.File(buffer, filename="test.png")
+        file = save_img_as_discord_png(base_img, "test")
 
         embed = self.get_race_embed()
 
@@ -736,7 +745,7 @@ class RaceJoinView(BaseView):
             score = r.result
 
             if score is not None:
-                additional = Typing.get_log_additional(
+                additional = get_log_additional(
                     score.wpm, score.raw, score.acc, word_display, score.xp
                 )
 
@@ -1039,19 +1048,11 @@ class Typing(commands.Cog):
 
         raw_quote = " ".join(quote)
 
-        word_list, fquote = wrap_text(raw_quote, wrap_width)
-
-        width, height = get_width_height(word_list, wrap_width)
-
-        base_img = get_base(width, height, user.theme, fquote)
+        base_img = get_base_img(raw_quote, wrap_width, user.theme)
 
         loading_img = get_loading_img(base_img, user.theme[1])
 
-        buffer = BytesIO()
-        loading_img.save(buffer, "png")
-        buffer.seek(0)
-
-        file = discord.File(buffer, filename="loading.png")
+        file = save_img_as_discord_png(loading_img, "loading")
 
         embed.set_image(url="attachment://loading.png")
         embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
@@ -1064,11 +1065,7 @@ class Typing(commands.Cog):
 
         # TODO: generate pacer if the user has a pacer
 
-        buffer = BytesIO()
-        base_img.save(buffer, "png")
-        buffer.seek(0)
-
-        file = discord.File(buffer, filename="test.png")
+        file = save_img_as_discord_png(base_img, "test")
 
         embed = ctx.embed(title=title, description=desc, add_footer=False)
 
@@ -1150,40 +1147,24 @@ class Typing(commands.Cog):
             icon_url=ctx.author.display_avatar.url,
         )
 
-        embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
+        embed = add_test_stats_to_embed(
+            embed,
+            wpm,
+            raw,
+            acc,
+            end_time,
+            len(u_input),
+            cw,
+            word_history,
+            user.language,
+            pacer_name,
+            word_display,
+            xp_earned,
+        )
 
         # Statistics
 
         word_display = get_word_display(quote, raw_quote)
-
-        space = " "
-
-        embed.add_field(name=":person_walking: Wpm", value=wpm)
-
-        embed.add_field(name=":person_running: Raw Wpm", value=raw)
-
-        embed.add_field(name=":dart: Accuracy", value=f"{acc}%")
-
-        embed.add_field(name=":clock1: Time", value=f"{end_time}s")
-
-        embed.add_field(name=f"{icons.xp} Experience", value=xp_earned)
-
-        embed.add_field(name=f":x: Mistakes", value=len(u_input) - cw)
-
-        embed.add_field(
-            name="** **",
-            value=f"**Word History**\n> {word_history}\n\n```ini\n{space*13}[ Test Settings ]```\n** **",
-            inline=False,
-        )
-
-        # Settings
-        embed.add_field(
-            name=":earth_americas: Language", value=user.language.capitalize()
-        )
-
-        embed.add_field(name=":timer: Pacer", value=pacer_name)
-
-        embed.add_field(name=":1234: Words", value=word_display)
 
         view = TestResultView(ctx, user, is_dict, *quote_info, length)
 
@@ -1265,21 +1246,11 @@ class Typing(commands.Cog):
             await ctx.bot.mongo.replace_user_data(user)
 
         # Logging the test
-        additional = cls.get_log_additional(wpm, raw, acc, word_display, xp_earned)
+        additional = get_log_additional(wpm, raw, acc, word_display, xp_earned)
 
         additional += f"\n**Word History:**\n> {word_history}"
 
         await cls.log_typing_test(ctx, "Typing Test", wpm, additional, is_hs)
-
-    @staticmethod
-    def get_log_additional(wpm, raw, acc, word_display, xp_earned):
-        return (
-            f"**Wpm:** {wpm}\n"
-            f"**Raw:** {raw}\n"
-            f"**Accuracy:** {acc}\n"
-            f"**Word Amount:** {word_display}\n"
-            f"**XP:** {xp_earned}"
-        )
 
     @staticmethod
     async def log_typing_test(ctx, name, wpm, additional: str, is_hs: bool):

@@ -13,6 +13,7 @@ from achievements import check_all
 from achievements.challenges import get_daily_challenges
 from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument, OnGoingTest
+from helpers.image import save_img_as_discord_png
 from helpers.ui import create_link_view, get_log_embed
 from helpers.user import get_user_cmds_run
 from helpers.utils import format_slash_command
@@ -26,11 +27,7 @@ def generate_achievement_image(name):
     draw = ImageDraw.Draw(img)
     draw.text((240, 110), name, font=uni_sans_heavy)
 
-    buffer = BytesIO()
-    img.save(buffer, "png")
-    buffer.seek(0)
-
-    return discord.File(fp=buffer, filename="image.png")
+    return save_img_as_discord_png(img, "achievement")
 
 
 class Events(commands.Cog):

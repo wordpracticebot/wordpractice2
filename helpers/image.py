@@ -1,6 +1,8 @@
 import random
 import textwrap
+from io import BytesIO
 
+import discord
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -96,3 +98,20 @@ def get_loading_img(img, text_colour):
     d.text(((width - w) / 2, (height - h) / 2), msg, fill=text_colour, font=arial)
 
     return blurred
+
+
+def save_img_as_discord_png(img, name):
+    buffer = BytesIO()
+
+    img.save(buffer, "png")
+    buffer.seek(0)
+
+    return discord.File(buffer, filename=f"{name}.png")
+
+
+def get_base_img(raw_quote, wrap_width, theme):
+    word_list, fquote = wrap_text(raw_quote, wrap_width)
+
+    width, height = get_width_height(word_list, wrap_width)
+
+    return get_base(width, height, theme, fquote)
