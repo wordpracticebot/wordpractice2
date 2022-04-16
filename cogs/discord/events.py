@@ -61,6 +61,7 @@ class Events(commands.Cog):
                     title=f"{icons.caution} Bot Missing Permissions",
                 )
                 await ctx.respond(embed=embed, ephemeral=True)
+
             return
 
         error = error.original

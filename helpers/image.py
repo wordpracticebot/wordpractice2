@@ -11,6 +11,7 @@ from static.assets import arial
 def quantize_img(img):
     return img.quantize(method=Image.NONE)
 
+
 def get_width_height(word_list, wrap_width):
     largest_item = max(word_list, key=lambda x: arial.getsize(x)[0])
 
@@ -64,7 +65,7 @@ def get_highscore_captcha_img(base_img, text_colour):
 
     for i in range(rows):
         for n in range(cols):
-            x = int(2.75 * np.cos(2 * np.pi * i / 22.9))
+            x = int(2.75 * np.cos(2 * np.pi * i / 22.8))
 
             img_output[i, n] = img[i, (n + x) % cols]
 
@@ -72,7 +73,7 @@ def get_highscore_captcha_img(base_img, text_colour):
 
     d = ImageDraw.Draw(img)
 
-    for _ in range(3):
+    for _ in range(4):
         d.line(
             (get_random_coord(), get_random_coord()),
             fill=text_colour,

@@ -115,7 +115,7 @@ class ScoreView(ScrollView):
     def __init__(self, ctx, user):
         page_amt = math.ceil(len(user.scores) / SCORES_PER_PAGE)
 
-        super().__init__(ctx, page_amt, compct=page_amt < 7)
+        super().__init__(ctx, page_amt, compact=page_amt < 7)
 
         self.user = user
 

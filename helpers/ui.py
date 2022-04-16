@@ -162,7 +162,14 @@ class ScrollView(PageView):
 
         return btn
 
+    @property
+    def has_btns(self):
+        return self.max_page > 1
+
     def add_items(self):
+        if not self.has_btns:
+            return
+
         if self.compact is False:
             self.add_scroll_btn(icons.fast_left_arrow, self.scroll_to_front)
 
@@ -174,6 +181,9 @@ class ScrollView(PageView):
             self.add_scroll_btn(icons.fast_right_arrow, self.scroll_to_back)
 
     async def update_buttons(self):
+        if not self.has_btns:
+            return
+
         first_page = self.page == 0
         last_page = self.page == self.max_page - 1
 

@@ -239,7 +239,7 @@ class HighScoreCaptchaView(BaseView):
             raw = round(raw * ratio, 2)
 
             # Checking if the test was passed
-            if math.ceil(raw) >= self.target and math.ceil(acc) >= CAPTCHA_ACC_PERC:
+            if math.ceil(raw) >= self.target and acc >= CAPTCHA_ACC_PERC:
                 embed = self.ctx.embed(
                     title="Passed", description="You passed the high score captcha!"
                 )
