@@ -25,6 +25,11 @@ class Server(commands.Cog):
     async def roles(self, ctx):
         """Update your wordPractice roles on the server"""
 
+        if SERVER_ROLES is False:
+            embed = ctx.error_embed(title=f"{icons.caution} Roles have been disabled")
+
+            return await ctx.respond(embed=embed)
+
         user = await self.bot.mongo.fetch_user(ctx.author)
 
         if len(user.scores) == 0:

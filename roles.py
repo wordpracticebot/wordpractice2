@@ -1,3 +1,4 @@
+# set to False to disable server roles
 SERVER_ROLES = {
     # role_id: [range]
     "wpm": {
