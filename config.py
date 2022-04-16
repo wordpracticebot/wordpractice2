@@ -18,3 +18,5 @@ DEBUG_GUILD_ID = config("DEBUG_GUILD_ID", cast=int)
 TESTING = config("TESTING", cast=bool, default=False)
 
 DBL_TOKEN = config("DBL_TOKEN", default=None)
+
+MODERATORS = config("MODERATORS", cast=lambda x: [int(m.strip()) for m in x.split(",")])

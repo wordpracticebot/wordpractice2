@@ -76,7 +76,6 @@ class UserBase(Document):
     avatar = StringField(default=None)
     created_at = DateTimeField(required=True)
     premium = BooleanField(default=False)
-    views = IntegerField(default=0)  # TODO: update views
 
     # list of commands that the user has run before (for context tutorials)
     # includes subcommands from groups
@@ -407,7 +406,7 @@ class Mongo(commands.Cog):
             title="You were banned",
             description=(
                 f"Reason: {reason}\n\n"
-                "Join the support server and create a ticket for a ban appeal"
+                "Join the support server and create a ticket to request a ban appeal"
             ),
         )
 

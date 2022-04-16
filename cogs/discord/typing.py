@@ -845,9 +845,7 @@ class RaceJoinView(BaseView):
         self.timeout_race.start()
 
 
-class Typing(
-    commands.Cog,
-):
+class Typing(commands.Cog):
     """Typing test related commands"""
 
     emoji = "\N{KEYBOARD}"

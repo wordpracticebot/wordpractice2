@@ -121,7 +121,7 @@ async def _handle_after_welcome_check(bot, interaction, user):
 
         embed = ctx.error_embed(
             title="You are banned",
-            description="Join the support server and create a ticket for a ban appeal",
+            description="Join the support server and create a ticket to request a ban appeal",
         )
         view = BaseView(ctx)
 
@@ -242,8 +242,6 @@ class WordPractice(commands.AutoShardedBot):
         self.session = aiohttp.ClientSession(loop=self.loop)
 
         self.cooldowns = {}
-
-        # TODO: clear cache every so often
 
         # Cache
         self.user_cache = {}
