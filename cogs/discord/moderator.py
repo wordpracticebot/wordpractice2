@@ -1,3 +1,5 @@
+import math
+
 import discord
 from discord.commands import Option
 from discord.commands.permissions import CommandPermission
@@ -8,7 +10,9 @@ from config import MODERATORS, SUPPORT_GUILD_ID
 from constants import SUPPORT_SERVER_INVITE
 from helpers.checks import user_check
 from helpers.converters import rqd_user
-from helpers.ui import BaseView, create_link_view
+from helpers.ui import BaseView, ScrollView, create_link_view
+
+INFRACTIONS_PER_PAGE = 3
 
 BAN_AUTOCOMPLETE = [
     "Cheating",
@@ -25,6 +29,42 @@ mod_command = commands.slash_command(
         CommandPermission(id=user_id, type=2, permission=True) for user_id in MODERATORS
     ],
 )
+
+
+class CatView(ScrollView):
+    def __init__(self, ctx, user):
+        page_amt = math.ceil(len(user.infractions) / INFRACTIONS_PER_PAGE)
+
+        super().__init__(ctx, page_amt)
+
+        self.user = user
+
+    async def create_page(self):
+        total_infs = len(self.user.infractions)
+
+        # TODO: add a util for this because it's duplicated in scoresview
+        start_page = self.page * INFRACTIONS_PER_PAGE
+        end_page = min((self.page + 1) * INFRACTIONS_PER_PAGE, total_infs)
+
+        embed = self.ctx.error_embed(
+            title=f"{self.user.username}'s Recent Infractions",
+            description=f"**Current Ban Status:** {self.user.banned}",
+        )
+
+        for i, inf in enumerate(self.user.infractions[::-1][start_page:end_page]):
+            timestamp = inf.unix_timestamp
+
+            embed.add_field(
+                name=f"Infraction {total_infs - (start_page + i)} ({inf.name})",
+                value=(
+                    f">>> Moderator: {inf.mod_name} ({inf.mod_id})\n"
+                    f"Reason: {inf.reason}\n"
+                    f"Timestamp: <t:{timestamp}:F>"
+                ),
+                inline=False,
+            )
+
+        return embed
 
 
 class RestoreConfirm(BaseView):
@@ -164,27 +204,9 @@ class Moderator(commands.Cog):
 
         user_data = await self.handle_moderator_user(ctx, user)
 
-        embed = ctx.error_embed(
-            title=f"{user_data.username}'s Infractions",
-            description=f"**Ban Status:** {user_data.banned}",
-        )
+        view = CatView(ctx, user_data)
 
-        # TODO: add pagination
-
-        for i, inf in enumerate(user_data.infractions):
-            timestamp = inf.unix_timestamp
-
-            embed.add_field(
-                name=f"Infraction {i + 1} ({inf.name})",
-                value=(
-                    f">>> Moderator: {inf.mod_name} ({inf.mod_id})\n"
-                    f"Reason: {inf.reason}\n"
-                    f"Timestamp: <t:{timestamp}:F>"
-                ),
-                inline=False,
-            )
-
-        await ctx.respond(embed=embed)
+        await view.start()
 
     @mod_command
     async def restore(self, ctx, user: rqd_user()):
