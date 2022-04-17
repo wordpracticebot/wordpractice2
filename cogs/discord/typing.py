@@ -32,7 +32,6 @@ from constants import (
 )
 from helpers.checks import cooldown
 from helpers.converters import quote_amt, word_amt
-from helpers.errors import OnGoingTest
 from helpers.image import (
     get_base_img,
     get_highscore_captcha_img,
@@ -189,25 +188,28 @@ class HighScoreCaptchaView(BaseView):
     async def start_captcha(self, button, interaction):
         await self.handle_captcha(self, button, interaction)
 
-    async def flag_captcha_fail(self, wpm):
+    async def log_captcha_completion(self, raw, acc, failed: bool):
+        completion_type = "Fail" if failed else "Pass"
+
         embed = get_log_embed(
             self.ctx,
-            title="High Score Captcha Fail",
+            title=f"High Score Captcha {completion_type}",
             additional=(
                 f"**Orignal Wpm:** {self.original_wpm}\n"
-                f"**Wpm:** {wpm}\n"
+                f"**Raw:** {raw} / {self.target}\n"
+                f"**Acc:** {acc} / {CAPTCHA_ACC_PERC}\n"
                 f"**Attempts:** {self.attempts} / {MAX_CAPTCHA_ATTEMPTS}"
             ),
-            error=True,
+            error=failed,
         )
 
         await self.ctx.bot.test_wh.send(embed=embed)
 
-        if self.original_wpm >= SUSPICIOUS_THRESHOLD:
+        if failed and self.original_wpm >= SUSPICIOUS_THRESHOLD:
             await self.ctx.bot.impt_wh.send(embed=embed)
 
     async def handle_captcha(self, view, button, interaction):
-        Typing.active_start(self.ctx.author.id)
+        self.ctx.bot.active_start(self.ctx.author.id)
 
         button.disabled = True
 
@@ -269,7 +271,7 @@ class HighScoreCaptchaView(BaseView):
         except asyncio.TimeoutError:
             finished_test = False
 
-        Typing.active_end(self.ctx.author.id)
+        self.ctx.bot.active_end(self.ctx.author.id)
 
         raw = None
 
@@ -302,7 +304,10 @@ class HighScoreCaptchaView(BaseView):
 
                 await self.ctx.bot.mongo.replace_user_data(self.user, self.ctx.author)
 
-                return invoke_completion(self.ctx)
+                invoke_completion(self.ctx)
+
+                # Logging the pass of the high score captcha
+                return await self.log_captcha_completion(raw, acc, False)
 
         self.attempts += 1
 
@@ -320,7 +325,7 @@ class HighScoreCaptchaView(BaseView):
 
             invoke_completion(self.ctx)
 
-            return await self.flag_captcha_fail(raw)
+            return await self.log_captcha_completion(raw, acc, True)
 
         plural = "s" if attempts_left > 1 else ""
 
@@ -330,7 +335,7 @@ class HighScoreCaptchaView(BaseView):
 
         view.message = await self.ctx.respond(embed=embed, view=view)
 
-        await self.flag_captcha_fail(raw)
+        await self.log_captcha_completion(raw, acc, True)
 
     def add_results(self, embed, raw, acc, word_history):
         embed.add_field(name=":person_running: Raw Wpm", value=f"{raw} / {self.target}")
@@ -403,7 +408,7 @@ class TestResultView(BaseView):
 
     @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
-        Typing.active_start(self.ctx.author.id)
+        self.ctx.bot.active_start(self.ctx.author.id)
 
         await self.disable_btn(button)
 
@@ -414,7 +419,7 @@ class TestResultView(BaseView):
         )
 
         if result is None:
-            Typing.active_end(self.ctx.author.id)
+            self.ctx.bot.active_end(self.ctx.author.id)
             return
 
         message, end_time, pacer_name, raw_quote = result
@@ -458,7 +463,7 @@ class TestResultView(BaseView):
 
         await self.ctx.respond("Warning: Practice tests are not saved")
 
-        Typing.active_end(self.ctx.author.id)
+        self.ctx.bot.active_end(self.ctx.author.id)
 
 
 class RaceMember:
@@ -519,12 +524,12 @@ class RaceJoinView(BaseView):
 
     def end_all_racers(self):
         for r in self.racers:
-            Typing.active_end(r)
+            self.ctx.bot.active_end(r)
 
     async def remove_racer(self, interaction):
         user = interaction.user
 
-        Typing.active_end(user.id)
+        self.ctx.bot.active_end(user.id)
 
         # If the author leaves, the race is ended
         is_author = user.id == self.ctx.author.id
@@ -576,7 +581,7 @@ class RaceJoinView(BaseView):
         return embed
 
     async def handle_racer_finish(self, m):
-        Typing.active_end(m.author.id)
+        self.ctx.bot.active_end(m.author.id)
 
         end_time = time.time() - self.start_time
 
@@ -819,7 +824,7 @@ class RaceJoinView(BaseView):
                     ephemeral=True,
                 )
 
-            Typing.active_start(user.id)
+            self.ctx.bot.active_start(user.id)
 
             self.racers[user.id] = RaceMember(user, user_data)
 
@@ -892,7 +897,7 @@ class RaceJoinView(BaseView):
         return embed
 
     async def start(self):
-        Typing.active_start(self.ctx.author.id)
+        self.ctx.bot.active_start(self.ctx.author.id)
 
         embed = self.get_race_join_embed()
 
@@ -913,30 +918,14 @@ class Typing(commands.Cog):
     emoji = "\N{KEYBOARD}"
     order = 2
 
-    # Not using MaxConcurrency because it's based on context so it doesn't work with users who join race
-    active_tests = []
-
-    def __init__(self, bot):
-        self.bot = bot
-
     tt_group = SlashCommandGroup("tt", "Take a typing test")
     race_group = SlashCommandGroup(
         "race",
         f"Take a multiplayer typing test. Up to {MAX_RACE_JOIN-1} other users can join your race.",
     )
 
-    @classmethod
-    def active_start(cls, user_id: int):
-        # If the user is currently in a test
-        if user_id in cls.active_tests:
-            raise OnGoingTest()
-
-        cls.active_tests.append(user_id)
-
-    @classmethod
-    def active_end(cls, user_id: int):
-        if user_id in cls.active_tests:
-            cls.active_tests.remove(user_id)
+    def __init__(self, bot):
+        self.bot = bot
 
     @cooldown(5, 1)
     @tt_group.command()
@@ -1108,7 +1097,7 @@ class Typing(commands.Cog):
 
     @classmethod
     async def do_typing_test(cls, ctx, is_dict, quote_info, length, send):
-        cls.active_start(ctx.author.id)
+        ctx.bot.active_start(ctx.author.id)
 
         quote, _ = quote_info
 
@@ -1123,7 +1112,7 @@ class Typing(commands.Cog):
         )
 
         if result is None:
-            cls.active_end(ctx.author.id)
+            ctx.bot.active_end(ctx.author.id)
             return
 
         message, end_time, pacer_name, raw_quote = result
@@ -1169,7 +1158,7 @@ class Typing(commands.Cog):
 
         view.message = await message.reply(embed=embed, view=view, mention_author=False)
 
-        cls.active_end(ctx.author.id)
+        ctx.bot.active_end(ctx.author.id)
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 

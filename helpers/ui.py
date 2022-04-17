@@ -102,6 +102,8 @@ class BaseView(discord.ui.View):
         if isinstance(error, OnGoingTest):
             return await self.ctx.bot.handle_ongoing_test_error(send)
 
+        self.bot.active_end(self.ctx.author.id)
+
         self = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
 
         embed = self.ctx.error_embed(
@@ -114,15 +116,9 @@ class BaseView(discord.ui.View):
         else:
             await send(embed=embed, view=self, ephemeral=True)
 
-        timestamp = int(time.time())
-
-        user = escape_markdown(str(inter.user))
-
-        guild = escape_markdown(str(inter.guild))
-
         embed = get_log_embed(
             self.ctx,
-            title="nexpected Error (in view)",
+            title="Unexpected Error (in view)",
             additional=f"**Done:** {inter.response.is_done()}",
             error=True,
         )

@@ -59,12 +59,14 @@ class Events(commands.Cog):
                 )
                 await ctx.respond(embed=embed, ephemeral=True)
 
-            return
+            return self.bot.active_end(ctx.author.id)
 
         error = error.original
 
         if isinstance(error, OnGoingTest):
             return await self.bot.handle_ongoing_test_error(ctx.respond)
+
+        self.bot.active_end(ctx.author.id)
 
         if isinstance(error, discord.errors.Forbidden):
             try:

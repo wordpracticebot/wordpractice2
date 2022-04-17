@@ -24,6 +24,7 @@ from constants import (
     SUPPORT_SERVER_INVITE,
     TEST_ZONES,
 )
+from helpers.errors import OnGoingTest
 from helpers.ui import BaseView, CustomEmbed
 from static.hints import hints
 
@@ -256,6 +257,9 @@ class WordPractice(commands.AutoShardedBot):
         self.cmds_run = {}  # user_id: set{cmds}
         self.avg_perc = []  # [wpm (33% 66%), raw, acc]
 
+        # Not using MaxConcurrency because it's based on context so it doesn't work with users who join race
+        self.active_tests = []
+
         # Leaderboards
 
         def get_hs(s):
@@ -303,6 +307,17 @@ class WordPractice(commands.AutoShardedBot):
         self.start_time = time.time()
 
         self.load_exts()
+
+    def active_start(self, user_id: int):
+        # If the user is currently in a test
+        if user_id in self.active_tests:
+            raise OnGoingTest()
+
+        self.active_tests.append(user_id)
+
+    def active_end(self, user_id: int):
+        if user_id in self.active_tests:
+            self.active_tests.remove(user_id)
 
     @property
     def mongo(self):
