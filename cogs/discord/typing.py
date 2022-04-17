@@ -495,6 +495,8 @@ class RaceMember:
 
         self.save_score = True
 
+        self.zone = None
+
 
 class RaceJoinButton(discord.ui.Button):
     def __init__(self):
@@ -590,7 +592,11 @@ class RaceJoinView(BaseView):
             title=f"{test_type} Race",
             description="\n".join(
                 f"{r.data.display_name}"
-                + ("" if r.result is None else " :checkered_flag:")
+                + (
+                    ""
+                    if r.result is None
+                    else f" :checkered_flag: **{r.result.wpm} wpm**"
+                )
                 for r in self.racers.values()
             ),
             add_footer=False,
@@ -730,6 +736,8 @@ class RaceJoinView(BaseView):
 
                     warning = get_test_warning(score.raw, score.acc, test_zone)
 
+                    r.zone = test_zone
+
                     if warning is not None:
                         r.save_score = False
                         value += f"\n{long_space} Warning: {warning}"
@@ -751,22 +759,7 @@ class RaceJoinView(BaseView):
 
         await self.ctx.respond(embed=embed, view=view)
 
-        # Updating the users in the database
-        for r in self.racers.values():
-            score = r.result
-
-            if score is not None and r.save_score:
-                # Refetching user to account for state changes
-                user = await self.ctx.bot.mongo.fetch_user(r.user)
-
-                user.add_score(score)
-                user.add_words(score.cw)
-                user.add_xp(score.xp)
-
-                await self.ctx.bot.mongo.replace_user_data(user, r.user)
-
-        # Logging the race
-
+        # For logging the race
         embeds = []
 
         raw_quote = " ".join(self.quote)
@@ -775,22 +768,44 @@ class RaceJoinView(BaseView):
 
         race_size_display = f"\n**Race Size:** {len(self.racers)}"
 
+        # Updating the users in the database
         for r in self.racers.values():
             score = r.result
 
             if score is not None:
-                additional = get_log_additional(
-                    score.wpm, score.raw, score.acc, word_display, score.xp
-                )
+                if r.save_score:
+                    # Refetching user to account for state changes
+                    user = await self.ctx.bot.mongo.fetch_user(r.user)
 
-                embed = get_log_embed(
-                    self.ctx,
-                    title="Race",
-                    additional=additional + race_size_display,
-                    author=r.user,
-                )
+                    user.add_score(score)
+                    user.add_words(score.cw)
+                    user.add_xp(score.xp)
 
-                embeds.append(embed)
+                    await self.ctx.bot.mongo.replace_user_data(user, r.user)
+
+            additional = get_log_additional(
+                score.wpm, score.raw, score.acc, word_display, score.xp
+            )
+
+            is_hs = False
+
+            if r.zone is not None:
+                zone, zone_range = r.zone
+
+                if score.wpm > r.data.highspeed[zone].wpm:
+                    # TODO: send a message showing high score and high score captcha if applicable
+                    is_hs = True
+
+            await Typing.log_typing_test(self.ctx, "Race", score.wpm, additional, is_hs)
+
+            embed = get_log_embed(
+                self.ctx,
+                title="Race",
+                additional=additional + race_size_display,
+                author=r.user,
+            )
+
+            embeds.append(embed)
 
         for i in range(0, len(embeds), 10):
             show_embeds = embeds[i : i + 10]
