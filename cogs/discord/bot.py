@@ -183,7 +183,7 @@ class ScoreView(ScrollView):
             timestamp = s.unix_timestamp
 
             embed.add_field(
-                name=f"Score {start_page + i + 1}",
+                name=f"Score {start_page + i + 1} ({s.test_type})",
                 value=(
                     f">>> **Wpm:** {s.wpm}\n"
                     f"**Raw:** 108.21 {s.raw}\n"

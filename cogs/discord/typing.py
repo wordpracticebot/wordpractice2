@@ -108,6 +108,19 @@ def get_log_additional(wpm, raw, acc, word_display, xp_earned):
     )
 
 
+def get_test_warning(raw, acc, result):
+    if raw > 350:
+        return "Please try not to spam the test."
+
+    if acc < 75:
+        return "Tests below 75% accuracy are not saved."
+
+    if result is None:
+        return "Tests below 10 correct words are not saved."
+
+    return None
+
+
 def add_test_stats_to_embed(
     embed,
     wpm,
@@ -467,15 +480,20 @@ class TestResultView(BaseView):
 
 
 class RaceMember:
-    def __init__(self, user, data):
+    def __init__(self, user, data, send):
         # user object
         self.user = user
 
         # User's database document
         self.data = data
 
+        # Function for sending ephemeral messages to user
+        self.send = send
+
         # The test score (mongo.Score)
         self.result = None
+
+        self.save_score = True
 
 
 class RaceJoinButton(discord.ui.Button):
@@ -519,7 +537,7 @@ class RaceJoinView(BaseView):
     def add_author_to_race(self):
         author = self.ctx.author
 
-        race_member = RaceMember(author, self.user)
+        race_member = RaceMember(author, self.user, self.ctx.respond)
         self.racers[author.id] = race_member
 
     def end_all_racers(self):
@@ -607,7 +625,9 @@ class RaceJoinView(BaseView):
             tw=len(self.quote),
             xp=xp_earned,
             timestamp=datetime.utcnow(),
+            is_race=True,
         )
+
         embed = self.get_race_embed()
         embed.set_image(url="attachment://test.png")
 
@@ -706,6 +726,14 @@ class RaceJoinView(BaseView):
                         f"{long_space} :dart: Accuracy: **{score.acc}%**"
                     )
 
+                    test_zone = get_test_zone_name(score.cw)
+
+                    warning = get_test_warning(score.raw, score.acc, test_zone)
+
+                    if warning is not None:
+                        r.save_score = False
+                        value += f"\n{long_space} Warning: {warning}"
+
                 embed.add_field(
                     name=f"{place_display} {r.data.display_name}",
                     value=value,
@@ -727,7 +755,7 @@ class RaceJoinView(BaseView):
         for r in self.racers.values():
             score = r.result
 
-            if score is not None:
+            if score is not None and r.save_score:
                 # Refetching user to account for state changes
                 user = await self.ctx.bot.mongo.fetch_user(r.user)
 
@@ -826,7 +854,7 @@ class RaceJoinView(BaseView):
 
             self.ctx.bot.active_start(user.id)
 
-            self.racers[user.id] = RaceMember(user, user_data)
+            self.racers[user.id] = RaceMember(user, user_data, interaction.response)
 
         embed = self.get_race_join_embed(is_author)
 
@@ -1175,18 +1203,9 @@ class Typing(commands.Cog):
 
         result = get_test_zone_name(cw)
 
-        warning = ""
+        warning = get_test_warning(raw, acc, result)
 
-        if raw > 350:
-            warning = "Please try not to spam the test."
-
-        elif acc < 75:
-            warning = "Tests below 75% accuracy are not saved."
-
-        elif result is None:
-            warning = "Tests below 10 correct words are not saved."
-
-        if warning:
+        if warning is not None:
             await ctx.respond(f"Warning: {warning}", ephemeral=True)
 
         else:
@@ -1200,6 +1219,7 @@ class Typing(commands.Cog):
                 tw=len(quote),
                 xp=xp_earned,
                 timestamp=datetime.utcnow(),
+                is_race=False,
             )
 
             check = user.highest_speed * (1 + CAPTCHA_WPM_DEC)

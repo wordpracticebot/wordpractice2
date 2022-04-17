@@ -79,9 +79,15 @@ class Score(EmbeddedDocument):
     xp = IntegerField(default=0)
     timestamp = DateTimeField(default=datetime.min)
 
+    is_race = BooleanField(default=False)
+
     @property
     def unix_timestamp(self):
         return datetime_to_unix(self.timestamp)
+
+    @property
+    def test_type(self):
+        return "Race" if self.is_race else "Normal"
 
 
 class UserBase(Document):
