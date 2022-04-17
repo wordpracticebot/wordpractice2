@@ -2,14 +2,13 @@ import discord
 from discord.commands import Option
 from discord.commands.permissions import CommandPermission
 from discord.ext import commands
-from discord.utils import escape_markdown
 
 import icons
 from config import MODERATORS, SUPPORT_GUILD_ID
 from constants import SUPPORT_SERVER_INVITE
 from helpers.checks import user_check
 from helpers.converters import rqd_user
-from helpers.ui import BaseView, create_link_view, get_log_embed
+from helpers.ui import BaseView, create_link_view
 
 BAN_AUTOCOMPLETE = [
     "Cheating",
@@ -37,9 +36,7 @@ class RestoreConfirm(BaseView):
 
     @discord.ui.button(label="Confirm Restore", style=discord.ButtonStyle.grey, row=1)
     async def confirm_restore(self, button, interaction):
-        embed = self.ctx.embed(
-            title=f"{icons.success} Restored user's accouunt", add_footer=False
-        )
+        embed = self.ctx.default_embed(title="Restored user's accouunt")
 
         await interaction.message.edit(embed=embed, view=None)
 
@@ -48,13 +45,12 @@ class RestoreConfirm(BaseView):
         await self.backup.delete()
 
     async def start(self):
-        embed = self.ctx.embed(
+        embed = self.ctx.default_embed(
             title="Restore Account",
             description=(
                 "Are you sure you want to restore account?\n\n"
                 f"All current data will be restored to data from <t:{self.backup.unix_wiped_at}:f>"
             ),
-            add_footer=False,
         )
 
         await self.ctx.respond(embed=embed, view=self)
@@ -81,7 +77,7 @@ class Moderator(commands.Cog):
 
         await self.bot.mongo.wipe_user(user_data, ctx.author)
 
-        embed = ctx.embed(title="User Wiped", add_footer=False)
+        embed = ctx.default_embed(title="User Wiped")
 
         await ctx.respond(embed=embed)
 
@@ -105,16 +101,11 @@ class Moderator(commands.Cog):
         if user_data.banned:
             raise commands.BadArgument("That user is already banned")
 
-        embed = ctx.error_embed(
-            title="User Banned",
-            description=f"Reason: {reason}",
-        )
-
-        await ctx.respond(embed=embed)
-
         # Banning and wiping the user
 
-        user_data = self.bot.mongo.add_ban(user_data, reason, ctx.author)
+        user_data = await self.bot.mongo.add_inf(
+            ctx, user, user_data, ctx.author, reason, True
+        )
 
         if wipe:
             await self.bot.mongo.wipe_user(user_data, ctx.author)
@@ -139,15 +130,26 @@ class Moderator(commands.Cog):
         except Exception:
             pass
 
+        embed = ctx.error_embed(
+            title="User Banned",
+            description=f"Reason: {reason}",
+        )
+
+        await ctx.respond(embed=embed)
+
     @mod_command
-    async def unban(self, ctx, user: rqd_user()):
+    async def unban(self, ctx, user: rqd_user(), reason):
         """Unban a user"""
+        await ctx.defer()
+
         user_data = await self.handle_moderator_user(ctx, user)
 
         if user_data.banned is False:
             raise commands.BadArgument("That user is not banned")
 
-        user_data.banned = False
+        user_data = await self.bot.mongo.add_inf(
+            ctx, user, user_data, ctx.author, reason, False
+        )
 
         await self.bot.mongo.replace_user_data(user_data)
 
@@ -158,6 +160,7 @@ class Moderator(commands.Cog):
     @mod_command
     async def cat(self, ctx, user: rqd_user()):
         """View the infractions of a user"""
+        await ctx.defer()
 
         user_data = await self.handle_moderator_user(ctx, user)
 
@@ -172,7 +175,7 @@ class Moderator(commands.Cog):
             timestamp = inf.unix_timestamp
 
             embed.add_field(
-                name=f"Infraction {i + 1}",
+                name=f"Infraction {i + 1} ({inf.name})",
                 value=(
                     f">>> Moderator: {inf.mod_name} ({inf.mod_id})\n"
                     f"Reason: {inf.reason}\n"
@@ -186,6 +189,7 @@ class Moderator(commands.Cog):
     @mod_command
     async def restore(self, ctx, user: rqd_user()):
         """Restore a user's account"""
+        await ctx.defer()
 
         user_data = await self.handle_moderator_user(ctx, user)
 

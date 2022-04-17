@@ -50,12 +50,20 @@ def get_meta_data(user):
 class Infraction(EmbeddedDocument):
     mod_name = StringField(required=True)  # NAME#DISCRIMINATOR
     mod_id = IntegerField(require=True)
+
+    is_ban = BooleanField(required=True)  # True = ban, False = unban
+
     reason = StringField(required=True)
+
     timestamp = DateTimeField(required=True)
 
     @property
     def unix_timestamp(self):
         return datetime_to_unix(self.timestamp)
+
+    @property
+    def name(self):
+        return "Ban" if self.is_ban else "Unban"
 
 
 class Score(EmbeddedDocument):
@@ -419,22 +427,26 @@ class Mongo(commands.Cog):
             # Caching new user data
             self.bot.user_cache[new_user.id] = pickle.dumps(new_user.to_mongo())
 
-    async def add_ban(self, ctx, user, user_data, reason: str, mod=None):
-        # Technically not actually banning the user because it's not updated in the database
+    async def add_inf(self, ctx, user, user_data, mod, reason, is_ban: bool):
+        """Doesn't update in the database"""
 
         mod, mod_id = self.get_auto_mod(mod)
 
         inf = self.Infraction(
-            mod_name=mod, mod_id=mod_id, reason=reason, timestamp=datetime.utcnow()
+            mod_name=mod,
+            mod_id=mod_id,
+            is_ban=is_ban,
+            reason=reason,
+            timestamp=datetime.utcnow(),
         )
 
         user_data.infractions.append(inf)
-        user_data.banned = True
+        user_data.banned = is_ban
 
-        # Logging the ban
+        # Logging the infraction
         embed = get_log_embed(
             ctx,
-            title="User Banned",
+            title=f"User {inf.name}ned",  # sorry
             additional=f"**Moderator:** {mod} ({mod_id})\n**Reason:** {reason}",
             error=True,
             author=user,
