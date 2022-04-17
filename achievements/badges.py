@@ -1,3 +1,5 @@
+from static.assets import badge_icon
+
 from .base import Achievement, Category, XPReward
 
 
@@ -30,4 +32,5 @@ badges = Category(
             Badges("Badge Tycoon", 100),
         ]
     ],
+    icon=badge_icon,
 )

@@ -1,3 +1,5 @@
+from static.assets import speed_icon
+
 from .base import Achievement, Category, XPReward
 
 
@@ -30,4 +32,5 @@ speed = Category(
             Speed("Cheating?", 240),
         ]
     ],
+    icon=speed_icon,
 )

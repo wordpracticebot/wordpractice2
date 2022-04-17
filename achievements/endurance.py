@@ -1,5 +1,7 @@
 from itertools import groupby
 
+from static.assets import endurance_icon
+
 from .base import Achievement, Category
 
 
@@ -71,4 +73,5 @@ endurance = Category(
         ),
         [Perfectionist(amt) for amt in [10, 25, 50, 100, 250, 500]],
     ],
+    icon=endurance_icon,
 )

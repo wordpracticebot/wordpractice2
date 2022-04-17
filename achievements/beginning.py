@@ -1,3 +1,5 @@
+from static.assets import beginning_icon
+
 from .base import Achievement, Category
 
 
@@ -9,7 +11,4 @@ class StartingOut(Achievement):
         return bool(user)
 
 
-beginning = Category(
-    desc="",
-    challenges=[StartingOut()],
-)
+beginning = Category(desc="", challenges=[StartingOut()], icon=beginning_icon)

@@ -45,7 +45,7 @@ def check_all(user: dict):
                     continue
 
                 # (achievement object, callback), count of achievement, identifer
-                yield result, i if all_names.count(n.name) > 1 else None, (iii, ii)
+                yield result, i if all_names.count(n.name) > 1 else None, cv, (iii, ii)
 
 
 def get_bar(progress):

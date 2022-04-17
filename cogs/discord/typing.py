@@ -418,6 +418,7 @@ class TestResultView(BaseView):
             self.length,
             interaction.response.send_message,
         )
+        invoke_completion(self.ctx)
 
     @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):

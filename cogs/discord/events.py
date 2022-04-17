@@ -1,12 +1,11 @@
 import copy
 from collections import defaultdict
 from datetime import datetime
-from io import BytesIO
 
 import discord
 from discord.ext import commands
 from discord.ext.commands import errors
-from PIL import ImageDraw
+from PIL import Image, ImageDraw
 
 import icons
 from achievements import check_all
@@ -21,8 +20,12 @@ from static.assets import achievement_base, uni_sans_heavy
 
 
 # TODO: add icons to achievement image
-def generate_achievement_image(name):
+def generate_achievement_image(name, icon):
     img = achievement_base.copy()
+
+    if icon is not None:
+        img_icon = icon.copy().resize((95, 95))
+        img.paste(img_icon, (52, 52), img_icon)
 
     draw = ImageDraw.Draw(img)
     draw.text((240, 110), name, font=uni_sans_heavy)
@@ -135,7 +138,7 @@ class Events(commands.Cog):
         extra = 0
 
         for m in earned.values():
-            a, t = m[-1]
+            a, t, c = m[-1]
 
             name = a.name
 
@@ -143,7 +146,7 @@ class Events(commands.Cog):
                 if t is not None:
                     name += f" ({t + 1})"
 
-                image = generate_achievement_image(name)
+                image = generate_achievement_image(name, c.icon)
 
                 files.append(image)
             else:
@@ -183,8 +186,8 @@ class Events(commands.Cog):
         while done_checking is False:
             new_a = False
             # Looping through all the finished achievements
-            for (a, changer), count, identifier in check_all(new_user):
-                a_earned[identifier] = a_earned.get(identifier, []) + [(a, count)]
+            for (a, changer), count, cv, identifier in check_all(new_user):
+                a_earned[identifier] = a_earned.get(identifier, []) + [(a, count, cv)]
                 new_a = True
 
                 # Adding achievemnt to document

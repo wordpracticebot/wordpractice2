@@ -10,3 +10,8 @@ arial = ImageFont.truetype(f"{path}/fonts/arial.ttf", FONT_SIZE)
 
 # Images
 achievement_base = Image.open(f"{path}/img/achievement_base.png")
+
+beginning_icon = Image.open(f"{path}/img/beginning_icon.png")
+speed_icon = Image.open(f"{path}/img/speed_icon.png")
+badge_icon = Image.open(f"{path}/img/badge_icon.png")
+endurance_icon = Image.open(f"{path}/img/endurance_icon.png")

@@ -11,6 +11,8 @@ Challenges:
 [[a,b,c], a, b] 
 """
 
+from PIL import Image
+
 import icons
 from static.badges import get_badge_from_id
 
@@ -36,9 +38,10 @@ class Achievement:
 
 
 class Category:
-    def __init__(self, desc: str, challenges: list):
+    def __init__(self, desc: str, challenges: list, icon: Image = None):
         self.desc = desc
         self.challenges = challenges
+        self.icon = icon
 
     def is_completed(self, user):
         return all(
