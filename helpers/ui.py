@@ -102,7 +102,7 @@ class BaseView(discord.ui.View):
         if isinstance(error, OnGoingTest):
             return await self.ctx.bot.handle_ongoing_test_error(send)
 
-        self.bot.active_end(self.ctx.author.id)
+        self.ctx.bot.active_end(self.ctx.author.id)
 
         self = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
 

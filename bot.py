@@ -167,9 +167,9 @@ class WelcomeView(BaseView):
         # Adding the links
 
         item = discord.ui.Button(label="Privacy Policy", url=PRIVACY_POLICY_LINK)
-        item = discord.ui.Button(label="Rules", url=RULES_LINK)
-
         self.add_item(item)
+
+        item = discord.ui.Button(label="Rules", url=RULES_LINK)
         self.add_item(item)
 
         await self.ctx.respond(embed=embed, view=self)
