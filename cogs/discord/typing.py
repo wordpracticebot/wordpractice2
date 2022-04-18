@@ -784,27 +784,29 @@ class RaceJoinView(BaseView):
 
                     await self.ctx.bot.mongo.replace_user_data(user, r.user)
 
-            additional = get_log_additional(
-                score.wpm, score.raw, score.acc, word_display, score.xp
-            )
+                additional = get_log_additional(
+                    score.wpm, score.raw, score.acc, word_display, score.xp
+                )
 
-            is_hs = False
+                is_hs = False
 
-            if r.zone is not None:
-                zone, zone_range = r.zone
+                if r.zone is not None:
+                    zone, zone_range = r.zone
 
-                if score.wpm > r.data.highspeed[zone].wpm:
-                    # TODO: send a message showing high score and high score captcha if applicable
-                    is_hs = True
+                    if score.wpm > r.data.highspeed[zone].wpm:
+                        # TODO: send a message showing high score and high score captcha if applicable
+                        is_hs = True
 
-            await Typing.log_typing_test(self.ctx, "Race", score.wpm, additional, is_hs)
+                await Typing.log_typing_test(
+                    self.ctx, "Race", score.wpm, additional, is_hs
+                )
 
-            embed = get_log_embed(
-                self.ctx,
-                title="Race",
-                additional=additional + race_size_display,
-                author=r.user,
-            )
+                embed = get_log_embed(
+                    self.ctx,
+                    title="Race",
+                    additional=additional + race_size_display,
+                    author=r.user,
+                )
 
             embeds.append(embed)
 
@@ -824,8 +826,10 @@ class RaceJoinView(BaseView):
 
         user_data = await self.ctx.bot.mongo.fetch_user(user)
 
-        # TODO: create an account for them
         if user_data is None:
+            ctx = await self.ctx.bot.get_application_context(interaction)
+
+            await self.ctx.bot.handle_new_user(ctx)
             return
 
         if user_data.banned:

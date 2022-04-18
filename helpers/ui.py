@@ -104,7 +104,7 @@ class BaseView(discord.ui.View):
 
         self.ctx.bot.active_end(self.ctx.author.id)
 
-        self = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
+        view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
 
         embed = self.ctx.error_embed(
             title=f"{icons.danger} Unexpected Error",
@@ -112,9 +112,9 @@ class BaseView(discord.ui.View):
         )
 
         if inter.response.is_done():
-            await send(embed=embed, view=self, ephemeral=True)
+            await send(embed=embed, view=view, ephemeral=True)
         else:
-            await send(embed=embed, view=self, ephemeral=True)
+            await send(embed=embed, view=view, ephemeral=True)
 
         embed = get_log_embed(
             self.ctx,

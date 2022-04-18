@@ -25,7 +25,7 @@ from constants import (
     TEST_ZONES,
 )
 from helpers.errors import OnGoingTest
-from helpers.ui import BaseView, CustomEmbed
+from helpers.ui import BaseView, CustomEmbed, create_link_view
 from static.hints import hints
 
 
@@ -114,41 +114,17 @@ def get_exts():
         yield module.name
 
 
-async def _handle_after_welcome_check(bot, interaction, user):
-    # Checking if the user is banned
-    if user.banned:
-        ctx = await bot.get_application_context(interaction)
-
-        embed = ctx.error_embed(
-            title="You are banned",
-            description="Join the support server and create a ticket to request a ban appeal",
-        )
-        view = BaseView(ctx)
-
-        item = discord.ui.Button(
-            style=discord.ButtonStyle.link,
-            label="Support Server",
-            url=SUPPORT_SERVER_INVITE,
-        )
-        view.add_item(item=item)
-
-        await ctx.respond(embed=embed, view=view, ephemeral=True)
-        return True
-
-    return False
-
-
 class WelcomeView(BaseView):
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.primary)
     async def accept(self, button, interaction):
         user = await self.ctx.bot.mongo.fetch_user(interaction.user, create=True)
 
-        # TODO: add some kind of basic bot tutorial here
+        # TODO: add some kind of basic bot tutorial here and some links
         embed = self.ctx.default_embed(title="Rules Accepted", description="")
 
-        await interaction.message.edit(embed=embed, view=None)
+        await interaction.response.edit_message(embed=embed, view=None)
 
-        await _handle_after_welcome_check(self.ctx.bot, interaction, user)
+        await self.ctx.bot.handle_after_welcome_check(self.ctx, user)
 
     async def start(self):
         embed = self.ctx.default_embed(
@@ -172,14 +148,14 @@ class WelcomeView(BaseView):
         item = discord.ui.Button(label="Rules", url=RULES_LINK)
         self.add_item(item)
 
-        await self.ctx.respond(embed=embed, view=self)
+        await self.ctx.respond(embed=embed, view=self, ephemeral=True)
 
         # Enabling rules to be accepted after 5 seconds
         await asyncio.sleep(5)
 
         self.accept.disabled = False
 
-        await self.ctx.interaction.edit_original_message(view=self)
+        await self.ctx.edit(view=self)
 
 
 def get_embed_theme(user):
@@ -319,6 +295,21 @@ class WordPractice(commands.AutoShardedBot):
         if user_id in self.active_tests:
             self.active_tests.remove(user_id)
 
+    async def handle_after_welcome_check(self, ctx, user):
+        # Checking if the user is banned
+        if user.banned:
+            embed = ctx.error_embed(
+                title="You are banned",
+                description="Join the support server and create a ticket to request a ban appeal",
+            )
+            view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
+
+            await ctx.respond(embed=embed, view=view, ephemeral=True)
+
+            return True
+
+        return False
+
     @property
     def mongo(self):
         return self.get_cog("Mongo")
@@ -402,7 +393,9 @@ class WordPractice(commands.AutoShardedBot):
             if user is None:
                 return await self.handle_new_user(temp_ctx)
 
-            if await _handle_after_welcome_check(self, interaction, user):
+            ctx = await self.get_application_context(interaction)
+
+            if await self.handle_after_welcome_check(ctx, user):
                 return
 
         # Processing command

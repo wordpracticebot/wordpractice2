@@ -28,6 +28,7 @@ mod_command = commands.slash_command(
     permissions=[
         CommandPermission(id=user_id, type=2, permission=True) for user_id in MODERATORS
     ],
+    checks=[],
 )
 
 
@@ -101,6 +102,9 @@ class Moderator(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    async def cog_check(self, ctx):
+        return ctx.author.id in MODERATORS
 
     async def handle_moderator_user(self, ctx, user):
         if user.id == ctx.author.id:
