@@ -1,4 +1,4 @@
-from itertools import groupby
+from datetime import datetime
 
 from static.assets import endurance_icon
 
@@ -28,36 +28,27 @@ def generate_single_stat_endurance(name, key, values, desc):
     ]
 
 
-class Perfectionist(Achievement):
-    def __init__(self, amt):
-        super().__init__(
-            "Perfectionist",
-            f"Complete {amt} typing tests in a row with 100% accuracy.",
-        )
+class Veteran(Achievement):
+    def __init__(self, days):
+        super().__init__("Veteran", f"Be a wordPractice member for {days} days")
 
-        self.amt = amt
-
-    def callback(self, user):
-        return self.changer if self.get_scores_in_a_row(user) >= self.amt else False
-
-    def progress(self, user):
-        return self.get_scores_in_a_row(user), self.amt
+        self.days = days
 
     @staticmethod
-    def get_scores_in_a_row(user):
-        if user.scores == []:
-            return 0
+    def get_account_days(user):
+        now = datetime.utcnow()
 
-        result = [s.acc == 100 for s in user.scores]
+        return (now - user.created_at).days
 
-        if result[-1] is False:
-            return 0
+    def callback(self, user):
+        return self.changer if self.get_account_days(user) >= self.days else False
 
-        return [sum(i) for r, i in groupby(result) if r][-1]
+    def progress(self, user):
+        return self.get_account_days(user), self.days
 
 
 endurance = Category(
-    desc="",
+    desc="Endurance based achievements",
     challenges=[
         generate_single_stat_endurance(
             "Streakin'",
@@ -71,7 +62,7 @@ endurance = Category(
             (1, 5, 10, 25, 50, 100, 200, 350, 500, 750),
             "Vote for wordPractice {} time{}",
         ),
-        [Perfectionist(amt) for amt in [10, 25, 50, 100, 250, 500]],
+        [Veteran(days) for days in [7, 14, 30, 90, 180, 365]],
     ],
     icon=endurance_icon,
 )

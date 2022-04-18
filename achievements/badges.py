@@ -21,7 +21,7 @@ class Badges(Achievement):
 
 
 badges = Category(
-    desc="",
+    desc="Badge related achievements",
     challenges=[
         [
             Badges("First Badge", 1),

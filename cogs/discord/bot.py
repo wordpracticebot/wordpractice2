@@ -640,7 +640,7 @@ class AchievementsView(ViewFromDict):
 
         embed = self.ctx.embed(title=f"{self.page}", description=c.desc)
 
-        content = ""
+        content = []
 
         for a in c.challenges:
             tier_display = ""
@@ -667,7 +667,7 @@ class AchievementsView(ViewFromDict):
                 f"> **Reward:** {a.reward.desc}\n" if a.reward is not None else ""
             )
 
-            content += (
+            content.append(
                 f"**{emoji} {a.name}{tier_display}**\n"
                 f"> {a.desc}\n{reward_display}"
                 f"> {bar} `{p[0]}/{p[1]}`\n\n"
@@ -675,7 +675,7 @@ class AchievementsView(ViewFromDict):
 
         embed.add_field(
             name="** **",
-            value=content,
+            value="".join(content),
             inline=False,
         )
 

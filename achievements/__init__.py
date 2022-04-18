@@ -4,11 +4,11 @@ from icons import progress_bar
 from .badges import badges
 from .beginning import beginning
 from .endurance import endurance
-from .speed import speed
+from .typing import typing
 
 categories = {
     "Beginning": beginning,
-    "Speed": speed,
+    "Typing": typing,
     "Badges": badges,
     "Endurance": endurance,
 }

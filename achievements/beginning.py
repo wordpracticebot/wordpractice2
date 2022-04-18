@@ -11,4 +11,8 @@ class StartingOut(Achievement):
         return bool(user)
 
 
-beginning = Category(desc="", challenges=[StartingOut()], icon=beginning_icon)
+beginning = Category(
+    desc="Simple and basic achievements",
+    challenges=[StartingOut()],
+    icon=beginning_icon,
+)
