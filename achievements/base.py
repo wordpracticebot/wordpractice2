@@ -39,7 +39,7 @@ class Achievement:
         return a, b
 
     def user_progress(self, bot, user):
-        ...
+        return int(self.name in user.achievements), 1
 
 
 class Category:
