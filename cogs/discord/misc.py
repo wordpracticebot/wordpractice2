@@ -178,6 +178,8 @@ class Misc(commands.Cog):
         # Discord API latency
         latency = round(self.bot.latency * 1000, 3)
 
+        ctx.achievements_completed.append("Veteran")
+
         embed = ctx.embed(title=f"Pong! {latency} ms", add_footer=False)
 
         await ctx.respond(embed=embed)
@@ -285,7 +287,10 @@ class Misc(commands.Cog):
         # Voting achievement progress
         all_achievements = categories["Endurance"].challenges[1]
 
-        names = set(i.name for i in all_achievements)
+        all_names = [i.name for i in all_achievements]
+
+        names = set(all_names)
+
         tier = get_achievement_tier(user, names)
 
         a = all_achievements[tier]

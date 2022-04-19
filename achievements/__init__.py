@@ -31,7 +31,7 @@ def check_all(ctx, user: dict):
 
                 if (
                     n.is_completed(ctx.bot, user)
-                    or (n.name, i) in ctx.achievements_completed
+                    or n.name in ctx.achievements_completed
                 ):
                     # achievement object, count of achievement, identifer
                     yield n, i if all_names.count(n.name) > 1 else None, cv, (iii, ii)
@@ -58,6 +58,7 @@ def get_achievement_tier(user, names: set):
 
     # getting the amount of achievements that the user has in that tier
     unique = names & user_a
+
     tier = sum([len(user.achievements[x]) for x in unique])
 
-    return tier
+    return max(tier - 1, 0)
