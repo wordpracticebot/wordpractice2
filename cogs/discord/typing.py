@@ -1333,7 +1333,8 @@ class Typing(commands.Cog):
                 title="Captcha Expired",
                 description="You did not complete the captcha within 2 minutes",
             )
-            return await ctx.respond(embed=embed)
+            await ctx.respond(embed=embed)
+            return ctx.bot.active_end(ctx.author.id)
 
         word_display = f"**Word:** {captcha_word}"
 
@@ -1363,6 +1364,8 @@ class Typing(commands.Cog):
                 additional=word_display,
                 error=False,
             )
+
+        ctx.bot.active_end(ctx.author.id)
 
         # Logging the captcha
         await ctx.bot.test_wh.send(embed=embed)
