@@ -8,7 +8,9 @@ from discord.ext import commands
 
 import icons
 from achievements import categories, get_achievement_tier, get_bar
+from achievements.beginning import beginning
 from constants import (
+    INFO_VIDEO,
     PRIVACY_POLICY_LINK,
     RULES_LINK,
     SUPPORT_SERVER_INVITE,
@@ -102,7 +104,6 @@ class CategorySelect(discord.ui.Select):
 class HelpView(BaseView):
     async def create_page(self, option):
         if option == "Welcome":
-            # TODO: add more information about how to start (maybe create a youtube video)
             embed = self.ctx.embed(
                 title="Help",
                 description="Welcome to wordPractice!",
@@ -111,7 +112,7 @@ class HelpView(BaseView):
                 name="What is wordPractice?",
                 value=(
                     "I'm the most feature dense typing test Discord Bot. I allow\n"
-                    "you to practice your typing skills while having fun!\n"
+                    f"you to practice your typing skills while having fun!\n[Informational Video]({INFO_VIDEO})"
                 ),
                 inline=False,
             )
@@ -289,7 +290,7 @@ class Misc(commands.Cog):
 
         a = all_achievements[tier]
 
-        p = a.progress(user)
+        p = a.progress(self.bot, user)
 
         bar = get_bar(p[0] / p[1])
 

@@ -24,7 +24,7 @@ class WordChallenge(Challenge):
 
         self.word_amt = word_amt
 
-    def progress(self, user) -> tuple:
+    def progress(self, bot, user) -> tuple:
         return get_daily_stat(user.last24[0]), self.word_amt
 
 
@@ -32,7 +32,7 @@ class VoteChallenge(Challenge):
     def __init__(self):
         super().__init__("Vote for wordPractice")
 
-    def progress(self, user) -> tuple:
+    def progress(self, bot, user) -> tuple:
         return (
             int(
                 any(

@@ -186,27 +186,24 @@ class Events(commands.Cog):
         while done_checking is False:
             new_a = False
             # Looping through all the finished achievements
-            for (a, changer), count, cv, identifier in check_all(new_user):
+            for a, count, cv, identifier in check_all(ctx, new_user):
                 a_earned[identifier] = a_earned.get(identifier, []) + [(a, count, cv)]
                 new_a = True
 
                 # Adding achievemnt to document
-                insert_count = 0 if count is None else count
                 current = new_user.achievements.get(a.name, [])
 
-                current.insert(insert_count, datetime.utcnow())
-
-                new_user.achievements[a.name] = current
+                new_user.achievements[a.name] = current + [datetime.utcnow()]
 
                 if a.reward is None:
                     continue
 
                 # Checking if the state doesn't need to be updated
-                if changer == True:
+                if a.changer is None:
                     continue
 
                 # Updating the new user state
-                new_user = changer(new_user)
+                new_user = a.changer(new_user)
 
             # Continues checking until no new achievements are given in a round (allows chaining achievements)
             if new_a is False:
@@ -218,7 +215,7 @@ class Events(commands.Cog):
             challenges, reward = get_daily_challenges()
 
             challenge_completed = all(
-                (p := c.progress(new_user))[0] >= p[1] for c in challenges
+                (p := c.progress(self.bot, new_user))[0] >= p[1] for c in challenges
             )
 
             # Checking if the user has completed all the challenges

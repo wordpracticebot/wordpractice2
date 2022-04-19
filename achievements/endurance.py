@@ -7,15 +7,12 @@ from .base import Achievement, Category
 
 class SingleStatEndurance(Achievement):
     def __init__(self, name, desc, key, value):
-        super().__init__(name, desc)
+        super().__init__(name=name, desc=desc)
 
         self.key = key
         self.value = value
 
-    def callback(self, user):
-        return self.changer if user[self.key] >= self.value else False
-
-    def progress(self, user):
+    def user_progress(self, bot, user):
         return user[self.key], self.value
 
 
@@ -30,7 +27,9 @@ def generate_single_stat_endurance(name, key, values, desc):
 
 class Veteran(Achievement):
     def __init__(self, days):
-        super().__init__("Veteran", f"Be a wordPractice member for {days} days")
+        super().__init__(
+            name="Veteran", desc=f"Be a wordPractice member for {days} days"
+        )
 
         self.days = days
 
@@ -40,10 +39,7 @@ class Veteran(Achievement):
 
         return (now - user.created_at).days
 
-    def callback(self, user):
-        return self.changer if self.get_account_days(user) >= self.days else False
-
-    def progress(self, user):
+    def user_progress(self, bot, user):
         return self.get_account_days(user), self.days
 
 

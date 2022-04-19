@@ -610,10 +610,10 @@ class ProfileSelect(discord.ui.Select):
 
 
 class AchievementsButton(DictButton):
-    def __init__(self, label, user):
+    def __init__(self, bot, label, user):
         style = (
             discord.ButtonStyle.success
-            if categories[label].is_completed(user)
+            if categories[label].is_completed(bot, user)
             else discord.ButtonStyle.danger
         )
 
@@ -633,14 +633,12 @@ class AchievementsView(ViewFromDict):
         self.user = user  # user data
 
     def button(self, label):
-        return AchievementsButton(label, self.user)
+        return AchievementsButton(self.ctx.bot, label, self.user)
 
     async def create_page(self):
         c = self.the_dict[self.page]
 
         embed = self.ctx.embed(title=f"{self.page}", description=c.desc)
-
-        content = []
 
         for a in c.challenges:
             tier_display = ""
@@ -657,27 +655,21 @@ class AchievementsView(ViewFromDict):
 
                 tier_display = f" `[{tier + 1}/{len(all_names)}]`"
 
-            p = a.progress(self.user)
+            p = a.progress(self.ctx.bot, self.user)
 
             bar = get_bar(p[0] / p[1])
 
             emoji = icons.success if p[0] >= p[1] else icons.danger
 
             reward_display = (
-                f"> **Reward:** {a.reward.desc}\n" if a.reward is not None else ""
+                f"**Reward:** {a.reward.desc}\n" if a.reward is not None else ""
             )
 
-            content.append(
-                f"**{emoji} {a.name}{tier_display}**\n"
-                f"> {a.desc}\n{reward_display}"
-                f"> {bar} `{p[0]}/{p[1]}`\n\n"
+            embed.add_field(
+                name=f"**{emoji} {a.name}{tier_display}**",
+                value=f">>> {a.desc}\n{reward_display}{bar} `{p[0]}/{p[1]}`",
+                inline=False,
             )
-
-        embed.add_field(
-            name="** **",
-            value="".join(content),
-            inline=False,
-        )
 
         return embed
 
@@ -783,7 +775,7 @@ class Bot(commands.Cog):
 
         for i, c in enumerate(challenges):
             # Getting the user's progress on the challenge
-            p = c.progress(user)
+            p = c.progress(self.bot, user)
 
             # Generating the progress bar
             bar = get_bar(p[0] / p[1])

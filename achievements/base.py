@@ -1,12 +1,4 @@
 """
-callback -> 
-
-True = finished but no state change
-False = not finished
-Callable[[dict], dict] = state change
-"""
-
-"""
 Challenges:
 [[a,b,c], a, b] 
 """
@@ -18,36 +10,47 @@ from static.badges import get_badge_from_id
 
 
 class Achievement:
-    def __init__(self, name: str, desc: str, reward=None):
+    def __init__(self, *, name: str, desc: str, reward=None, immutable=False):
         self.name = name
         self.desc = desc
         self.reward = reward
 
+        # once the achievement is completed, it defaults to to maximum value
+        self.immutable = immutable
+
     @property
     def changer(self):
         if self.reward is None:
-            return True
+            return None
 
         return self.reward.changer
 
-    def progress(self, user) -> tuple:
-        return int(self.name in user.achievements), 1
+    def is_completed(self, bot, user):
+        a, b = self.progress(bot, user)
 
-    def has_callback(self):
-        return callable(getattr(self.__class__, "callback", False))
+        return a >= b
+
+    def progress(self, bot, user):
+        a, b = self.user_progress(bot, user)
+
+        if self.immutable and self.name in user.achievements:
+            a = max(a, b)
+
+        return a, b
+
+    def user_progress(self, bot, user):
+        ...
 
 
 class Category:
-    def __init__(self, desc: str, challenges: list, icon: Image = None):
+    def __init__(self, *, desc: str, challenges: list, icon: Image = None):
         self.desc = desc
         self.challenges = challenges
         self.icon = icon
 
-    def is_completed(self, user):
+    def is_completed(self, bot, user):
         return all(
-            (lambda m: m[0] >= m[1])(
-                (e if not isinstance(e, list) else e[-1]).progress(user)
-            )
+            (e if not isinstance(e, list) else e[-1]).is_completed(bot, user)
             for e in self.challenges
         )
 

@@ -4,7 +4,7 @@ import math
 import random
 import textwrap
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from itertools import groupby
 
 import discord
@@ -289,7 +289,7 @@ class HighScoreCaptchaView(BaseView):
         raw = None
 
         if finished_test:
-            end_time = time.time() - start_time
+            end_time = round(message.created_at.timestamp() - start_time, 2)
 
             u_input = message.content.split()
 
@@ -608,7 +608,7 @@ class RaceJoinView(BaseView):
     async def handle_racer_finish(self, m):
         self.ctx.bot.active_end(m.author.id)
 
-        end_time = time.time() - self.start_time
+        end_time = round(m.created_at.timestamp() - self.start_time, 2)
 
         r = self.racers[m.author.id]
 
@@ -1139,9 +1139,10 @@ class Typing(commands.Cog):
             await ctx.respond(embed=embed)
             return None
 
-        end_time = round(time.time() - start_time, 2)
+        else:
+            end_time = round(message.created_at.timestamp() - start_time, 2)
 
-        return message, end_time, pacer_name, raw_quote
+            return message, end_time, pacer_name, raw_quote
 
     @classmethod
     async def do_typing_test(cls, ctx, is_dict, quote_info, length, send):

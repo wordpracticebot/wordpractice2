@@ -14,21 +14,7 @@ categories = {
 }
 
 
-def handle_achievement(user, a, count):
-    # checking if the user has already completed the achievement
-    if count <= len(user.achievements.get(a.name, [])) or a.has_callback() is False:
-        return None
-
-    changer = a.callback(user)
-
-    # Checking if the achievement was not completed
-    if changer is False:
-        return None
-
-    return a, changer
-
-
-def check_all(user: dict):
+def check_all(ctx, user: dict):
     for iii, cv in enumerate(categories.values()):
         for ii, a in enumerate(cv.challenges):
             # Handling if it's not a tier
@@ -39,13 +25,18 @@ def check_all(user: dict):
             for i, n in enumerate(a):
                 a_count = all_names[: i + 1].count(n.name)
 
-                result = handle_achievement(user, n, a_count)
-
-                if result is None:
+                # checking if the user has already completed the achievement
+                if a_count <= len(user.achievements.get(n.name, [])):
                     continue
 
-                # (achievement object, callback), count of achievement, identifer
-                yield result, i if all_names.count(n.name) > 1 else None, cv, (iii, ii)
+                if (
+                    n.is_completed(ctx.bot, user)
+                    or (n.name, i) in ctx.achievements_completed
+                ):
+                    # achievement object, count of achievement, identifer
+                    yield n, i if all_names.count(n.name) > 1 else None, cv, (iii, ii)
+
+                continue
 
 
 def get_bar(progress):

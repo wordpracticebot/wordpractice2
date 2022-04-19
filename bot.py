@@ -16,6 +16,8 @@ import cogs
 import config
 from constants import (
     ERROR_CLR,
+    GITHUB_LINK,
+    INFO_VIDEO,
     LB_LENGTH,
     PERMISSONS,
     PRIMARY_CLR,
@@ -115,14 +117,29 @@ def get_exts():
 
 
 class WelcomeView(BaseView):
+    async def on_timeout(self):
+        pass
+
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.primary)
     async def accept(self, button, interaction):
         user = await self.ctx.bot.mongo.fetch_user(interaction.user, create=True)
 
-        # TODO: add some kind of basic bot tutorial here and some links
-        embed = self.ctx.default_embed(title="Rules Accepted", description="")
+        embed = self.ctx.default_embed(
+            title="Rules Accepted",
+            description="We hope that you enjoy your time using wordPractice",
+        )
 
-        await interaction.response.edit_message(embed=embed, view=None)
+        embed.set_thumbnail(url="https://i.imgur.com/MF0xiLu.png")
+
+        view = create_link_view(
+            {
+                "Community Server": SUPPORT_SERVER_INVITE,
+                "Video": INFO_VIDEO,
+                "Github": GITHUB_LINK,
+            }
+        )
+
+        await interaction.response.edit_message(embed=embed, view=view)
 
         await self.ctx.bot.handle_after_welcome_check(self.ctx, user)
 
@@ -168,6 +185,8 @@ class CustomContext(discord.commands.ApplicationContext):
 
         self._theme = theme
         self.testing = False  # if set to true, cooldowns are avoided
+
+        self.achievements_completed = []  # list of additional achievements completed
 
         self.no_completion = False
 
