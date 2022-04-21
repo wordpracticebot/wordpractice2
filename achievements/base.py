@@ -25,21 +25,23 @@ class Achievement:
 
         return self.reward.changer
 
-    def is_completed(self, bot, user):
-        a, b = self.progress(bot, user)
+    def in_achievements(self, user):
+        return self.name in user.achievements
 
+    async def is_completed(self, ctx, user):
+        a, b = await self.progress(ctx, user)
         return a >= b
 
-    def progress(self, bot, user):
-        a, b = self.user_progress(bot, user)
+    async def progress(self, ctx, user):
+        a, b = await self.user_progress(ctx, user)
 
         if self.immutable and self.name in user.achievements:
             a = max(a, b)
 
         return a, b
 
-    def user_progress(self, bot, user):
-        return int(self.name in user.achievements), 1
+    async def user_progress(self, ctx, user):
+        return int(self.in_achievements(user)), 1
 
 
 class Category:
@@ -48,9 +50,9 @@ class Category:
         self.challenges = challenges
         self.icon = icon
 
-    def is_completed(self, bot, user):
+    def is_done(self, user):
         return all(
-            (e if not isinstance(e, list) else e[-1]).is_completed(bot, user)
+            (e if not isinstance(e, list) else e[-1]).in_achievements(user)
             for e in self.challenges
         )
 

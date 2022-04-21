@@ -4,7 +4,7 @@ import discord
 from discord.utils import escape_markdown
 
 import icons
-from constants import DEFAULT_VIEW_TIMEOUT, ERROR_CLR, SUPPORT_SERVER_INVITE
+from constants import DEFAULT_VIEW_TIMEOUT, SUPPORT_SERVER_INVITE
 from helpers.errors import OnGoingTest
 
 
@@ -93,7 +93,7 @@ class BaseView(discord.ui.View):
         )
         return False
 
-    async def on_error(self, error, item, inter):
+    async def on_error(self, error, _, inter):
         if inter.response.is_done():
             send = inter.followup.send
         else:

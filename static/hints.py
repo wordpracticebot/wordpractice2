@@ -7,4 +7,5 @@ hints = [
     "Bot lagging? Check my ping using /ping",
     "Need help? Join our support server with /support",
     "Are you stuck? View all command information with /help",
+    "Change your typing theme with /theme premade",
 ]

@@ -14,7 +14,7 @@ categories = {
 }
 
 
-def check_all(ctx, user: dict):
+async def check_all(ctx, user: dict):
     for iii, cv in enumerate(categories.values()):
         for ii, a in enumerate(cv.challenges):
             # Handling if it's not a tier
@@ -30,7 +30,7 @@ def check_all(ctx, user: dict):
                     continue
 
                 if (
-                    n.is_completed(ctx.bot, user)
+                    await n.is_completed(ctx, user)
                     or n.name in ctx.achievements_completed
                 ):
                     # achievement object, count of achievement, identifer
@@ -61,4 +61,4 @@ def get_achievement_tier(user, names: set):
 
     tier = sum([len(user.achievements[x]) for x in unique])
 
-    return max(tier - 1, 0)
+    return max(tier, 0)

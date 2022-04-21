@@ -11,12 +11,13 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
+from achievements.season import SEASON_REWARDS
 from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH, PREMIUM_LINK
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_typing_average
-from helpers.utils import calculate_consistency, cmd_run_before
+from helpers.utils import calculate_score_consistency, cmd_run_before
 
 TS = "\N{THIN SPACE}"
 
@@ -37,7 +38,6 @@ class SeasonView(ViewFromDict):
     def __init__(self, ctx, user):
         categories = {
             "Information": self.get_info_embed,
-            "Prizes": self.get_prize_embed,
             "Badge Progress": self.get_badge_embed,
         }
 
@@ -45,15 +45,11 @@ class SeasonView(ViewFromDict):
 
         self.user = user
 
-    def get_prize_embed(self):
-        embed = self.ctx.embed(title="Season Prizes")
-        return embed
-
     def get_info_embed(self):
         embed = self.ctx.embed(title="Season Information")
 
         embed.add_field(
-            name="What is the season?",
+            name="What are seasons?",
             value="Seasons are a month-long competition open to all wordPractice. users. Users compete to earn the most XP before the season ends to win exclusive prizes.",
             inline=False,
         )
@@ -83,6 +79,9 @@ class SeasonView(ViewFromDict):
         embed = self.ctx.embed(
             title="Season Badge Progress",
         )
+
+        for r in SEASON_REWARDS:
+            ...
 
         return embed
 
@@ -543,7 +542,7 @@ class ProfileView(BaseView):
         wpm, raw, acc, cw, tw, scores = get_typing_average(self.user)
 
         if len(scores) > 0:
-            con = calculate_consistency([s.wpm + s.raw + s.acc for s in scores])
+            con = calculate_score_consistency([s.wpm + s.raw + s.acc for s in scores])
         else:
             con = 0
 
@@ -613,7 +612,7 @@ class AchievementsButton(DictButton):
     def __init__(self, bot, label, user):
         style = (
             discord.ButtonStyle.success
-            if categories[label].is_completed(bot, user)
+            if categories[label].is_done(user)
             else discord.ButtonStyle.danger
         )
 
@@ -655,7 +654,7 @@ class AchievementsView(ViewFromDict):
 
                 tier_display = f" `[{tier + 1}/{len(all_names)}]`"
 
-            p = a.progress(self.ctx.bot, self.user)
+            p = await a.progress(self.ctx, self.user)
 
             bar = get_bar(p[0] / p[1])
 
@@ -775,7 +774,7 @@ class Bot(commands.Cog):
 
         for i, c in enumerate(challenges):
             # Getting the user's progress on the challenge
-            p = c.progress(self.bot, user)
+            p = await c.progress(ctx, user)
 
             # Generating the progress bar
             bar = get_bar(p[0] / p[1])

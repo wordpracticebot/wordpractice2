@@ -13,7 +13,7 @@ class Badges(Achievement):
 
         self.amt = amt
 
-    def user_progress(self, bot, user):
+    async def user_progress(self, ctx, user):
         return len(user.badges), self.amt
 
 

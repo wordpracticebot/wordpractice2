@@ -1,8 +1,21 @@
 from itertools import groupby
 
+from helpers.utils import calculate_score_consistency
 from static.assets import speed_icon
 
 from .base import Achievement, Category, XPReward
+
+
+def get_in_row(scores, condition):
+    if scores == []:
+        return 0
+
+    result = [condition(s) for s in scores]
+
+    if result[-1] is False:
+        return 0
+
+    return [sum(i) for r, i in groupby(result) if r][-1]
 
 
 # TODO: add proper rewards and descriptions for all achievements
@@ -12,7 +25,7 @@ class Speed(Achievement):
 
         self.wpm = wpm
 
-    def user_progress(self, bot, user):
+    async def user_progress(self, ctx, user):
         return user.highest_speed, self.wpm
 
 
@@ -25,20 +38,40 @@ class Perfectionist(Achievement):
 
         self.amt = amt
 
-    def user_progress(self, bot, user):
-        return self.get_scores_in_a_row(user), self.amt
+    async def user_progress(self, ctx, user):
+        return get_in_row(user.scores, lambda s: s.acc == 100), self.amt
 
-    @staticmethod
-    def get_scores_in_a_row(user):
-        if user.scores == []:
-            return 0
 
-        result = [s.acc == 100 for s in user.scores]
+class Consistency(Achievement):
+    def __init__(self):
+        super().__init__(
+            name="Consistency",
+            desc="Complete 30 typing tests in a row with an consistency of 90%+",
+            immutable=True,
+        )
 
-        if result[-1] is False:
-            return 0
+    async def user_progress(self, ctx, user):
+        result = (
+            0
+            if len(user.scores) < 30
+            else calculate_score_consistency(user.scores[:30])
+        )
 
-        return [sum(i) for r, i in groupby(result) if r][-1]
+        return result, 90
+
+
+class BeepBoop(Achievement):
+    def __init__(self, amt):
+        super().__init__(
+            name="Beep Boop",
+            desc=f"Complete {amt} tests in a row at exactly 60 wpm (give or take <1 wpm)",
+            immutable=True,
+        )
+
+        self.amt = amt
+
+    async def user_progress(self, ctx, user):
+        return get_in_row(user.scores, lambda s: int(s.wpm) == 60), self.amt
 
 
 typing = Category(
@@ -56,6 +89,8 @@ typing = Category(
             Speed("Cheating?", 240),
         ],
         [Perfectionist(amt) for amt in [10, 25, 50, 100, 250, 500]],
+        Consistency(),
+        [BeepBoop(amt) for amt in [3, 7, 13, 20]],
     ],
     icon=speed_icon,
 )

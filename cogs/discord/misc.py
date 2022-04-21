@@ -8,7 +8,6 @@ from discord.ext import commands
 
 import icons
 from achievements import categories, get_achievement_tier, get_bar
-from achievements.beginning import beginning
 from constants import (
     INFO_VIDEO,
     PRIVACY_POLICY_LINK,
@@ -18,7 +17,7 @@ from constants import (
 )
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
-from helpers.utils import cmd_run_before, format_slash_command
+from helpers.utils import can_run, cmd_run_before, format_slash_command
 
 
 def _add_commands(embed, cmds):
@@ -44,15 +43,9 @@ async def _filter_commands(ctx, cmds):
 
     iterator = filter(lambda c: isinstance(c, (SlashCommand, SlashCommandGroup)), cmds)
 
-    async def predicate(cmd):
-        try:
-            return await cmd.can_run(ctx)
-        except commands.CommandError:
-            return False
-
     ret = []
     for cmd in iterator:
-        valid = await predicate(cmd)
+        valid = await can_run(cmd)
         if valid:
             ret.append(cmd)
 
@@ -295,7 +288,7 @@ class Misc(commands.Cog):
 
         a = all_achievements[tier]
 
-        p = a.progress(self.bot, user)
+        p = await a.progress(ctx, user)
 
         bar = get_bar(p[0] / p[1])
 

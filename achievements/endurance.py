@@ -12,7 +12,7 @@ class SingleStatEndurance(Achievement):
         self.key = key
         self.value = value
 
-    def user_progress(self, bot, user):
+    async def user_progress(self, ctx, user):
         return user[self.key], self.value
 
 
@@ -39,7 +39,7 @@ class Veteran(Achievement):
 
         return (now - user.created_at).days
 
-    def user_progress(self, bot, user):
+    async def user_progress(self, ctx, user):
         return self.get_account_days(user), self.days
 
 

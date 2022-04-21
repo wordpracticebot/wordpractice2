@@ -5,7 +5,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 from discord.ext.commands import errors
-from PIL import Image, ImageDraw
+from PIL import ImageDraw
 
 import icons
 from achievements import check_all
@@ -186,14 +186,17 @@ class Events(commands.Cog):
         while done_checking is False:
             new_a = False
             # Looping through all the finished achievements
-            for a, count, cv, identifier in check_all(ctx, new_user):
+            async for a, count, cv, identifier in check_all(ctx, new_user):
                 a_earned[identifier] = a_earned.get(identifier, []) + [(a, count, cv)]
                 new_a = True
 
                 # Adding achievemnt to document
+                insert_count = 0 if count is None else count
                 current = new_user.achievements.get(a.name, [])
 
-                new_user.achievements[a.name] = current + [datetime.utcnow()]
+                current.insert(insert_count, datetime.utcnow())
+
+                new_user.achievements[a.name] = current
 
                 if a.reward is None:
                     continue
@@ -215,7 +218,7 @@ class Events(commands.Cog):
             challenges, reward = get_daily_challenges()
 
             challenge_completed = all(
-                (p := c.progress(self.bot, new_user))[0] >= p[1] for c in challenges
+                (p := c.progress(ctx, new_user))[0] >= p[1] for c in challenges
             )
 
             # Checking if the user has completed all the challenges

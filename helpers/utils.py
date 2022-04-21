@@ -5,12 +5,20 @@ import random
 from datetime import datetime, timezone
 
 from discord import SlashCommand
+from discord.ext import commands
 
 from helpers.user import get_user_cmds_run
 
 
 def format_slash_command(command: SlashCommand):
     return (f"{command.parent.name} " if command.parent else "") + command.name
+
+
+async def can_run(ctx, cmd):
+    try:
+        return await cmd.can_run(ctx)
+    except commands.CommandError:
+        return False
 
 
 def cmd_run_before(ctx, user):
@@ -222,6 +230,13 @@ def calculate_consistency(nums: list) -> float:
 
     return round(100 * (1 - math.tanh(y + y ** 3 / 3 + y ** 5 / 5)), 2)
     # lol
+
+
+def calculate_score_consistency(scores):
+    if len(scores) == 0:
+        return 0
+
+    return calculate_consistency([s.wpm + s.raw + s.acc for s in scores])
 
 
 def get_test_stats(u_input, quote, end_time):
