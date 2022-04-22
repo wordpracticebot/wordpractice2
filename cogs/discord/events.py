@@ -213,18 +213,16 @@ class Events(commands.Cog):
                 done_checking = True
 
         # Daily challenges
-        if new_user.is_daily_complete is False:
 
-            challenges, reward = get_daily_challenges()
+        challenges, reward = get_daily_challenges()
 
-            challenge_completed = all(
-                (p := c.progress(ctx, new_user))[0] >= p[1] for c in challenges
-            )
+        new_user.daily_completion = [
+            (n and c.immutable) or await c.is_completed(ctx, new_user)
+            for n, c in zip(new_user.daily_completion, challenges)
+        ]
 
-            # Checking if the user has completed all the challenges
-            if challenge_completed:
-                new_user = reward.changer(new_user)
-                new_user.is_daily_complete = True
+        if new_user.is_daily_complete:
+            new_user = reward.changer(new_user)
 
         # Season rewards
 
@@ -246,7 +244,7 @@ class Events(commands.Cog):
 
         if user.to_mongo() != new_user.to_mongo():
             # Sending a message if the daily challenge has been completed
-            if challenge_completed:
+            if new_user.is_daily_complete:
                 embed = ctx.embed(
                     title=":tada: Daily Challenge Complete",
                     description=None

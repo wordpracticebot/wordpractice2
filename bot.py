@@ -117,6 +117,9 @@ def get_exts():
 
 
 class WelcomeView(BaseView):
+    def __init__(self, ctx):
+        super().__init__(ctx, timeout=120)
+
     async def on_timeout(self):
         pass
 
@@ -154,6 +157,8 @@ class WelcomeView(BaseView):
                 "below."
             ),
         )
+
+        embed.set_footer(text="You will be able to click accept after 5 seconds")
 
         self.accept.disabled = True
 

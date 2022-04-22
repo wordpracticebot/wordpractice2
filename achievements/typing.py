@@ -1,21 +1,7 @@
-from itertools import groupby
-
 from helpers.utils import calculate_score_consistency
 from static.assets import speed_icon
 
-from .base import Achievement, Category, XPReward
-
-
-def get_in_row(scores, condition):
-    if scores == []:
-        return 0
-
-    result = [condition(s) for s in scores]
-
-    if result[-1] is False:
-        return 0
-
-    return [sum(i) for r, i in groupby(result) if r][-1]
+from .base import Achievement, Category, XPReward, get_in_row
 
 
 # TODO: add proper rewards and descriptions for all achievements

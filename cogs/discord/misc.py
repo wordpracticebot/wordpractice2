@@ -171,8 +171,6 @@ class Misc(commands.Cog):
         # Discord API latency
         latency = round(self.bot.latency * 1000, 3)
 
-        ctx.achievements_completed.append("Veteran")
-
         embed = ctx.embed(title=f"Pong! {latency} ms", add_footer=False)
 
         await ctx.respond(embed=embed)

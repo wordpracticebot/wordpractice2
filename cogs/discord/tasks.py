@@ -7,7 +7,7 @@ import numpy as np
 from discord.ext import commands, tasks
 
 from config import DBL_TOKEN, TESTING
-from constants import COMPILE_INTERVAL, UPDATE_24_HOUR_INTERVAL
+from constants import CHALLENGE_AMT, COMPILE_INTERVAL, UPDATE_24_HOUR_INTERVAL
 
 
 def to_json(value):
@@ -143,9 +143,12 @@ class Tasks(commands.Cog):
             {"$set": {"last24.1": [0]}},
         )
 
+        default = [False] * CHALLENGE_AMT
+
         # Resetting daily challenge completions and tests
         await self.bot.mongo.db.users.update_many(
-            {"is_daily_completed": True}, {"$set": {"is_daily_completed": False}}
+            {"daily_completion": {"$ne": default}},
+            {"$set": {"daily_completion": default}},
         )
         await self.bot.mongo.db.users.update_many({}, {"$set": {"test_amt": 0}})
 

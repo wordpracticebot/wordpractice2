@@ -3,20 +3,40 @@ Challenges:
 [[a,b,c], a, b] 
 """
 
+from itertools import groupby
+
 from PIL import Image
 
 import icons
 from static.badges import get_badge_from_id
 
 
-class Achievement:
-    def __init__(self, *, name: str, desc: str, reward=None, immutable=False):
-        self.name = name
+class Challenge:
+    def __init__(self, *, desc: str, immutable=False):
         self.desc = desc
-        self.reward = reward
 
-        # once the achievement is completed, it defaults to to maximum value
+        # once the challenge is completed, it defaults to to maximum value
         self.immutable = immutable
+
+    async def is_completed(self, ctx, user):
+        a, b = await self.progress(ctx, user)
+        return a >= b
+
+    async def progress(self, ctx, user):
+        a, b = await self.user_progress(ctx, user)
+
+        return a, b
+
+    async def user_progress(ctx, user):
+        ...
+
+
+class Achievement(Challenge):
+    def __init__(self, *, name: str, desc: str, reward=None, immutable=False):
+        super().__init__(desc=desc, immutable=immutable)
+
+        self.name = name
+        self.reward = reward
 
     @property
     def changer(self):
@@ -27,10 +47,6 @@ class Achievement:
 
     def in_achievements(self, user):
         return self.name in user.achievements
-
-    async def is_completed(self, ctx, user):
-        a, b = await self.progress(ctx, user)
-        return a >= b
 
     async def progress(self, ctx, user):
         a, b = await self.user_progress(ctx, user)
@@ -110,3 +126,15 @@ class XPReward(Reward):
         amt = sum(i.amt for i in ins)
 
         return [cls.template.format(amt)]
+
+
+def get_in_row(scores, condition):
+    if scores == []:
+        return 0
+
+    result = [condition(s) for s in scores]
+
+    if result[-1] is False:
+        return 0
+
+    return [sum(i) for r, i in groupby(result) if r][-1]

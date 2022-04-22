@@ -24,6 +24,7 @@ from umongo.frameworks import MotorAsyncIOInstance
 from config import DATABASE_NAME, DATABASE_URI
 from constants import (
     AUTO_MODERATOR_NAME,
+    CHALLENGE_AMT,
     DEFAULT_THEME,
     PREMIUM_LAUNCHED,
     TEST_ZONES,
@@ -113,7 +114,7 @@ class UserBase(Document):
     xp = IntegerField(default=0)
 
     # Daily challenge
-    is_daily_complete = BooleanField(default=False)
+    daily_completion = ListField(BooleanField, default=[False] * CHALLENGE_AMT)
 
     # 24 Hour
     last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
@@ -191,6 +192,10 @@ class User(UserBase):
     @property
     def is_premium(self):
         return not PREMIUM_LAUNCHED or self.premium
+
+    @property
+    def is_daily_complete(self):
+        return all(self.daily_completion)
 
     @property
     def highest_speed(self):
