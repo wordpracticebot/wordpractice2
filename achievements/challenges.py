@@ -2,12 +2,11 @@
 Challenges are not directly related to achievements but they use almost the same mechamism
 """
 import random
-from datetime import datetime
 from functools import lru_cache
 
 from constants import CHALLENGE_AMT
 from helpers.user import get_daily_stat
-from helpers.utils import datetime_to_unix, get_start_of_day, weighted_lottery
+from helpers.utils import datetime_to_unix, get_start_of_day, is_today, weighted_lottery
 
 from .base import Challenge, XPReward, get_in_row
 
@@ -28,15 +27,9 @@ class VoteChallenge(Challenge):
         super().__init__(desc="Vote for wordPractice")
 
     async def user_progress(self, ctx, user):
-        return (
-            int(
-                any(
-                    v.date() == datetime.utcnow().date()
-                    for v in user.last_voted.values()
-                )
-            ),
-            1,
-        )
+        votes_today = any(is_today(v) for v in user.last_voted.values())
+
+        return int(votes_today), 1
 
 
 class AccuracyChallenge(Challenge):
@@ -48,7 +41,10 @@ class AccuracyChallenge(Challenge):
         self.amt = amt
 
     async def user_progress(self, ctx, user):
-        return get_in_row(user.scores, lambda s: s.acc == 100), self.amt
+        return (
+            get_in_row(user.scores, lambda s: s.acc == 100 and is_today(s.timestamp)),
+            self.amt,
+        )
 
 
 # TODO: add more challenges and proper weights

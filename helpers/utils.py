@@ -219,6 +219,12 @@ def datetime_to_unix(date):
     return calendar.timegm(date.utctimetuple())
 
 
+def is_today(d):
+    today = datetime.utcnow().date()
+
+    return d.date() == today
+
+
 # Calculates consistency from scores
 # Formula by Kogasa: https://github.com/Miodec/monkeytype
 def calculate_consistency(nums: list) -> float:

@@ -453,6 +453,8 @@ class ProfileView(BaseView):
         return f"({humanize.ordinal(placing)})"
 
     def create_achievements_page(self, embed):
+        embed.set_thumbnail(url="https://i.imgur.com/sQQXQsw.png")
+
         return embed
 
     def add_thin_spacing(self, num: str, intended: int):
@@ -468,7 +470,7 @@ class ProfileView(BaseView):
 
         return f"{num}{(intended - int(s)) * TS}"
 
-    def create_stats_page(self, embed):
+    def create_account_page(self, embed):
         embed.set_thumbnail(url="https://i.imgur.com/KrXiy9S.png")
 
         embed.title += f"\n\nAccount{TS*38}Season{TS*40}24h{TS*15}** **"
@@ -541,10 +543,7 @@ class ProfileView(BaseView):
 
         wpm, raw, acc, cw, tw, scores = get_typing_average(self.user)
 
-        if len(scores) > 0:
-            con = calculate_score_consistency([s.wpm + s.raw + s.acc for s in scores])
-        else:
-            con = 0
+        con = calculate_score_consistency(scores)
 
         # Average
 
@@ -570,7 +569,7 @@ class ProfileView(BaseView):
 
     def get_embed_callbacks(self):
         return {
-            "Statistics": ["\N{BAR CHART}", self.create_stats_page],
+            "Account": ["\N{BAR CHART}", self.create_account_page],
             "Typing": ["\N{KEYBOARD}", self.create_typing_page],
             "Achievements": ["\N{SHIELD}", self.create_achievements_page],
         }
@@ -603,9 +602,11 @@ class ProfileSelect(discord.ui.Select):
     async def callback(self, interaction):
         option = self.values[0]
 
-        self.view.page = option
+        if option != self.view.page:
 
-        await self.view.update_message(interaction)
+            self.view.page = option
+
+            await self.view.update_message(interaction)
 
 
 class AchievementsButton(DictButton):
