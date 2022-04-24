@@ -433,7 +433,7 @@ class ProfileView(BaseView):
         return "+"
 
     def get_placing_display(self, user, category: int, stat: int):
-        placing = self.ctx.bot.lbs[category].stats[stat].get_placing(user.id)
+        placing = self.ctx.bot.lbs[category].stats[stat].get_placing(user.id)[0]
 
         if placing is None:
             return f"(> {LB_LENGTH})", False
@@ -705,7 +705,7 @@ class AchievementsView(ViewFromDict):
 
                 names = set(all_names)
 
-                tier = get_achievement_tier(self.user, names)
+                tier = get_achievement_tier(self.user, len(all_names), names)
 
                 a = a[tier]
 

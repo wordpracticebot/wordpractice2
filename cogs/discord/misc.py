@@ -282,7 +282,7 @@ class Misc(commands.Cog):
 
         names = set(all_names)
 
-        tier = get_achievement_tier(user, names)
+        tier = get_achievement_tier(user, len(all_names), names)
 
         a = all_achievements[tier]
 

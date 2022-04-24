@@ -53,7 +53,7 @@ def get_bar(progress):
     return bar
 
 
-def get_achievement_tier(user, names: set):
+def get_achievement_tier(user, total: int, names: set):
     user_a = set(user.achievements)
 
     # getting the amount of achievements that the user has in that tier
@@ -61,4 +61,4 @@ def get_achievement_tier(user, names: set):
 
     tier = sum([len(user.achievements[x]) for x in unique])
 
-    return max(tier, 0)
+    return min(tier, total - 1)
