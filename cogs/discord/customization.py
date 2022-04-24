@@ -13,7 +13,7 @@ from helpers.converters import opt_user, rgb_to_hex, rqd_colour
 from helpers.errors import ImproperArgument
 from helpers.image import get_base_img, save_img_as_discord_png
 from helpers.ui import BaseView
-from helpers.user import get_pacer_display, get_pacer_type_name, get_theme_display
+from helpers.user import get_pacer_display, get_theme_display
 from static import themes
 
 
@@ -37,7 +37,7 @@ class EquipSelect(discord.ui.Select):
                     emoji=None if icon is None else discord.PartialEmoji.from_str(icon),
                     value=name,
                 )
-                for name, icon in zip(user.badges, user.badges_emojis)
+                for name, icon in zip(user.badges, user.badge_emojis)
             ],
             row=1,
         )
@@ -337,27 +337,22 @@ class Customization(commands.Cog):
 
         user = await user_check(ctx, user)
 
+        author_data = self.bot.mongo.fetch_user(ctx.author)
+
         embed = ctx.embed(
             title=f"{user.display_name} | User Settings",
         )
 
-        pacer_type_name = get_pacer_type_name(user.pacer_type)
-
-        pacer_name = get_pacer_display(user.pacer_speed)
-
-        if pacer_name != "None":
-            pacer_name += f" ({pacer_type_name})"
+        pacer_name = get_pacer_display(user.pacer_type, user.pacer_speed)
 
         theme_name, theme_icon = get_theme_display(user.theme)
-
-        theme_name = theme_name or "Custom"
 
         embed.add_field(
             name=":paintbrush: Theme",
             value=f"{theme_icon} {theme_name} ({user.theme[0]} {user.theme[1]})"
             + (
                 ""
-                if user.is_premium
+                if author_data.is_premium
                 else f"\n**[Patrons]({PREMIUM_LINK})** can unlock custom themes!"
             ),
             inline=False,

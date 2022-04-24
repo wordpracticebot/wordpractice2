@@ -170,11 +170,15 @@ class User(UserBase):
         collection_name = "users"
 
     @property
+    def unix_created_at(self):
+        return datetime_to_unix(self.created_at)
+
+    @property
     def status_emoji(self):
         return get_badge_from_id(self.status) or ""
 
     @property
-    def badges_emojis(self):
+    def badge_emojis(self):
         return get_badges_from_ids(self.badges)
 
     @property

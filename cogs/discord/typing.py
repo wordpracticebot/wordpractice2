@@ -39,7 +39,7 @@ from helpers.image import (
     save_img_as_discord_png,
 )
 from helpers.ui import BaseView, create_link_view, get_log_embed
-from helpers.user import get_pacer_display, get_pacer_type_name
+from helpers.user import get_pacer_display
 from helpers.utils import cmd_run_before, get_test_stats
 
 HIGH_SCORE_CAPTCHA_TIMEOUT = 60
@@ -1068,12 +1068,7 @@ class Typing(commands.Cog):
 
         test_type = get_test_type(test_type_int, word_count)
 
-        pacer_type_name = get_pacer_type_name(user.pacer_type)
-
-        pacer_name = get_pacer_display(user.pacer_speed)
-
-        if pacer_name != "None":
-            pacer_name += f" ({pacer_type_name})"
+        pacer_name = get_pacer_display(user.pacer_type, user.pacer_speed)
 
         title = f"{user.display_name} | {test_type} Test ({word_count} words)"
         desc = f"**Pacer:** {pacer_name}"

@@ -16,10 +16,11 @@ from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH, PREMIUM_LINK
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
-from helpers.user import get_typing_average
+from helpers.user import get_pacer_display, get_theme_display, get_typing_average
 from helpers.utils import calculate_score_consistency, cmd_run_before
 
 TS = "\N{THIN SPACE}"
+LINE_SPACE = "\N{BOX DRAWINGS LIGHT HORIZONTAL}"
 
 SCORE_DATA_LABELS = {
     "Wpm": "wpm",
@@ -305,10 +306,8 @@ class LeaderboardView(ScrollView):
 
         count = c.get_stat(self.user)
 
-        line_space = "\N{BOX DRAWINGS LIGHT HORIZONTAL}"
-
         embed.add_field(
-            name=f"{line_space * 13}\n`{place_display}.` {self.user.display_name} - {count} {c.unit}",
+            name=f"{LINE_SPACE * 13}\n`{place_display}.` {self.user.display_name} - {count} {c.unit}",
             value="** **",
             inline=False,
         )
@@ -435,70 +434,122 @@ class ProfileView(BaseView):
         return "+"
 
     def get_placing_display(self, user, category: int, stat: int):
-        # Getting the correct leaderboard
         placing = self.ctx.bot.lbs[category].stats[stat].get_placing(user.id)
 
         if placing is None:
-            return f"(> {LB_LENGTH})"
+            return f"(> {LB_LENGTH})", False
 
         if placing == 1:
-            return ":first_place:"
+            emoji = ":first_place:"
 
-        if placing == 2:
-            return ":second_place:"
+        elif placing == 2:
+            emoji = ":second_place:"
 
-        if placing == 3:
-            return ":third_place:"
+        elif placing == 3:
+            emoji = ":third_place:"
 
-        return f"({humanize.ordinal(placing)})"
+        else:
+            return f"({humanize.ordinal(placing)})", False
+
+        return emoji, True
 
     def create_achievements_page(self, embed):
         embed.set_thumbnail(url="https://i.imgur.com/sQQXQsw.png")
 
         return embed
 
-    def add_thin_spacing(self, num: str, intended: int):
-        s = 0
+    def get_thin_spacing(self, text: str, is_emoji: bool):
+        if is_emoji:
+            s = 9
+        else:
+            s = 0
 
-        for c in num:
-            if c == ",":
-                s += 1.5
-            elif c in ["1", "(", ")"]:
-                s += 2
-            else:
-                s += 4
+            for c in text:
+                if c == ",":
+                    s += 1.5
+                elif c in ["1", "(", ")"]:
+                    s += 2
+                elif c == "h":
+                    s += 3
+                else:
+                    s += 4
 
-        return f"{num}{(intended - int(s)) * TS}"
+        return math.ceil(s)
+
+    def format_account_stat(self, num: str, intended: int):
+        num_spacing = intended - self.get_thin_spacing(num, False)
+
+        return f"{num}{num_spacing * TS}"
 
     def create_account_page(self, embed):
         embed.set_thumbnail(url="https://i.imgur.com/KrXiy9S.png")
 
-        embed.title += f"\n\nAccount{TS*38}Season{TS*40}24h{TS*15}** **"
+        in_between = 35
+        b = in_between * TS
 
-        fr_words = self.add_thin_spacing(f"{self.user.words:,}", 49)
-        fr_xp = self.add_thin_spacing(f"{self.user.xp:,}", 57)
+        # TODO: add placings
+        embed.title += f"\n\nAlltime{b}Season{b}24h{b}** **"
+
+        fr_words = self.format_account_stat(f"{self.user.words:,}", 6 + in_between)
+        fr_xp = self.format_account_stat(f"{self.user.xp:,}", 17 + in_between)
         fr_24_words = f"{sum(self.user.last24[0]):,}"
-
-        fr_24_xp = f"{sum(self.user.last24[1]):,}"
 
         if self.user.badges == []:
             badges = "They have no badges..."
         else:
-            badges = " ".join(self.user.badges_emojis)
+            badges = " ".join(self.user.badge_emojis)
 
-        # TODO: add placings
         embed.description = (
-            f"**Words:** {fr_words}**XP:** {fr_xp}**Words:** {fr_24_words}\n{TS*147}**XP:** {fr_24_xp}\n\n"
+            f"**Words:** {fr_words}**XP:** {fr_xp}**XP:** {fr_24_words}\n\n"
             f"**Badges ({len(self.user.badges)})**\n"
             f"{badges}"
         )
 
         embed.add_field(
             name=f"Trophies ({sum(self.user.trophies)})",
-            value=f"{TS*8}".join(
+            value=f"{TS*6}".join(
                 f"{icons.trophies[i]} x{t}" for i, t in enumerate(self.user.trophies)
             ),
             inline=False,
+        )
+
+        s = TS * 3
+
+        embed.add_field(
+            name="** **",
+            value=f"**{LINE_SPACE * 9}{s}Information{s}{LINE_SPACE * 9}**",
+            inline=False,
+        )
+
+        embed.add_field(name="Created", value=f"<t:{self.user.unix_created_at}:R>")
+
+        embed.add_field(name="Votes", value=self.user.votes)
+
+        embed.add_field(
+            name="Daily Streak",
+            value=f"{self.user.streak} ({self.user.highest_streak})",
+        )
+
+        embed.add_field(
+            name=f"{LINE_SPACE * 9}{s}Settings{s}{LINE_SPACE * 10}",
+            value="** **",
+            inline=False,
+        )
+
+        theme_name, theme_icon = get_theme_display(self.user.theme)
+
+        pacer_display = get_pacer_display(self.user.pacer_type, self.user.pacer_speed)
+
+        embed.add_field(name="Theme", value=f"{theme_icon} {theme_name}")
+
+        embed.add_field(
+            name="Language",
+            value=f"{self.user.language.capitalize()} ({self.user.level.capitalize()})",
+        )
+
+        embed.add_field(
+            name="Pacer",
+            value=pacer_display,
         )
 
         return embed
@@ -515,7 +566,7 @@ class ProfileView(BaseView):
         hs1, hs2, hs3 = self.user.highspeed.values()
 
         # Short high score
-        placing = self.get_placing_display(self.user, 3, 0)
+        placing = self.get_placing_display(self.user, 3, 0)[0]
 
         embed.add_field(
             name=f"Range:{TS*26}10-20:",
@@ -527,14 +578,14 @@ class ProfileView(BaseView):
         )
 
         # Medium high score
-        placing = self.get_placing_display(self.user, 3, 1)
+        placing = self.get_placing_display(self.user, 3, 1)[0]
 
         embed.add_field(
             name="21-50:",
             value=(f"{hs2.wpm}\n{hs2.acc}%\n**{placing}**"),
         )
 
-        placing = self.get_placing_display(self.user, 3, 2)
+        placing = self.get_placing_display(self.user, 3, 2)[0]
 
         embed.add_field(
             name="51-100:",

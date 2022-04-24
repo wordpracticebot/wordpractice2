@@ -13,12 +13,13 @@ def get_theme_display(clrs):
     for name, value in default.items():
         if value["colours"] == clrs:
             return name, value["icon"]
-    return "", ""
+
+    return "Custom", ""
 
 
-def get_pacer_display(pacer: str):
+def get_pacer_name(pacer: str):
     if pacer == "":
-        return "None"
+        return None
 
     if pacer == "avg":
         return "Average"
@@ -34,6 +35,17 @@ def get_pacer_type_name(pacer_type: int):
         return "Horizontal"
 
     return "Vertical"
+
+
+def get_pacer_display(pacer_type, pacer_speed):
+    pacer_type_name = get_pacer_type_name(pacer_type)
+
+    pacer_name = get_pacer_name(pacer_speed)
+
+    if pacer_name is not None:
+        pacer_name += f" ({pacer_type_name})"
+
+    return pacer_name
 
 
 def get_typing_average(user, amount: int = 10):
