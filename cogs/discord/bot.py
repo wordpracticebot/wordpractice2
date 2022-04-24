@@ -495,7 +495,7 @@ class ProfileView(BaseView):
         fr_24_words = f"{sum(self.user.last24[0]):,}"
 
         if self.user.badges == []:
-            badges = "They have no badges..."
+            badges = "User has no badges..."
         else:
             badges = " ".join(self.user.badge_emojis)
 
@@ -616,6 +616,11 @@ class ProfileView(BaseView):
             ),
         )
 
+        embed.add_field(name="Recent Typing Scores", value="** **", inline=False)
+
+        return embed
+
+    def create_ranking_page(self, embed):
         return embed
 
     def get_embed_callbacks(self):
@@ -623,6 +628,7 @@ class ProfileView(BaseView):
             "Account": ["\N{BAR CHART}", self.create_account_page],
             "Typing": ["\N{KEYBOARD}", self.create_typing_page],
             "Achievements": ["\N{SHIELD}", self.create_achievements_page],
+            "Rankings": ["\N{TROPHY}", self.create_ranking_page],
         }
 
     async def start(self):

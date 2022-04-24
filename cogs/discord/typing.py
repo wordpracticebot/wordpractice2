@@ -4,8 +4,8 @@ import math
 import random
 import textwrap
 import time
-from datetime import datetime, timezone
-from itertools import groupby
+from datetime import datetime
+from itertools import chain, groupby
 
 import discord
 from captcha.image import ImageCaptcha
@@ -119,6 +119,10 @@ def get_test_warning(raw, acc, result):
         return "Tests below 10 correct words are not saved."
 
     return None
+
+
+def get_test_time(start: float, end: float):
+    return max(round(start - end, 2), 0.01)
 
 
 def add_test_stats_to_embed(
@@ -289,7 +293,7 @@ class HighScoreCaptchaView(BaseView):
         raw = None
 
         if finished_test:
-            end_time = round(message.created_at.timestamp() - start_time, 2)
+            end_time = get_test_time(message.created_at.timestamp(), start_time)
 
             u_input = message.content.split()
 
@@ -608,7 +612,7 @@ class RaceJoinView(BaseView):
     async def handle_racer_finish(self, m):
         self.ctx.bot.active_end(m.author.id)
 
-        end_time = round(m.created_at.timestamp() - self.start_time, 2)
+        end_time = get_test_time(m.created_at.timestamp(), self.start_time)
 
         r = self.racers[m.author.id]
 
@@ -1036,13 +1040,15 @@ class Typing(commands.Cog):
 
         last = None
 
-        while last is None or len(last) + len(words) <= max_words:
+        while (
+            last is None or len(last) + len(joined := list(chain(*words))) <= max_words
+        ):
             if last is not None:
-                words += last
+                words.append(last)
 
             last = quotes[(len(words) + start) % len(quotes)].split()
 
-        return words, wrap
+        return joined, wrap
 
     @staticmethod
     async def show_race_start(ctx, is_dict, quote_info):
@@ -1135,7 +1141,7 @@ class Typing(commands.Cog):
             return None
 
         else:
-            end_time = round(message.created_at.timestamp() - start_time, 2)
+            end_time = get_test_time(message.created_at.timestamp(), start_time)
 
             return message, end_time, pacer_name, raw_quote
 
