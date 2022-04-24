@@ -1,3 +1,5 @@
+from discord.commands import SlashCommand
+
 from helpers.user import get_user_cmds_run
 from helpers.utils import can_run, format_slash_command
 from static.assets import beginning_icon
@@ -32,11 +34,13 @@ class OpenMinded(Achievement):
     async def user_progress(self, ctx, user):
         ctx.testing = True
 
+        slash_cmds = filter(
+            lambda c: isinstance(c, SlashCommand), ctx.bot.walk_application_commands()
+        )
+
         # Getting total commands that the user can run
         all_cmds = [
-            format_slash_command(cmd)
-            for cmd in ctx.bot.walk_application_commands()
-            if await can_run(ctx, cmd)
+            format_slash_command(cmd) for cmd in slash_cmds if await can_run(ctx, cmd)
         ]
 
         return len(set(all_cmds) & set(get_user_cmds_run(ctx.bot, user))), len(all_cmds)

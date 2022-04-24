@@ -282,7 +282,7 @@ class LeaderboardView(ScrollView):
             extra = ""
 
             if self.placing is None and u["_id"] == self.user.id:
-                self.placing = p
+                self.placing = p, u
                 extra = "__"
 
             username = f"{u['name']}#{u['discriminator']} {u['status']}"
@@ -299,12 +299,11 @@ class LeaderboardView(ScrollView):
 
         if self.placing is None:
             place_display = "N/A"
+            count = c.get_stat(self.user)
+
         else:
-            place_display = self.placing + 1
-
-        # Adding author's own placing at the bottom
-
-        count = c.get_stat(self.user)
+            place_display = self.placing[0] + 1
+            count = self.placing[1]["count"]
 
         embed.add_field(
             name=f"{LINE_SPACE * 13}\n`{place_display}.` {self.user.display_name} - {count} {c.unit}",

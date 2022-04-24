@@ -45,7 +45,7 @@ async def _filter_commands(ctx, cmds):
 
     ret = []
     for cmd in iterator:
-        valid = await can_run(cmd)
+        valid = await can_run(ctx, cmd)
         if valid:
             ret.append(cmd)
 

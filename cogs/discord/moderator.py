@@ -22,13 +22,18 @@ BAN_AUTOCOMPLETE = [
     "Breaking Discord TOS",
 ]
 
+
+async def cog_check(ctx):
+    return ctx.author.id in MODERATORS
+
+
 mod_command = commands.slash_command(
     guild_ids=[SUPPORT_GUILD_ID],
     default_permission=False,
     permissions=[
         CommandPermission(id=user_id, type=2, permission=True) for user_id in MODERATORS
     ],
-    checks=[],
+    checks=[cog_check],
 )
 
 
@@ -77,7 +82,7 @@ class RestoreConfirm(BaseView):
 
     @discord.ui.button(label="Confirm Restore", style=discord.ButtonStyle.grey, row=1)
     async def confirm_restore(self, button, interaction):
-        embed = self.ctx.default_embed(title="Restored user's accouunt")
+        embed = self.ctx.default_embed(title="Restored user's account")
 
         await interaction.message.edit(embed=embed, view=None)
 
@@ -102,9 +107,6 @@ class Moderator(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-
-    async def cog_check(self, ctx):
-        return ctx.author.id in MODERATORS
 
     async def handle_moderator_user(self, ctx, user):
         if user.id == ctx.author.id:

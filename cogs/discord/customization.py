@@ -337,7 +337,7 @@ class Customization(commands.Cog):
 
         user = await user_check(ctx, user)
 
-        author_data = self.bot.mongo.fetch_user(ctx.author)
+        author_data = await self.bot.mongo.fetch_user(ctx.author)
 
         embed = ctx.embed(
             title=f"{user.display_name} | User Settings",
