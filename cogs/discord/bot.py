@@ -715,7 +715,11 @@ class AchievementsView(ViewFromDict):
 
             bar = get_bar(p[0] / p[1])
 
-            emoji = icons.success if p[0] >= p[1] else icons.danger
+            emoji = (
+                icons.success
+                if await a.is_completed(self.ctx, self.user)
+                else icons.danger
+            )
 
             reward_display = (
                 f"**Reward:** {a.reward.desc}\n" if a.reward is not None else ""
@@ -836,7 +840,7 @@ class Bot(commands.Cog):
             # Generating the progress bar
             bar = get_bar(p[0] / p[1])
 
-            emoji = icons.success if p[0] >= p[1] else icons.danger
+            emoji = icons.success if await c.is_completed(ctx, user) else icons.danger
 
             content += (
                 f"**{emoji} Challenge {i+1}**\n"

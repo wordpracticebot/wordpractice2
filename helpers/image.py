@@ -6,7 +6,7 @@ import discord
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-from constants import SIDE_BORDER, SPACING, TOP_BORDER
+from constants import SIDE_BORDER, SPACING, STATIC_IMAGE_FORMAT, TOP_BORDER
 from static.assets import arial
 
 
@@ -103,10 +103,10 @@ def get_loading_img(img, text_colour):
 def save_img_as_discord_png(img, name):
     buffer = BytesIO()
 
-    img.save(buffer, "png")
+    img.save(buffer, STATIC_IMAGE_FORMAT)
     buffer.seek(0)
 
-    return discord.File(buffer, filename=f"{name}.png")
+    return discord.File(buffer, filename=f"{name}.{STATIC_IMAGE_FORMAT}")
 
 
 def get_base_img(raw_quote, wrap_width, theme):

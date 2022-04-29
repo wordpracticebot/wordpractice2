@@ -81,6 +81,7 @@ class Score(EmbeddedDocument):
     timestamp = DateTimeField(default=datetime.min)
 
     is_race = BooleanField(default=False)
+    is_hs = BooleanField(default=False)
 
     @property
     def unix_timestamp(self):

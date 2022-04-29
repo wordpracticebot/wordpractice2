@@ -8,6 +8,9 @@ ERROR_CLR = 0xFF5858
 PERMISSONS = 412317248576
 SUPPORT_SERVER_INVITE = "https://discord.gg/wordpractice"
 
+# Images
+STATIC_IMAGE_FORMAT = "png"
+
 PRIVACY_POLICY_LINK = "https://wordpracticebot.github.io/privacy-policy/"
 RULES_LINK = "https://wordpracticebot.github.io/privacy-policy/rules"
 INFO_VIDEO = "https://www.youtube.com/"
@@ -39,6 +42,7 @@ SUSPICIOUS_THRESHOLD = 180
 CAPTCHA_INTERVAL = 20  # tests
 CAPTCHA_WPM_DEC = 0.2
 CAPTCHA_ACC_PERC = 90
+CAPTCHA_STARTING_THRESHOLD = 120
 MAX_CAPTCHA_ATTEMPTS = 2
 
 # Typing test image

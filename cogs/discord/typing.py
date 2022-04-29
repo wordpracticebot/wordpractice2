@@ -19,11 +19,13 @@ import word_list
 from constants import (
     CAPTCHA_ACC_PERC,
     CAPTCHA_INTERVAL,
+    CAPTCHA_STARTING_THRESHOLD,
     CAPTCHA_WPM_DEC,
     DEFAULT_WRAP,
     MAX_CAPTCHA_ATTEMPTS,
     MAX_RACE_JOIN,
     RACE_JOIN_EXPIRE_TIME,
+    STATIC_IMAGE_FORMAT,
     SUPPORT_SERVER_INVITE,
     SUSPICIOUS_THRESHOLD,
     TEST_EXPIRE_TIME,
@@ -249,7 +251,7 @@ class HighScoreCaptchaView(BaseView):
 
         embed = self.ctx.embed(title="High Score Captcha")
 
-        embed.set_image(url="attachment://captcha.png")
+        embed.set_image(url=f"attachment://captcha.{STATIC_IMAGE_FORMAT}")
         embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
 
         await interaction.response.send_message(embed=embed, file=file, delete_after=5)
@@ -262,7 +264,7 @@ class HighScoreCaptchaView(BaseView):
 
         embed = self.ctx.embed(title="High Score Captcha")
 
-        embed.set_image(url="attachment://test.png")
+        embed.set_image(url=f"attachment://test.{STATIC_IMAGE_FORMAT}")
 
         load_time = time.time() - load_start
 
@@ -641,7 +643,7 @@ class RaceJoinView(BaseView):
         )
 
         embed = self.get_race_embed()
-        embed.set_image(url="attachment://test.png")
+        embed.set_image(url=f"attachment://test.{STATIC_IMAGE_FORMAT}")
 
         await self.race_msg.edit(embed=embed)
 
@@ -660,7 +662,7 @@ class RaceJoinView(BaseView):
         # Loading image
         embed = self.get_race_embed()
 
-        embed.set_image(url="attachment://loading.png")
+        embed.set_image(url=f"attachment://loading.{STATIC_IMAGE_FORMAT}")
         embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
 
         await interaction.response.send_message(embed=embed, file=file, delete_after=5)
@@ -671,7 +673,7 @@ class RaceJoinView(BaseView):
 
         embed = self.get_race_embed()
 
-        embed.set_image(url="attachment://test.png")
+        embed.set_image(url=f"attachment://test.{STATIC_IMAGE_FORMAT}")
 
         load_time = time.time() - load_start
 
@@ -787,23 +789,29 @@ class RaceJoinView(BaseView):
                     user.add_words(score.cw)
                     user.add_xp(score.xp)
 
-                    await self.ctx.bot.mongo.replace_user_data(user, r.user)
-
                 additional = get_log_additional(
                     score.wpm, score.raw, score.acc, word_display, score.xp
                 )
 
-                is_hs = False
+                show_hs_captcha = False
 
                 if r.zone is not None:
                     zone, zone_range = r.zone
 
-                    if score.wpm > r.data.highspeed[zone].wpm:
-                        # TODO: send a message showing high score and high score captcha if applicable
-                        is_hs = True
+                    score, show_hs_captcha = await Typing.handle_highscore_captcha(
+                        ctx=self.ctx,
+                        send=self.ctx.respond,
+                        user=user,
+                        score=score,
+                        zone=zone,
+                        zone_range=zone_range,
+                    )
+
+                if show_hs_captcha is False:
+                    await self.ctx.bot.mongo.replace_user_data(user, r.user)
 
                 await Typing.log_typing_test(
-                    self.ctx, "Race", score.wpm, additional, is_hs
+                    self.ctx, "Race", score.wpm, additional, score.is_hs
                 )
 
                 embed = get_log_embed(
@@ -1094,7 +1102,7 @@ class Typing(commands.Cog):
 
         file = save_img_as_discord_png(loading_img, "loading")
 
-        embed.set_image(url="attachment://loading.png")
+        embed.set_image(url=f"attachment://loading.{STATIC_IMAGE_FORMAT}")
         embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
 
         await send(embed=embed, file=file, delete_after=5)
@@ -1109,7 +1117,7 @@ class Typing(commands.Cog):
 
         embed = ctx.embed(title=title, description=desc, add_footer=False)
 
-        embed.set_image(url="attachment://test.png")
+        embed.set_image(url=f"attachment://test.{STATIC_IMAGE_FORMAT}")
 
         load_time = time.time() - load_start
 
@@ -1245,33 +1253,18 @@ class Typing(commands.Cog):
                 is_race=False,
             )
 
-            check = user.highest_speed * (1 + CAPTCHA_WPM_DEC)
-
             user.add_score(score)
 
-            if wpm > user.highspeed[zone].wpm:
-                user.highspeed[zone] = score
+            score, show_hs_captcha = await cls.handle_highscore_captcha(
+                ctx=ctx,
+                send=ctx.respond,
+                user=user,
+                score=score,
+                zone=zone,
+                zone_range=zone_range,
+            )
 
-                embed = ctx.embed(
-                    title=":trophy: New High Score",
-                    description=f"You got a new high score of **{wpm}** on the {zone} test {zone_range}",
-                )
-
-                await ctx.respond(embed=embed)
-
-                # Test high score anti cheat system
-
-                is_hs = True
-
-                if check <= wpm >= 100:
-                    # Preventing on_application_command_completion from being invoked
-                    ctx.no_completion = True
-
-                    view = HighScoreCaptchaView(ctx, user, wpm)
-
-                    await view.start()
-
-                    show_hs_captcha = True
+            is_hs = score.is_hs
 
         if show_hs_captcha is False:
             await ctx.bot.mongo.replace_user_data(user, ctx.author)
@@ -1305,6 +1298,38 @@ class Typing(commands.Cog):
         await ctx.bot.test_wh.send(embeds=embeds)
 
     @staticmethod
+    async def handle_highscore_captcha(ctx, send, user, score, zone, zone_range):
+        if score.wpm > user.highspeed[zone].wpm:
+            score.is_hs = True
+
+            user.highspeed[zone] = score
+
+            embed = ctx.embed(
+                title=":trophy: New High Score",
+                description=f"You got a new high score of **{score.wpm}** on the {zone} test {zone_range}",
+            )
+
+            await send(embed=embed)
+
+            # Test high score anti cheat system
+
+            if (
+                user.highest_speed * (1 + CAPTCHA_WPM_DEC)
+                <= score.wpm
+                >= CAPTCHA_STARTING_THRESHOLD
+            ):
+                # Preventing on_application_command_completion from being invoked
+                ctx.no_completion = True
+
+                view = HighScoreCaptchaView(ctx, user, score.wpm)
+
+                await view.start()
+
+                return score, True
+
+        return score, False
+
+    @staticmethod
     async def handle_interval_captcha(ctx, user):
         # Getting the quote for the captcha
         words, _ = load_test_file(word_list.languages["english"]["easy"])
@@ -1319,9 +1344,9 @@ class Typing(commands.Cog):
             title=":robot: Captcha", description="Type the word below", add_footer=False
         )
 
-        file = discord.File(fp=buffer, filename="captcha.png")
+        file = discord.File(fp=buffer, filename=f"captcha.{STATIC_IMAGE_FORMAT}")
 
-        embed.set_image(url="attachment://captcha.png")
+        embed.set_image(url=f"attachment://captcha.{STATIC_IMAGE_FORMAT}")
 
         await ctx.respond(embed=embed, file=file)
 

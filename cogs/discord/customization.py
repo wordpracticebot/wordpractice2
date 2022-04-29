@@ -7,7 +7,7 @@ from discord.ext import commands
 
 import icons
 import word_list
-from constants import DEFAULT_WRAP, PREMIUM_LINK
+from constants import DEFAULT_WRAP, PREMIUM_LINK, STATIC_IMAGE_FORMAT
 from helpers.checks import cooldown, premium_command, user_check
 from helpers.converters import opt_user, rgb_to_hex, rqd_colour
 from helpers.errors import ImproperArgument
@@ -92,7 +92,7 @@ class ThemeSelect(discord.ui.Select):
 
         file = get_theme_preview_file(theme_value)
 
-        embed.set_image(url="attachment://preview.png")
+        embed.set_image(url=f"attachment://preview.{STATIC_IMAGE_FORMAT}")
 
         await interaction.message.edit(embed=embed, file=file, view=None)
 
@@ -174,7 +174,7 @@ class Customization(commands.Cog):
 
         file = get_theme_preview_file(colours)
 
-        embed.set_image(url="attachment://preview.png")
+        embed.set_image(url=f"attachment://preview.{STATIC_IMAGE_FORMAT}")
 
         await ctx.respond(embed=embed, file=file)
 
