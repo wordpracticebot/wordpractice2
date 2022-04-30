@@ -8,4 +8,9 @@ hints = [
     "Need help? Join our support server with /support",
     "Are you stuck? View all command information with /help",
     "Change your typing theme with /theme premade",
+    "Learn more about the monthly season with /season",
+    "Take a typing test with /tt",
+    "Race against others with /race",
+    "Change your typing test language with /language",
+    "Equip one of your badges with /equip",
 ]

@@ -4,7 +4,7 @@ import math
 import random
 import textwrap
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from itertools import chain, groupby
 
 import discord
@@ -124,7 +124,7 @@ def get_test_warning(raw, acc, result):
 
 
 def get_test_time(start: float, end: float):
-    return max(round(start - end, 2), 0.01)
+    return max(round((start - end), 2), 0.01)
 
 
 def add_test_stats_to_embed(
@@ -270,9 +270,11 @@ class HighScoreCaptchaView(BaseView):
 
         await asyncio.sleep(5 - max(load_time, 0))
 
-        await self.ctx.respond(embed=embed, file=file)
+        start_lag = time.time()
 
-        start_time = time.time()
+        start_msg = await self.ctx.respond(embed=embed, file=file)
+
+        lag = time.time() - start_lag
 
         tc = len(raw_quote)
 
@@ -296,7 +298,9 @@ class HighScoreCaptchaView(BaseView):
         raw = None
 
         if finished_test:
-            end_time = get_test_time(message.created_at.timestamp(), start_time)
+            end_time = get_test_time(
+                message.created_at.timestamp(), start_msg.create_at.timestamp() + lag
+            )
 
             u_input = message.content.split()
 
@@ -679,9 +683,13 @@ class RaceJoinView(BaseView):
 
         await asyncio.sleep(5 - max(load_time, 0))
 
+        start_lag = time.time()
+
         self.race_msg = await self.ctx.respond(embed=embed, file=file)
 
-        self.start_time = time.time()
+        lag = time.time() - start_lag
+
+        self.start_time = self.race_msg.create_at.timestamp() + lag
 
         try:
             await asyncio.wait_for(self.wait_for_inputs(), timeout=TEST_EXPIRE_TIME)
@@ -1123,9 +1131,11 @@ class Typing(commands.Cog):
 
         await asyncio.sleep(5 - max(load_time, 0))
 
-        await ctx.respond(embed=embed, file=file)
+        start_lag = time.time()
 
-        start_time = time.time()
+        send_msg = await ctx.respond(embed=embed, file=file)
+
+        lag = time.time() - start_lag
 
         if not cmd_run_before(ctx, user):
             await ctx.respond("Type the text above!", ephemeral=True)
@@ -1150,7 +1160,9 @@ class Typing(commands.Cog):
             return None
 
         else:
-            end_time = get_test_time(message.created_at.timestamp(), start_time)
+            end_time = get_test_time(
+                message.created_at.timestamp(), send_msg.created_at.timestamp() + lag
+            )
 
             return message, end_time, pacer_name, raw_quote
 

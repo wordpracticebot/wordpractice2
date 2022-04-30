@@ -72,3 +72,8 @@ PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
 
 # Daily challenges
 CHALLENGE_AMT = 2
+
+# Season
+SEASON_TIER_1_AMT = 3
+SEASON_TIER_2_AMT = 2
+SEASON_TIER_3_AMT = 1

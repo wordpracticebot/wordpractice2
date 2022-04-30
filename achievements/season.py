@@ -1,3 +1,17 @@
-from .base import Achievement
+from functools import lru_cache
 
-SEASON_REWARDS = []
+from .base import Achievement, BadgeReward, XPReward
+
+
+@lru_cache(maxsize=1)
+async def get_season_challenges_from_unix(bot, unix_time):
+    ...
+
+
+async def get_season_challenges(bot):
+    unix_time = ...
+
+    return get_season_challenges_from_unix(bot, unix_time)
+
+
+all_season_challenges = []

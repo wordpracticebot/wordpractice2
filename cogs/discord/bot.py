@@ -11,7 +11,6 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
-from achievements.season import SEASON_REWARDS
 from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH, PREMIUM_LINK
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
@@ -39,7 +38,7 @@ class SeasonView(ViewFromDict):
     def __init__(self, ctx, user):
         categories = {
             "Information": self.get_info_embed,
-            "Badge Progress": self.get_badge_embed,
+            "Rewards": self.get_reward_embed,
         }
 
         super().__init__(ctx, categories)
@@ -51,19 +50,19 @@ class SeasonView(ViewFromDict):
 
         embed.add_field(
             name="What are seasons?",
-            value="Seasons are a month-long competition open to all wordPractice. users. Users compete to earn the most XP before the season ends to win exclusive prizes.",
+            value="Seasons are a month-long competition open to all wordPractice users. Users compete to earn the most XP before the end of the season to earn exclusive prizes.",
             inline=False,
         )
 
         embed.add_field(
             name="How do I earn XP?",
-            value=f"XP ({icons.xp}) can be earned through completing typing tests, daily challenges, voting and much more.",
+            value=f"XP {icons.xp} can be earned through completing typing tests, daily challenges, voting and much more.",
             inline=False,
         )
 
         embed.add_field(
-            name="What are season badges?",
-            value="Users can earn season badges by progressing through the season. Season badges are exclusive and change every season.",
+            name="What are season rewards?",
+            value="By completing seasonal challenges, users can win exclusive prizes like badges.",
             inline=False,
         )
 
@@ -76,13 +75,10 @@ class SeasonView(ViewFromDict):
 
         return embed
 
-    def get_badge_embed(self):
+    def get_reward_embed(self):
         embed = self.ctx.embed(
-            title="Season Badge Progress",
+            title="Season Rewards",
         )
-
-        for r in SEASON_REWARDS:
-            ...
 
         return embed
 
@@ -433,10 +429,12 @@ class ProfileView(BaseView):
         return "+"
 
     def get_placing_display(self, user, category: int, stat: int):
-        placing = self.ctx.bot.lbs[category].stats[stat].get_placing(user.id)[0]
+        placing = self.ctx.bot.lbs[category].stats[stat].get_placing(user.id)
 
         if placing is None:
             return f"(> {LB_LENGTH})", False
+
+        placing = placing[0]
 
         if placing == 1:
             emoji = ":first_place:"

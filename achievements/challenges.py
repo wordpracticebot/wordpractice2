@@ -47,7 +47,6 @@ class AccuracyChallenge(Challenge):
         )
 
 
-# TODO: add more challenges and proper weights
 CHALLENGES = [
     [VoteChallenge(), 5],
     [WordChallenge(750), 1],

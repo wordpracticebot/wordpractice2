@@ -27,6 +27,9 @@ from constants import (
     CHALLENGE_AMT,
     DEFAULT_THEME,
     PREMIUM_LAUNCHED,
+    SEASON_TIER_1_AMT,
+    SEASON_TIER_2_AMT,
+    SEASON_TIER_3_AMT,
     TEST_ZONES,
     VOTING_SITES,
 )
@@ -114,8 +117,9 @@ class UserBase(Document):
     # Season
     xp = IntegerField(default=0)
 
-    # Daily challenge
+    # Challenge
     daily_completion = ListField(BooleanField, default=[False] * CHALLENGE_AMT)
+    season_completion = ListField(BooleanField, default=[False] * CHALLENGE_AMT)
 
     # 24 Hour
     last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
