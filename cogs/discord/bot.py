@@ -11,6 +11,7 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
+from achievements.season import get_season_challenges
 from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH, PREMIUM_LINK
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
@@ -45,7 +46,7 @@ class SeasonView(ViewFromDict):
 
         self.user = user
 
-    def get_info_embed(self):
+    async def get_info_embed(self):
         embed = self.ctx.embed(title="Season Information")
 
         embed.add_field(
@@ -75,15 +76,19 @@ class SeasonView(ViewFromDict):
 
         return embed
 
-    def get_reward_embed(self):
+    async def get_reward_embed(self):
         embed = self.ctx.embed(
             title="Season Rewards",
         )
 
-        return embed
+        return embed, [
+            discord.ui.Button(style=discord.ButtonStyle.grey, label="15k", row=2),
+            discord.ui.Button(style=discord.ButtonStyle.grey, label="30k", row=2),
+            discord.ui.Button(style=discord.ButtonStyle.grey, label="60k", row=2),
+        ]
 
     async def create_page(self):
-        return self.the_dict[self.page]()
+        return await self.the_dict[self.page]()
 
 
 class GraphView(ViewFromDict):

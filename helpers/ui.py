@@ -140,7 +140,22 @@ class PageView(BaseView):
 
     async def update_message(self, interaction):
         embed = await self.create_page()
-        await interaction.message.edit(embed=embed, view=self)
+
+        view = self
+
+        items = None
+
+        if isinstance(embed, tuple):
+            embed, items = embed
+
+            for item in items:
+                view.add_item(item)
+
+        await interaction.message.edit(embed=embed, view=view)
+
+        if items is not None:
+            for item in items:
+                view.remove_item(item)
 
     async def update_all(self, interaction):
         await self.update_buttons()
@@ -234,16 +249,20 @@ class ScrollView(PageView):
 
 
 class DictButton(discord.ui.Button):
+    success = discord.ButtonStyle.success
+    regular = discord.ButtonStyle.primary
+
     def toggle_success(self):
-        self.style = discord.ButtonStyle.success
+        self.style = self.success
 
     def toggle_regular(self):
-        self.style = discord.ButtonStyle.primary
+        self.style = self.regular
 
     async def callback(self, interaction):
-        self.toggle_success()
+        if self.style != self.success:
+            self.toggle_success()
 
-        await self.view.update_all(interaction, self.label)
+            await self.view.update_all(interaction, self.label)
 
 
 class ViewFromDict(PageView):
@@ -259,10 +278,6 @@ class ViewFromDict(PageView):
     @property
     def button(self):
         return DictButton
-
-    async def update_message(self, interaction):
-        embed = await self.create_page()
-        await interaction.message.edit(embed=embed, view=self)
 
     async def update_buttons(self, page):
         if self.page is not None:

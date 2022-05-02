@@ -1,17 +1,8 @@
-from functools import lru_cache
-
-from .base import Achievement, BadgeReward, XPReward
-
-
-@lru_cache(maxsize=1)
-async def get_season_challenges_from_unix(bot, unix_time):
-    ...
+from .base import BadgeReward
 
 
 async def get_season_challenges(bot):
-    unix_time = ...
+    season_info = await bot.mongo.get_season_info()
 
-    return get_season_challenges_from_unix(bot, unix_time)
-
-
-all_season_challenges = []
+    for i, badge_id in enumerate(season_info["badges"]):
+        yield (i + 1) * 15000, BadgeReward(badge_id)

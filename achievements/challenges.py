@@ -64,7 +64,6 @@ CHALLENGES = [
 def get_challenges_from_unix(start_unix):
     challenges = weighted_lottery(start_unix, CHALLENGES, CHALLENGE_AMT)
 
-    # Getting the xp reward
     gen = random.Random()
     gen.seed(start_unix)
 

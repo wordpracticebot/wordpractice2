@@ -27,9 +27,6 @@ from constants import (
     CHALLENGE_AMT,
     DEFAULT_THEME,
     PREMIUM_LAUNCHED,
-    SEASON_TIER_1_AMT,
-    SEASON_TIER_2_AMT,
-    SEASON_TIER_3_AMT,
     TEST_ZONES,
     VOTING_SITES,
 )
@@ -446,6 +443,9 @@ class Mongo(commands.Cog):
         else:
             # Caching new user data
             self.bot.user_cache[new_user.id] = pickle.dumps(new_user.to_mongo())
+
+    async def get_season_info():
+        ...
 
     async def add_inf(self, ctx, user, user_data, mod, reason, is_ban: bool):
         """Doesn't update in the database"""

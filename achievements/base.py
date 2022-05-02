@@ -32,8 +32,8 @@ class Challenge:
 
 
 class Achievement(Challenge):
-    def __init__(self, *, name: str, desc: str, reward=None, immutable=False):
-        super().__init__(desc=desc, immutable=immutable)
+    def __init__(self, *, name: str, reward=None, **kwargs):
+        super().__init__(**kwargs)
 
         self.name = name
         self.reward = reward
