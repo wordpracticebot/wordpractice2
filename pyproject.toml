@@ -11,9 +11,7 @@ motor = "^2.5.1"
 dnspython = "^2.1.0"
 certifi = "^2021.10.8"
 humanfriendly = "^10.0"
-black = "^21.11b1"
 Pillow = "^8.4.0"
-isort = "^5.10.1"
 humanize = "^4.0.0"
 numpy = "^1.22.3"
 captcha = "^0.4"
@@ -21,6 +19,12 @@ python-decouple = "^3.6"
 py-cord = "2.0.0b7"
 
 [tool.poetry.dev-dependencies]
+isort = "^5.10.1"
+black = "^21.11b1"
+
+[tool.isort]
+multi_line_output = 3
+profile = "black"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

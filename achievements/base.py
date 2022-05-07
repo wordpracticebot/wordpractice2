@@ -80,6 +80,10 @@ class Reward:
     def changer(self):
         ...
 
+    @property
+    def raw(self):
+        ...
+
     @classmethod
     def group(cls, ins: list):
         ...
@@ -91,6 +95,10 @@ class BadgeReward(Reward):
         self.badge_id = badge_id
 
         super().__init__(desc=self.get_badge_format(badge_id))
+
+    @property
+    def raw(self):
+        return get_badge_from_id(self.badge_id)
 
     @staticmethod
     def get_badge_format(badge_id):
@@ -104,8 +112,8 @@ class BadgeReward(Reward):
         return user
 
     @classmethod
-    def group(self, ins: list):
-        return [self.get_badge_format(i.badge_id) for i in ins]
+    def group(cls, ins: list):
+        return [cls.get_badge_format(i.badge_id) for i in ins]
 
 
 class XPReward(Reward):
@@ -115,6 +123,10 @@ class XPReward(Reward):
         self.amt = amt
 
         super().__init__(desc=XPReward.template.format(self.amt))
+
+    @property
+    def raw(self):
+        return self.amt
 
     def changer(self, user):
         user.add_xp(self.amt)

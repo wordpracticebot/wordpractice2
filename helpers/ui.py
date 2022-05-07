@@ -247,7 +247,6 @@ class ScrollView(PageView):
 
             await self.update_all(interaction)
 
-
 class DictButton(discord.ui.Button):
     success = discord.ButtonStyle.success
     regular = discord.ButtonStyle.primary
@@ -266,10 +265,11 @@ class DictButton(discord.ui.Button):
 
 
 class ViewFromDict(PageView):
-    def __init__(self, ctx, the_dict):
+    def __init__(self, ctx, the_dict, row=0):
         super().__init__(ctx)
 
         self.the_dict = the_dict
+        self.row = row
 
     @property
     def order(self):
@@ -295,7 +295,7 @@ class ViewFromDict(PageView):
         start_index = 0
         # Generating the buttons
         for i, name in enumerate(self.order):
-            button = self.button(label=name)
+            button = self.button(label=name, row=self.row)
 
             if i == start_index:
                 self.page = name

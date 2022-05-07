@@ -221,7 +221,9 @@ class Events(commands.Cog):
             for n, c in zip(new_user.daily_completion, challenges)
         ]
 
-        if new_user.is_daily_complete:
+        new_daily_completion = user.is_daily_complete is False and new_user.is_daily_complete
+
+        if new_daily_completion:
             new_user = reward.changer(new_user)
 
         # Season rewards
@@ -244,7 +246,7 @@ class Events(commands.Cog):
 
         if user.to_mongo() != new_user.to_mongo():
             # Sending a message if the daily challenge has been completed
-            if new_user.is_daily_complete:
+            if new_daily_completion:
                 embed = ctx.embed(
                     title=":tada: Daily Challenge Complete",
                     description=None

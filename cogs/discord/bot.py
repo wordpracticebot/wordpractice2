@@ -81,11 +81,10 @@ class SeasonView(ViewFromDict):
             title="Season Rewards",
         )
 
-        return embed, [
-            discord.ui.Button(style=discord.ButtonStyle.grey, label="15k", row=2),
-            discord.ui.Button(style=discord.ButtonStyle.grey, label="30k", row=2),
-            discord.ui.Button(style=discord.ButtonStyle.grey, label="60k", row=2),
-        ]
+        async for amt, r in get_season_challenges(self.ctx.bot):
+            embed.add_field(name=f"{icons.xp} {amt} xp", value=r.raw)
+
+        return embed
 
     async def create_page(self):
         return await self.the_dict[self.page]()
@@ -669,14 +668,14 @@ class ProfileSelect(discord.ui.Select):
 
 
 class AchievementsButton(DictButton):
-    def __init__(self, bot, label, user):
+    def __init__(self, label, row, user):
         style = (
             discord.ButtonStyle.success
             if categories[label].is_done(user)
             else discord.ButtonStyle.danger
         )
 
-        super().__init__(label=label, style=style)
+        super().__init__(label=label, style=style, row=row)
 
     def toggle_success(self):
         self.disabled = True
@@ -691,8 +690,8 @@ class AchievementsView(ViewFromDict):
 
         self.user = user  # user data
 
-    def button(self, label):
-        return AchievementsButton(self.ctx.bot, label, self.user)
+    def button(self, **kwargs):
+        return AchievementsButton(self.user, **kwargs)
 
     async def create_page(self):
         c = self.the_dict[self.page]
@@ -843,7 +842,7 @@ class Bot(commands.Cog):
             # Generating the progress bar
             bar = get_bar(p[0] / p[1])
 
-            emoji = icons.success if await c.is_completed(ctx, user) else icons.danger
+            emoji = icons.success if user.daily_completion[i] else icons.danger
 
             content += (
                 f"**{emoji} Challenge {i+1}**\n"
