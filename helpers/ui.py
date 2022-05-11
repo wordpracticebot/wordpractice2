@@ -247,6 +247,7 @@ class ScrollView(PageView):
 
             await self.update_all(interaction)
 
+
 class DictButton(discord.ui.Button):
     success = discord.ButtonStyle.success
     regular = discord.ButtonStyle.primary

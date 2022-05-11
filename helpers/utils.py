@@ -234,7 +234,7 @@ def calculate_consistency(nums: list) -> float:
     x = math.sqrt(sum([(x - mean) ** 2 for x in nums]))
     y = x / mean
 
-    return round(100 * (1 - math.tanh(y + y ** 3 / 3 + y ** 5 / 5)), 2)
+    return round(100 * (1 - math.tanh(y + y**3 / 3 + y**5 / 5)), 2)
     # lol
 
 

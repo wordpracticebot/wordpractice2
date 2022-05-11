@@ -4,7 +4,7 @@ from textwrap import TextWrapper
 
 import discord
 from discord.commands import SlashCommand, SlashCommandGroup
-from discord.ext import commands
+from discord.ext import bridge, commands
 
 import icons
 from achievements import categories, get_achievement_tier, get_bar
@@ -164,7 +164,7 @@ class Misc(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def ping(self, ctx):
         """View the bot's latency"""
 
@@ -184,7 +184,7 @@ class Misc(commands.Cog):
         await view.start()
 
     @cooldown(3, 1)
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def stats(self, ctx):
         """Various statistics related to the bot"""
         embed = ctx.embed(title="Bot Stats")
@@ -205,7 +205,7 @@ class Misc(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def privacy(self, ctx):
         """View the privacy policy"""
         embed = ctx.embed(
@@ -223,7 +223,7 @@ class Misc(commands.Cog):
 
         await ctx.respond(embed=embed, view=view)
 
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def rules(self, ctx):
         """View the rules"""
         embed = ctx.embed(
@@ -242,7 +242,7 @@ class Misc(commands.Cog):
 
         await ctx.respond(embed=embed, view=view)
 
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def invite(self, ctx):
         """Get the invite link for the bot"""
 
@@ -255,12 +255,12 @@ class Misc(commands.Cog):
 
         await ctx.respond("Here you go!", view=view)
 
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def support(self, ctx):
         """Join the wordPractice Discord server"""
         await ctx.respond(SUPPORT_SERVER_INVITE)
 
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def vote(self, ctx):
         """Get the voting link for the bot"""
 
@@ -318,9 +318,13 @@ class Misc(commands.Cog):
         await ctx.respond(embed=embed, view=view)
 
         if not cmd_run_before(ctx, user):
-            await ctx.followup.send(
-                "Voting is a great way to support wordPractice!", ephemeral=True
-            )
+
+            msg = "Voting is a great way to support wordPractice!"
+
+            if hasattr(ctx, "followup"):
+                return await ctx.followup.send(msg, ephemeral=True)
+
+            await ctx.respond(msg)
 
 
 def setup(bot):

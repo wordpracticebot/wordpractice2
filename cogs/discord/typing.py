@@ -154,9 +154,14 @@ def add_test_stats_to_embed(
 
     embed.add_field(name=f":x: Mistakes", value=tw - cw)
 
+    escape = "\U0000001b"
+
     embed.add_field(
         name="** **",
-        value=f"**Word History**\n> {word_history}\n\n```ini\n{space*13}[ Test Settings ]```\n** **",
+        value=(
+            f"**Word History**\n> {word_history}\n\n"
+            f"```ansi\n{space*13}{escape}[2;34mTest Settings{escape}[0m```\n** **"
+        ),
         inline=False,
     )
 

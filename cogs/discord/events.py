@@ -221,7 +221,9 @@ class Events(commands.Cog):
             for n, c in zip(new_user.daily_completion, challenges)
         ]
 
-        new_daily_completion = user.is_daily_complete is False and new_user.is_daily_complete
+        new_daily_completion = (
+            user.is_daily_complete is False and new_user.is_daily_complete
+        )
 
         if new_daily_completion:
             new_user = reward.changer(new_user)

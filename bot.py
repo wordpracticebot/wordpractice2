@@ -10,7 +10,7 @@ from io import BytesIO
 import aiohttp
 import discord
 from discord import InteractionType
-from discord.ext import commands
+from discord.ext import bridge, commands
 
 import cogs
 import config
@@ -185,11 +185,10 @@ def get_embed_theme(user):
     return int(user.theme[1].replace("#", "0x"), 16) if user else None
 
 
-class CustomContext(discord.commands.ApplicationContext):
-    def __init__(self, bot, interaction, theme):
-        super().__init__(bot, interaction)
+class CustomContextItems:
+    def __init__(self):
+        self._theme = None
 
-        self._theme = theme
         self.testing = False  # if set to true, cooldowns are avoided
 
         self.achievements_completed = []  # list of additional achievements completed
@@ -214,6 +213,11 @@ class CustomContext(discord.commands.ApplicationContext):
         color = kwargs.pop("color", self.theme or PRIMARY_CLR)
         return CustomEmbed(self.bot, color=color, hint=self.hint, **kwargs)
 
+    async def add_theme(self, user):
+        user_data = await self.bot.mongo.fetch_user(user)
+
+        self._theme = get_embed_theme(user_data)
+
     @property
     def error_embed(self):
         return self.bot.error_embed
@@ -225,6 +229,19 @@ class CustomContext(discord.commands.ApplicationContext):
     @property
     def custom_embed(self):
         return self.bot.custom_embed
+
+
+class CustomAppContext(bridge.BridgeApplicationContext, CustomContextItems):
+    def __init__(self, *args, **kwargs):
+
+        bridge.BridgeApplicationContext.__init__(self, *args, **kwargs)
+        CustomContextItems.__init__(self)
+
+
+class CustomPrefixContext(bridge.BridgeExtContext, CustomContextItems):
+    def __init__(self, *args, **kwargs):
+        bridge.BridgeExtContext.__init__(self, *args, **kwargs)
+        CustomContextItems.__init__(self)
 
 
 class WordPractice(commands.AutoShardedBot):
@@ -357,15 +374,19 @@ class WordPractice(commands.AutoShardedBot):
     async def on_shard_ready(self, shard_id):
         self.log.info(f"Shard {shard_id} ready")
 
-    async def get_application_context(self, interaction, cls=None):
-        user = await self.mongo.fetch_user(interaction.user)
+    async def get_application_context(self, interaction, cls=CustomAppContext):
+        ctx = await super().get_application_context(interaction, cls)
 
-        theme = get_embed_theme(user)
+        await ctx.add_theme(interaction.user)
 
-        if cls is None:
-            cls = CustomContext
+        return ctx
 
-        return cls(self, interaction, theme)
+    async def get_context(self, message, *, cls=CustomPrefixContext):
+        ctx = await super().get_context(message, cls=cls)
+
+        await ctx.add_theme(message.author)
+
+        return ctx
 
     def load_exts(self):
         # Finding files in cogs folder that end with .py

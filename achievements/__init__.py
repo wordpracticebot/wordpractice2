@@ -1,5 +1,4 @@
-from constants import BAR_SIZE
-from icons import progress_bar
+from icons import h_progress_bar, v_progress_bar
 
 from .badges import badges
 from .beginning import beginning
@@ -39,17 +38,28 @@ async def check_all(ctx, user: dict):
                 continue
 
 
-def get_bar(progress):
-    """Creates a progress bar out of emojis from progress float"""
-    p = int(progress * BAR_SIZE)
+def get_bar(progress: float, size: int = 10, horizontal: bool = True):
+    """Creates a progress bar out of emojis"""
+    bar_list = h_progress_bar if horizontal else v_progress_bar
+
+    p = progress * size
+
     bar = ""
-    for i in range(BAR_SIZE):
+
+    for i in range(size):
+        level = 0 if int(r := p - i) > 0 else 2 if r >= 0.5 else 1
+
         if i == 0:
-            bar += progress_bar[0][int(p != 0)]
-        elif i == BAR_SIZE - 1:
-            bar += progress_bar[2][int(p >= BAR_SIZE)]
+            bar += bar_list[0][level]
+        elif i == size - 1:
+            bar += bar_list[2][level]
+
         else:
-            bar += progress_bar[1][2 if i == p else int(i > p)]
+            if 1.5 > r >= 1:
+                level = 3
+
+            bar += bar_list[1][level]
+
     return bar
 
 

@@ -82,6 +82,7 @@ class SeasonView(ViewFromDict):
         )
 
         async for amt, r in get_season_challenges(self.ctx.bot):
+
             embed.add_field(name=f"{icons.xp} {amt} xp", value=r.raw)
 
         return embed
@@ -668,14 +669,14 @@ class ProfileSelect(discord.ui.Select):
 
 
 class AchievementsButton(DictButton):
-    def __init__(self, label, row, user):
-        style = (
+    def __init__(self, user, **kwargs):
+        super().__init__(**kwargs)
+
+        self.style = (
             discord.ButtonStyle.success
-            if categories[label].is_done(user)
+            if categories[self.label].is_done(user)
             else discord.ButtonStyle.danger
         )
-
-        super().__init__(label=label, style=style, row=row)
 
     def toggle_success(self):
         self.disabled = True

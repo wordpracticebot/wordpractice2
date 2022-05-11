@@ -27,7 +27,6 @@ COMPILE_INTERVAL = 5  # minutes
 UPDATE_24_HOUR_INTERVAL = 5  # minutes
 
 # Achievements
-BAR_SIZE = 10
 ACHIEVEMENTS_SHOWN = 4
 
 # Typing test
