@@ -11,7 +11,7 @@ from discord.ext import commands
 import icons
 from achievements import categories, get_achievement_tier, get_bar
 from achievements.challenges import get_daily_challenges
-from achievements.season import get_season_challenges
+from achievements.season import get_season_tiers
 from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH, PREMIUM_LINK
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
@@ -34,6 +34,8 @@ SCORE_DATA_LABELS = {
 
 SCORES_PER_PAGE = 3
 
+EMOJIS_PER_TIER = 4
+
 
 class SeasonView(ViewFromDict):
     def __init__(self, ctx, user):
@@ -49,28 +51,17 @@ class SeasonView(ViewFromDict):
     async def get_info_embed(self):
         embed = self.ctx.embed(title="Season Information")
 
-        embed.add_field(
-            name="What are seasons?",
-            value="Seasons are a month-long competition open to all wordPractice users. Users compete to earn the most XP before the end of the season to earn exclusive prizes.",
-            inline=False,
-        )
+        info = {
+            "What are seasons?": "Seasons are a month-long competition open to all wordPractice users. Users compete to earn the most XP before the end of the season to earn exclusive prizes.",
+            "How do I earn XP?": f"XP {icons.xp} can be earned through completing typing tests, daily challenges, voting and much more.",
+            "What are season rewards?": "By completing seasonal challenges, users can win exclusive badges.",
+            "How do I view the season leaderboads?": "The season leaderboard can be viewed with `/leaderboard` under the season category.",
+        }
 
-        embed.add_field(
-            name="How do I earn XP?",
-            value=f"XP {icons.xp} can be earned through completing typing tests, daily challenges, voting and much more.",
-            inline=False,
-        )
+        for i, (title, desc) in enumerate(info.items()):
+            spacing = "** **\n" if i != 0 else ""
 
-        embed.add_field(
-            name="What are season rewards?",
-            value="By completing seasonal challenges, users can win exclusive prizes like badges.",
-            inline=False,
-        )
-
-        embed.add_field(
-            name="How do I view the season leaderboads?",
-            value="The season leaderboard can be viewed with `/leaderboard` under the season category.",
-        )
+            embed.add_field(name=f"{spacing}{title}", value=desc, inline=False)
 
         embed.set_thumbnail(url="https://i.imgur.com/0Mzb6Js.png")
 
@@ -79,11 +70,28 @@ class SeasonView(ViewFromDict):
     async def get_reward_embed(self):
         embed = self.ctx.embed(
             title="Season Rewards",
+            description=(
+                "Unlock seasonal badges as you earn XP\n\n"
+                f"{icons.xp} **{self.user.xp:,} XP**\n\n"
+            ),
         )
 
-        async for amt, r in get_season_challenges(self.ctx.bot):
+        challenges = [v async for v in get_season_tiers(self.ctx.bot)]
 
-            embed.add_field(name=f"{icons.xp} {amt} xp", value=r.raw)
+        p = self.user.xp / challenges[-1][0]
+
+        bar = get_bar(
+            p, size=EMOJIS_PER_TIER * len(challenges), vertical=True, split=True
+        )
+
+        for i, (amt, r) in enumerate(challenges):
+            emoji = icons.green_dot if self.user.xp >= amt else icons.red_dot
+
+            index = (i + 1) * EMOJIS_PER_TIER - 1
+
+            bar[index] += f"{emoji}**{r.badge_format()}** *{amt/1000:g}k*"
+
+        embed.description += "\n".join(bar)
 
         return embed
 

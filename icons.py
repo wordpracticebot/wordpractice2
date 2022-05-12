@@ -3,10 +3,14 @@
 # Bot
 xp = "<:xp:934865195438854155>"
 
-# General
+# Success indicators
 success = ":white_check_mark:"
 caution = ":warning:"
 danger = ":no_entry:"
+
+# Dots
+green_dot = "<:green_dot:974116115108229120>"
+red_dot = "<:red_dot:974116115141783573>"
 
 # Progress bars
 h_progress_bar = [

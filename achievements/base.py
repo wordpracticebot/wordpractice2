@@ -91,7 +91,6 @@ class Reward:
 
 class BadgeReward(Reward):
     def __init__(self, badge_id: str):
-        self.template = f""
         self.badge_id = badge_id
 
         super().__init__(desc=self.get_badge_format(badge_id))
@@ -103,7 +102,10 @@ class BadgeReward(Reward):
     @staticmethod
     def get_badge_format(badge_id):
         emoji = get_badge_from_id(badge_id)
-        return f"{emoji} {badge_id.capitalize()}"
+        return f"{badge_id.capitalize()} {emoji}"
+
+    def badge_format(self):
+        return self.get_badge_format(self.badge_id)
 
     def changer(self, user):
         if self.badge_id not in user.badges:
@@ -117,7 +119,7 @@ class BadgeReward(Reward):
 
 
 class XPReward(Reward):
-    template = f"{icons.xp}" "{} xp"
+    template = f"{icons.xp}" "{} XP"
 
     def __init__(self, amt: int):
         self.amt = amt

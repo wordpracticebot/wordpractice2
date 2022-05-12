@@ -69,6 +69,8 @@ class Tasks(commands.Cog):
             {"best24": {"$ne": None}}, {"$set": {"best24": None}}
         )
 
+        self.bot.user_cache = {}
+
     @tasks.loop(minutes=COMPILE_INTERVAL)
     async def update_leaderboards(self):
         for lb in self.bot.lbs:
@@ -133,6 +135,8 @@ class Tasks(commands.Cog):
 
     @tasks.loop(hours=24)
     async def daily_restart(self):
+        self.bot.user_cache = {}
+
         # Removing excess items if user hasn't typed in last 24 hours
         await self.bot.mongo.db.users.update_many(
             {"last24.0": [0] * 96},
@@ -151,6 +155,8 @@ class Tasks(commands.Cog):
             {"$set": {"daily_completion": default}},
         )
         await self.bot.mongo.db.users.update_many({}, {"$set": {"test_amt": 0}})
+
+        self.bot.user_cache = {}
 
     # Clearing cache
     @tasks.loop(minutes=10)

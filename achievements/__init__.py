@@ -38,27 +38,32 @@ async def check_all(ctx, user: dict):
                 continue
 
 
-def get_bar(progress: float, size: int = 10, horizontal: bool = True):
+def get_bar(
+    progress: float, *, size: int = 10, vertical: bool = False, split: bool = False
+):
     """Creates a progress bar out of emojis"""
-    bar_list = h_progress_bar if horizontal else v_progress_bar
+    bar_list = v_progress_bar if vertical else h_progress_bar
 
     p = progress * size
 
-    bar = ""
+    bar = []
 
     for i in range(size):
         level = 0 if int(r := p - i) > 0 else 2 if r >= 0.5 else 1
 
         if i == 0:
-            bar += bar_list[0][level]
+            bar.append(bar_list[0][level])
         elif i == size - 1:
-            bar += bar_list[2][level]
+            bar.append(bar_list[2][level])
 
         else:
             if 1.5 > r >= 1:
                 level = 3
 
-            bar += bar_list[1][level]
+            bar.append(bar_list[1][level])
+
+    if split is False:
+        return ("\n" if vertical else "").join(bar)
 
     return bar
 

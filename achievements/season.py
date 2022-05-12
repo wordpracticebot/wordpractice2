@@ -1,7 +1,7 @@
 from .base import BadgeReward
 
 
-async def get_season_challenges(bot):
+async def get_season_tiers(bot):
     # season_info = await bot.mongo.get_season_info()
 
     season_info = {"enabled": True, "badges": ["rainbow", "shovel", "ornament"]}

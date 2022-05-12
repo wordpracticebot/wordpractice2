@@ -272,7 +272,7 @@ class Misc(commands.Cog):
         )
 
         embed.add_field(
-            name="Rewards per Vote", value=f"{icons.xp} 1000 xp", inline=False
+            name="Rewards per Vote", value=f"{icons.xp} 1000 XP", inline=False
         )
 
         # Voting achievement progress
