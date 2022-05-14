@@ -57,6 +57,8 @@ def _get_difficulty_choices(name):
 
 class EquipSelect(discord.ui.Select):
     def __init__(self, ctx, user):
+        none_option = discord.SelectOption(label="None", value="no")
+
         super().__init__(
             placeholder="Select a badge to equip...",
             min_values=1,
@@ -68,7 +70,8 @@ class EquipSelect(discord.ui.Select):
                     value=name,
                 )
                 for name, icon in zip(user.badges, user.badge_emojis)
-            ],
+            ]
+            + [none_option],
             row=1,
         )
         self.ctx = ctx
@@ -77,8 +80,10 @@ class EquipSelect(discord.ui.Select):
         option = self.values[0]
         self.disabled = True
 
+        option_name = option.capitalize()
+
         embed = self.ctx.embed(
-            title=f"{icons.success} {option.capitalize()} Badge Equipped",
+            title=f"{icons.success} {option_name} Badge Equipped",
             add_footer=False,
         )
 
@@ -86,7 +91,10 @@ class EquipSelect(discord.ui.Select):
 
         user = await self.ctx.bot.mongo.fetch_user(self.ctx.author)
 
-        user.status = option
+        if option is None:
+            user.status = ""
+        else:
+            user.status = option
 
         await self.ctx.bot.mongo.replace_user_data(user, self.ctx.author)
 
