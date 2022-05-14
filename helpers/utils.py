@@ -7,7 +7,9 @@ from datetime import datetime, timezone
 from discord import SlashCommand
 from discord.ext import commands
 
+from constants import TEST_ZONES
 from helpers.user import get_user_cmds_run
+from icons import h_progress_bar, v_progress_bar
 
 
 def format_slash_command(command: SlashCommand):
@@ -270,3 +272,64 @@ def get_test_stats(u_input, quote, end_time):
         word_history += "..."
 
     return wpm, raw, acc, cc, cw, word_history
+
+
+def get_bar(
+    progress: float, *, size: int = 10, vertical: bool = False, split: bool = False
+):
+    """Creates a progress bar out of emojis"""
+    bar_list = v_progress_bar if vertical else h_progress_bar
+
+    p = progress * size
+
+    bar = []
+
+    for i in range(size):
+        level = 0 if int(r := p - i) > 0 else 2 if r >= 0.5 else 1
+
+        if i == 0:
+            bar.append(bar_list[0][level])
+        elif i == size - 1:
+            bar.append(bar_list[2][level])
+
+        else:
+            if 1.5 > r >= 1:
+                level = 3
+
+            bar.append(bar_list[1][level])
+
+    if split is False:
+        return ("\n" if vertical else "").join(bar)
+
+    return bar
+
+
+def get_xp_earned(cc: int) -> int:
+    return round(1 + (cc * 2))
+
+def get_test_type(test_type_int: int, length: int):
+    zone = next(
+        (f"{t.capitalize()} " for t, v in TEST_ZONES.items() if length in v), ""
+    )
+
+    # fmt: off
+    return zone + (
+        "Quote"
+        if test_type_int == 0
+
+        else "Dictionary"
+        if test_type_int == 1
+
+        else "Practice"
+        if test_type_int == 2
+        
+        else None
+        )
+    # fmt: on
+
+def get_test_zone_name(cw):
+    for n, r in TEST_ZONES.items():
+        if cw in r:
+            return n, f"({r[0]}-{r[-1]}) words"
+
+    return None

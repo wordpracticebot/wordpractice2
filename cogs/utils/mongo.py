@@ -32,11 +32,11 @@ from constants import (
 )
 from helpers.ui import get_log_embed
 from helpers.user import get_expanded_24_hour_stat
-from helpers.utils import datetime_to_unix
+from helpers.utils import datetime_to_unix, get_test_type
 from static.badges import get_badge_from_id, get_badges_from_ids
 
 
-def get_meta_data(user):
+def _get_meta_data(user):
     return {
         "id": user.id,
         "name": user.name,
@@ -83,13 +83,19 @@ class Score(EmbeddedDocument):
     is_race = BooleanField(default=False)
     is_hs = BooleanField(default=False)
 
+    test_type_int = IntegerField(default=0)
+
     @property
     def unix_timestamp(self):
         return datetime_to_unix(self.timestamp)
 
     @property
     def test_type(self):
-        return "Race" if self.is_race else "Normal"
+        test_prefix = get_test_type(self.test_type_int, self.cw)
+
+        test_suffix = "Race" if self.is_race else "Test"
+
+        return f"{test_prefix} {test_suffix}"
 
 
 class UserBase(Document):
@@ -116,7 +122,7 @@ class UserBase(Document):
 
     # Challenge
     daily_completion = ListField(BooleanField, default=[False] * CHALLENGE_AMT)
-    season_completion = ListField(BooleanField, default=[False] * CHALLENGE_AMT)
+    last_season_value = IntegerField(default=0)  # value of the last season completion
 
     # 24 Hour
     last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
@@ -238,7 +244,6 @@ class User(UserBase):
 
 
 # Backup for users that have been wiped
-# TODO: add a timestamp and remove backups after 60 days
 class UserBackup(UserBase):
     wiped_at = DateTimeField(required=True)
 
@@ -366,7 +371,7 @@ class Mongo(commands.Cog):
 
         backup = await self.UserBackup.find_one({"id": user.id})
 
-        # TODO: max it replace the data instead of deleting
+        # TODO: replace the data instead of deleting
         if backup is not None:
             await backup.delete()
 
@@ -380,7 +385,7 @@ class Mongo(commands.Cog):
 
         # Resetting the user's data
 
-        meta_data = get_meta_data(user)
+        meta_data = _get_meta_data(user)
 
         # Resetting the user's account
         new_data = self.User(
@@ -401,7 +406,7 @@ class Mongo(commands.Cog):
         if backup is None:
             return False
 
-        meta_data = get_meta_data(user)
+        meta_data = _get_meta_data(user)
 
         backup_data = backup.dump()
         del backup_data["wiped_at"]
@@ -444,8 +449,9 @@ class Mongo(commands.Cog):
             # Caching new user data
             self.bot.user_cache[new_user.id] = pickle.dumps(new_user.to_mongo())
 
-    async def get_season_info():
-        ...
+    async def get_season_info(self):
+        # TODO: fetch season info from database
+        return {"enabled": True, "badges": ["rainbow", "shovel", "ornament"]}
 
     async def add_inf(self, ctx, user, user_data, mod, reason, is_ban: bool):
         """Doesn't update in the database"""

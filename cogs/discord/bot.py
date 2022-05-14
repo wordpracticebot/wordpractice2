@@ -9,17 +9,17 @@ import humanize
 from discord.ext import commands
 
 import icons
-from achievements import categories, get_achievement_tier, get_bar
-from achievements.challenges import get_daily_challenges
-from achievements.season import get_season_tiers
+from challenges.achievements import categories, get_achievement_tier
+from challenges.daily import get_daily_challenges
+from challenges.season import get_season_tiers
 from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH, PREMIUM_LINK
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_pacer_display, get_theme_display, get_typing_average
-from helpers.utils import calculate_score_consistency, cmd_run_before
+from helpers.utils import calculate_score_consistency, cmd_run_before, get_bar
 
-TS = "\N{THIN SPACE}"
+THIN_SPACE = "\N{THIN SPACE}"
 LINE_SPACE = "\N{BOX DRAWINGS LIGHT HORIZONTAL}"
 
 SCORE_DATA_LABELS = {
@@ -85,7 +85,9 @@ class SeasonView(ViewFromDict):
         )
 
         for i, (amt, r) in enumerate(challenges):
-            emoji = icons.green_dot if self.user.xp >= amt else icons.red_dot
+            emoji = (
+                icons.green_dot if self.user.last_season_value >= amt else icons.red_dot
+            )
 
             index = (i + 1) * EMOJIS_PER_TIER - 1
 
@@ -489,13 +491,13 @@ class ProfileView(BaseView):
     def format_account_stat(self, num: str, intended: int):
         num_spacing = intended - self.get_thin_spacing(num, False)
 
-        return f"{num}{num_spacing * TS}"
+        return f"{num}{num_spacing * THIN_SPACE}"
 
     def create_account_page(self, embed):
         embed.set_thumbnail(url="https://i.imgur.com/KrXiy9S.png")
 
         in_between = 35
-        b = in_between * TS
+        b = in_between * THIN_SPACE
 
         # TODO: add placings
         embed.title += f"\n\nAlltime{b}Season{b}24h{b}** **"
@@ -517,13 +519,13 @@ class ProfileView(BaseView):
 
         embed.add_field(
             name=f"Trophies ({sum(self.user.trophies)})",
-            value=f"{TS*6}".join(
+            value=f"{THIN_SPACE*6}".join(
                 f"{icons.trophies[i]} x{t}" for i, t in enumerate(self.user.trophies)
             ),
             inline=False,
         )
 
-        s = TS * 3
+        s = THIN_SPACE * 3
 
         embed.add_field(
             name="** **",
@@ -565,7 +567,7 @@ class ProfileView(BaseView):
         return embed
 
     def create_typing_page(self, embed):
-        embed.title += f"{TS*115}** **"
+        embed.title += f"{THIN_SPACE*115}** **"
         embed.set_thumbnail(url="https://i.imgur.com/BZzMGjc.png")
         embed.add_field(
             name="High Scores",
@@ -579,11 +581,11 @@ class ProfileView(BaseView):
         placing = self.get_placing_display(self.user, 3, 0)[0]
 
         embed.add_field(
-            name=f"Range:{TS*26}10-20:",
+            name=f"Range:{THIN_SPACE*26}10-20:",
             value=(
-                f"Wpm:{TS*28}{hs1.wpm}\n"
-                f"Accuracy:{TS*17}{hs1.acc}%\n"
-                f"Placing:{TS*23}**{placing}**"
+                f"Wpm:{THIN_SPACE*28}{hs1.wpm}\n"
+                f"Accuracy:{THIN_SPACE*17}{hs1.acc}%\n"
+                f"Placing:{THIN_SPACE*23}**{placing}**"
             ),
         )
 

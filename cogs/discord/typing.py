@@ -4,7 +4,7 @@ import math
 import random
 import textwrap
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from itertools import chain, groupby
 
 import discord
@@ -42,65 +42,41 @@ from helpers.image import (
 )
 from helpers.ui import BaseView, create_link_view, get_log_embed
 from helpers.user import get_pacer_display
-from helpers.utils import cmd_run_before, get_test_stats
+from helpers.utils import (
+    cmd_run_before,
+    get_test_stats,
+    get_test_type,
+    get_test_zone_name,
+    get_xp_earned,
+)
+
+THIN_SPACE = "\N{THIN SPACE}"
+LONG_SPACE = "\N{IDEOGRAPHIC SPACE}"
 
 HIGH_SCORE_CAPTCHA_TIMEOUT = 60
 
 
-def load_test_file(name):
+def _load_test_file(name):
     with open(f"./word_list/{name}", "r", encoding="utf-8-sig") as f:
         data = json.load(f)
 
     return data["words"], data.get("wrap", DEFAULT_WRAP)
 
 
-def author_is_user(ctx):
+def _author_is_user(ctx):
     return lambda m: m.author.id == ctx.author.id
 
 
-def get_test_zone_name(cw):
-    for n, r in TEST_ZONES.items():
-        if cw in r:
-            return n, f"({r[0]}-{r[-1]}) words"
-
-    return None
-
-
-def get_word_display(quote, raw_quote):
+def _get_word_display(quote, raw_quote):
     return f"{len(quote)} ({len(raw_quote)} chars)"
 
 
-def get_xp_earned(cc):
-    return round(1 + (cc * 2))
-
-
-def get_test_type(test_type_int: int, length: int):
-    zone = next(
-        (f"{t.capitalize()} " for t, v in TEST_ZONES.items() if length in v), ""
-    )
-
-    # fmt: off
-    return zone + (
-        "Quote"
-        if test_type_int == 0
-
-        else "Dictionary"
-        if test_type_int == 1
-
-        else "Practice"
-        if test_type_int == 2
-        
-        else None
-        )
-    # fmt: on
-
-
-def invoke_completion(ctx):
+def _invoke_completion(ctx):
     ctx.no_completion = False
     ctx.bot.dispatch("application_command_completion", ctx)
 
 
-def get_log_additional(wpm, raw, acc, word_display, xp_earned):
+def _get_log_additional(wpm, raw, acc, word_display, xp_earned):
     return (
         f"**Wpm:** {wpm}\n"
         f"**Raw:** {raw}\n"
@@ -110,7 +86,7 @@ def get_log_additional(wpm, raw, acc, word_display, xp_earned):
     )
 
 
-def get_test_warning(raw, acc, result):
+def _get_test_warning(raw, acc, result):
     if raw > 350:
         return "Please try not to spam the test."
 
@@ -123,11 +99,11 @@ def get_test_warning(raw, acc, result):
     return None
 
 
-def get_test_time(start: float, end: float):
+def _get_test_time(start: float, end: float):
     return max(round((start - end), 2), 0.01)
 
 
-def add_test_stats_to_embed(
+def _add_test_stats_to_embed(
     embed,
     wpm,
     raw,
@@ -143,16 +119,16 @@ def add_test_stats_to_embed(
 ):
     space = " "
 
-    embed.add_field(name=":person_walking: Wpm", value=wpm)
-    embed.add_field(name=":person_running: Raw Wpm", value=raw)
-    embed.add_field(name=":dart: Accuracy", value=f"{acc}%")
+    embed.add_field(name=f"{icons.wpm} Wpm", value=wpm)
+    embed.add_field(name=f"{icons.raw} Raw Wpm", value=raw)
+    embed.add_field(name=f"{icons.acc} Accuracy", value=f"{acc}%")
 
-    embed.add_field(name=":clock1: Time", value=f"{end_time}s")
+    embed.add_field(name=f"{icons.time} Time", value=f"{end_time}s")
 
     if xp_earned is not None:
         embed.add_field(name=f"{icons.xp} Experience", value=xp_earned)
 
-    embed.add_field(name=f":x: Mistakes", value=tw - cw)
+    embed.add_field(name=f"{icons.mistake} Mistakes", value=tw - cw)
 
     escape = "\U0000001b"
 
@@ -166,9 +142,9 @@ def add_test_stats_to_embed(
     )
 
     # Settings
-    embed.add_field(name=":earth_americas: Language", value=language.capitalize())
-    embed.add_field(name=":timer: Pacer", value=pacer_name)
-    embed.add_field(name=":1234: Words", value=word_display)
+    embed.add_field(name=f"{icons.language} Language", value=language.capitalize())
+    embed.add_field(name=f"{icons.pacer}: Pacer", value=pacer_name)
+    embed.add_field(name=f"{icons.words} Words", value=word_display)
 
     embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
 
@@ -184,7 +160,7 @@ class RetryView(BaseView):
     async def on_timeout(self):
         await super().on_timeout()
 
-        invoke_completion(self.ctx)
+        _invoke_completion(self.ctx)
 
     @discord.ui.button(label="Retry", style=discord.ButtonStyle.success)
     async def retry_captcha(self, button, interaction):
@@ -202,7 +178,7 @@ class HighScoreCaptchaView(BaseView):
     async def on_timeout(self):
         await super().on_timeout()
 
-        invoke_completion(self.ctx)
+        _invoke_completion(self.ctx)
 
     @property
     def target(self):
@@ -291,7 +267,7 @@ class HighScoreCaptchaView(BaseView):
         try:
             message = await self.ctx.bot.wait_for(
                 "message",
-                check=author_is_user(self.ctx),
+                check=_author_is_user(self.ctx),
                 timeout=expire_time,
             )
         except asyncio.TimeoutError:
@@ -303,7 +279,7 @@ class HighScoreCaptchaView(BaseView):
         raw = None
 
         if finished_test:
-            end_time = get_test_time(
+            end_time = _get_test_time(
                 message.created_at.timestamp(), start_msg.create_at.timestamp() + lag
             )
 
@@ -323,7 +299,7 @@ class HighScoreCaptchaView(BaseView):
                 )
 
                 embed.add_field(
-                    name=":x: Attempts",
+                    name=f"{icons.mistake} Attempts",
                     value=f"{self.attempts} / {MAX_CAPTCHA_ATTEMPTS}",
                 )
 
@@ -333,7 +309,7 @@ class HighScoreCaptchaView(BaseView):
 
                 await self.ctx.bot.mongo.replace_user_data(self.user, self.ctx.author)
 
-                invoke_completion(self.ctx)
+                _invoke_completion(self.ctx)
 
                 # Logging the pass of the high score captcha
                 return await self.log_captcha_completion(raw, acc, False)
@@ -352,7 +328,7 @@ class HighScoreCaptchaView(BaseView):
 
             await self.ctx.respond(embed=embed)
 
-            invoke_completion(self.ctx)
+            _invoke_completion(self.ctx)
 
             return await self.log_captcha_completion(raw, acc, True)
 
@@ -367,9 +343,11 @@ class HighScoreCaptchaView(BaseView):
         await self.log_captcha_completion(raw, acc, True)
 
     def add_results(self, embed, raw, acc, word_history):
-        embed.add_field(name=":person_running: Raw Wpm", value=f"{raw} / {self.target}")
+        embed.add_field(name=f"{icons.raw} Raw Wpm", value=f"{raw} / {self.target}")
 
-        embed.add_field(name=":dart: Accuracy", value=f"{acc}% / {CAPTCHA_ACC_PERC}%")
+        embed.add_field(
+            name=f"{icons.acc} Accuracy", value=f"{acc}% / {CAPTCHA_ACC_PERC}%"
+        )
 
         embed.add_field(
             name="Word History", value=word_history or "** **", inline=False
@@ -434,7 +412,7 @@ class TestResultView(BaseView):
             self.length,
             interaction.response.send_message,
         )
-        invoke_completion(self.ctx)
+        _invoke_completion(self.ctx)
 
     @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
@@ -460,12 +438,10 @@ class TestResultView(BaseView):
             u_input, self.quote, end_time
         )
 
-        ts = "\N{THIN SPACE}"
-
         # Sending the results
         # Spacing in title keeps same spacing if word history is short
         embed = self.ctx.embed(
-            title=f"Practice Test Results (Repeat){ts*75}\n\n`Statistics`",
+            title=f"Practice Test Results (Repeat){THIN_SPACE*75}\n\n`Statistics`",
         )
 
         embed.set_author(
@@ -473,9 +449,9 @@ class TestResultView(BaseView):
             icon_url=self.ctx.author.display_avatar.url,
         )
 
-        word_display = get_word_display(self.quote, raw_quote)
+        word_display = _get_word_display(self.quote, raw_quote)
 
-        embed = add_test_stats_to_embed(
+        embed = _add_test_stats_to_embed(
             embed,
             wpm,
             raw,
@@ -624,7 +600,7 @@ class RaceJoinView(BaseView):
     async def handle_racer_finish(self, m):
         self.ctx.bot.active_end(m.author.id)
 
-        end_time = get_test_time(m.created_at.timestamp(), self.start_time)
+        end_time = _get_test_time(m.created_at.timestamp(), self.start_time)
 
         r = self.racers[m.author.id]
 
@@ -649,6 +625,7 @@ class RaceJoinView(BaseView):
             xp=xp_earned,
             timestamp=datetime.utcnow(),
             is_race=True,
+            test_type_int=int(self.is_dict),
         )
 
         embed = self.get_race_embed()
@@ -739,29 +716,27 @@ class RaceJoinView(BaseView):
         for i, (_, g) in enumerate(grouped_results):
             place_display = f"`{i+1}.`" if i != 0 else ":first_place:"
 
-            long_space = "\N{IDEOGRAPHIC SPACE}"
-
             for r in g:
                 score = r.result
 
                 if r.result is None:
-                    value = f"** **{long_space}__Not Finished__"
+                    value = f"** **{LONG_SPACE}__Not Finished__"
                 else:
                     value = (
-                        f"** **{long_space}:person_walking: Wpm: **{score.wpm}**\n"
-                        f"{long_space} :person_running: Raw Wpm: **{score.raw}**\n"
-                        f"{long_space} :dart: Accuracy: **{score.acc}%**"
+                        f"** **{LONG_SPACE}{icons.wpm} Wpm: **{score.wpm}**\n"
+                        f"{LONG_SPACE} {icons.raw} Raw Wpm: **{score.raw}**\n"
+                        f"{LONG_SPACE} {icons.acc} **{score.acc}%**"
                     )
 
                     test_zone = get_test_zone_name(score.cw)
 
-                    warning = get_test_warning(score.raw, score.acc, test_zone)
+                    warning = _get_test_warning(score.raw, score.acc, test_zone)
 
                     r.zone = test_zone
 
                     if warning is not None:
                         r.save_score = False
-                        value += f"\n{long_space} Warning: {warning}"
+                        value += f"\n{LONG_SPACE} Warning: {warning}"
 
                 embed.add_field(
                     name=f"{place_display} {r.data.display_name}",
@@ -785,7 +760,7 @@ class RaceJoinView(BaseView):
 
         raw_quote = " ".join(self.quote)
 
-        word_display = get_word_display(self.quote, raw_quote)
+        word_display = _get_word_display(self.quote, raw_quote)
 
         race_size_display = f"\n**Race Size:** {len(self.racers)}"
 
@@ -802,7 +777,7 @@ class RaceJoinView(BaseView):
                     user.add_words(score.cw)
                     user.add_xp(score.xp)
 
-                additional = get_log_additional(
+                additional = _get_log_additional(
                     score.wpm, score.raw, score.acc, word_display, score.xp
                 )
 
@@ -1044,13 +1019,13 @@ class Typing(commands.Cog):
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
-        words, wrap = load_test_file(word_list.languages[user.language][user.level])
+        words, wrap = _load_test_file(word_list.languages[user.language][user.level])
 
         return random.sample(words, length), wrap
 
     @staticmethod
     async def handle_quote_input(length: str):
-        quotes, wrap = load_test_file("quotes.json")
+        quotes, wrap = _load_test_file("quotes.json")
 
         # Getting the maximum amount of words for that test zone
         max_words = TEST_ZONES[length][-1]
@@ -1150,7 +1125,7 @@ class Typing(commands.Cog):
         try:
             message = await ctx.bot.wait_for(
                 "message",
-                check=author_is_user(ctx),
+                check=_author_is_user(ctx),
                 timeout=TEST_EXPIRE_TIME,
             )
         except asyncio.TimeoutError:
@@ -1165,7 +1140,7 @@ class Typing(commands.Cog):
             return None
 
         else:
-            end_time = get_test_time(
+            end_time = _get_test_time(
                 message.created_at.timestamp(), send_msg.created_at.timestamp() + lag
             )
 
@@ -1213,9 +1188,9 @@ class Typing(commands.Cog):
             icon_url=ctx.author.display_avatar.url,
         )
 
-        word_display = get_word_display(quote, raw_quote)
+        word_display = _get_word_display(quote, raw_quote)
 
-        embed = add_test_stats_to_embed(
+        embed = _add_test_stats_to_embed(
             embed,
             wpm,
             raw,
@@ -1251,7 +1226,7 @@ class Typing(commands.Cog):
 
         result = get_test_zone_name(cw)
 
-        warning = get_test_warning(raw, acc, result)
+        warning = _get_test_warning(raw, acc, result)
 
         if warning is not None:
             await ctx.respond(f"Warning: {warning}", ephemeral=True)
@@ -1268,6 +1243,7 @@ class Typing(commands.Cog):
                 xp=xp_earned,
                 timestamp=datetime.utcnow(),
                 is_race=False,
+                test_type_int=int(is_dict),
             )
 
             user.add_score(score)
@@ -1287,7 +1263,7 @@ class Typing(commands.Cog):
             await ctx.bot.mongo.replace_user_data(user, ctx.author)
 
         # Logging the test
-        additional = get_log_additional(wpm, raw, acc, word_display, xp_earned)
+        additional = _get_log_additional(wpm, raw, acc, word_display, xp_earned)
 
         additional += f"\n**Word History:**\n> {word_history}"
 
@@ -1349,7 +1325,7 @@ class Typing(commands.Cog):
     @staticmethod
     async def handle_interval_captcha(ctx, user):
         # Getting the quote for the captcha
-        words, _ = load_test_file(word_list.languages["english"]["easy"])
+        words, _ = _load_test_file(word_list.languages["english"]["easy"])
         captcha_word = random.choice(words)
 
         # Generating the captcha image
@@ -1370,7 +1346,7 @@ class Typing(commands.Cog):
         # Waiting for user input
         try:
             message = await ctx.bot.wait_for(
-                "message", check=author_is_user(ctx), timeout=120
+                "message", check=_author_is_user(ctx), timeout=120
             )
         except asyncio.TimeoutError:
             embed = ctx.error_embed(

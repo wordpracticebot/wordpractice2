@@ -38,3 +38,14 @@ trophies = [
     "<:bronze_trophy:953059551882649610>", # third 
     "<:top10_trophy:953059582937288714>" # top 10
 ]
+
+# Typing
+wpm = ":person_walking:"
+raw = ":person_running:"
+acc = ":dart:"
+time = ":clock1:"
+mistake = ":x:"
+
+pacer = ":timer:"
+language = ":earth_americas:"
+words = ":1234:"

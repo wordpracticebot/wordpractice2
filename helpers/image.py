@@ -10,6 +10,14 @@ from constants import SIDE_BORDER, SPACING, STATIC_IMAGE_FORMAT, TOP_BORDER
 from static.assets import arial
 
 
+def _wrap_text(text, wrap_width):
+    word_list = textwrap.wrap(text=text, width=wrap_width)
+
+    joined = "\n".join(word_list)
+
+    return word_list, joined
+
+
 def quantize_img(img):
     return img.quantize(method=Image.NONE)
 
@@ -30,14 +38,6 @@ def get_width_height(word_list, wrap_width):
         width,
         height,
     )
-
-
-def wrap_text(text, wrap_width):
-    word_list = textwrap.wrap(text=text, width=wrap_width)
-
-    joined = "\n".join(word_list)
-
-    return word_list, joined
 
 
 def get_base(width, height, colours, fquote):
@@ -110,7 +110,7 @@ def save_img_as_discord_png(img, name):
 
 
 def get_base_img(raw_quote, wrap_width, theme):
-    word_list, fquote = wrap_text(raw_quote, wrap_width)
+    word_list, fquote = _wrap_text(raw_quote, wrap_width)
 
     width, height = get_width_height(word_list, wrap_width)
 

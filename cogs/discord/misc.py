@@ -7,7 +7,7 @@ from discord.commands import SlashCommand, SlashCommandGroup
 from discord.ext import bridge, commands
 
 import icons
-from achievements import categories, get_achievement_tier, get_bar
+from challenges.achievements import categories, get_achievement_tier
 from constants import (
     INFO_VIDEO,
     PRIVACY_POLICY_LINK,
@@ -17,7 +17,7 @@ from constants import (
 )
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
-from helpers.utils import can_run, cmd_run_before, format_slash_command
+from helpers.utils import can_run, cmd_run_before, format_slash_command, get_bar
 
 
 def _add_commands(embed, cmds):
@@ -39,7 +39,7 @@ def _add_commands(embed, cmds):
 
 
 async def _filter_commands(ctx, cmds):
-    ctx.testing = True  # skipping displaying
+    ctx.testing = True  # skipping invoking the command
 
     iterator = filter(lambda c: isinstance(c, (SlashCommand, SlashCommandGroup)), cmds)
 

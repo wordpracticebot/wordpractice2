@@ -1,5 +1,4 @@
 import math
-from io import BytesIO
 
 import discord
 from discord.commands import Option, SlashCommandGroup
@@ -17,12 +16,43 @@ from helpers.user import get_pacer_display, get_theme_display
 from static import themes
 
 
-def get_theme_preview_file(theme):
+def _get_theme_preview_file(theme):
     raw_quote = "This is a preview of your theme. Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut nulla quas eius temporibus ex facilis ipsum culpa quod non possimus."
 
     base_img = get_base_img(raw_quote, DEFAULT_WRAP, theme)
 
     return save_img_as_discord_png(base_img, "preview")
+
+
+# Formula from: https://gist.github.com/ryancat/9972419b2a78f329ce3aebb7f1a09152
+def _get_colour_perceptual_distance(self, c1, c2):
+    """Calculates perceptual distance between two colours"""
+    c1 = math.sqrt(c1[1] * c1[1] + c1[2] * c1[2])
+    c2 = math.sqrt(c2[1] * c2[1] + c2[2] * c2[2])
+
+    delta_c = c1 - c2
+    delta_h = (c1 - c2) ** 2 + (c1 - c2) ** 2 - delta_c * delta_c
+    delta_h = 0 if delta_h < 0 else math.sqrt(delta_h)
+
+    sc = 1.0 + 0.045 * c1
+    sh = 1.0 + 0.015 * c1
+
+    delta_lklsl = (c1 - c2) / (1.0)
+    delta_ckcsc = delta_c / (sc)
+    delta_hkhsh = delta_h / (sh)
+
+    i = (
+        delta_lklsl * delta_lklsl
+        + delta_ckcsc * delta_ckcsc
+        + delta_hkhsh * delta_hkhsh
+    )
+
+    return max(int(math.sqrt(i)) + 1, 0)
+
+
+def _get_difficulty_choices(name):
+    """Finds language difficulty options from selected language"""
+    return word_list.languages.get(name, [])
 
 
 class EquipSelect(discord.ui.Select):
@@ -90,7 +120,7 @@ class ThemeSelect(discord.ui.Select):
             add_footer=False,
         )
 
-        file = get_theme_preview_file(theme_value)
+        file = _get_theme_preview_file(theme_value)
 
         embed.set_image(url=f"attachment://preview.{STATIC_IMAGE_FORMAT}")
 
@@ -101,11 +131,6 @@ class ThemeSelect(discord.ui.Select):
         user.theme = theme_value
 
         await self.ctx.bot.mongo.replace_user_data(user, self.ctx.author)
-
-
-def get_difficulty_choices(name):
-    """Finds language difficulty options from selected language"""
-    return word_list.languages.get(name, [])
 
 
 class Customization(commands.Cog):
@@ -120,38 +145,13 @@ class Customization(commands.Cog):
     theme_group = SlashCommandGroup("theme", "Change the typing test theme")
     pacer_group = SlashCommandGroup("pacer", "Set a pacer for your typing test")
 
-    # Calculates perceptual distance between two colours
-    # Formula from: https://gist.github.com/ryancat/9972419b2a78f329ce3aebb7f1a09152
-    def get_perceptual_distance(self, c1, c2):
-        c1 = math.sqrt(c1[1] * c1[1] + c1[2] * c1[2])
-        c2 = math.sqrt(c2[1] * c2[1] + c2[2] * c2[2])
-
-        delta_c = c1 - c2
-        delta_h = (c1 - c2) ** 2 + (c1 - c2) ** 2 - delta_c * delta_c
-        delta_h = 0 if delta_h < 0 else math.sqrt(delta_h)
-
-        sc = 1.0 + 0.045 * c1
-        sh = 1.0 + 0.015 * c1
-
-        delta_lklsl = (c1 - c2) / (1.0)
-        delta_ckcsc = delta_c / (sc)
-        delta_hkhsh = delta_h / (sh)
-
-        i = (
-            delta_lklsl * delta_lklsl
-            + delta_ckcsc * delta_ckcsc
-            + delta_hkhsh * delta_hkhsh
-        )
-
-        return max(int(math.sqrt(i)) + 1, 0)
-
     @premium_command()
     @cooldown(8, 3)
     @theme_group.command()
     async def custom(self, ctx, background: rqd_colour(), text: rqd_colour()):
         """Create a custom theme for your typing test"""
 
-        distance = self.get_perceptual_distance(background, text)
+        distance = _get_colour_perceptual_distance(background, text)
 
         colours = [rgb_to_hex(*background), rgb_to_hex(*text)]
 
@@ -172,7 +172,7 @@ class Customization(commands.Cog):
                 add_footer=False,
             )
 
-        file = get_theme_preview_file(colours)
+        file = _get_theme_preview_file(colours)
 
         embed.set_image(url=f"attachment://preview.{STATIC_IMAGE_FORMAT}")
 
@@ -202,14 +202,14 @@ class Customization(commands.Cog):
         difficulty: Option(
             str,
             autocomplete=discord.utils.basic_autocomplete(
-                lambda ctx: get_difficulty_choices(ctx.options.get("name"))
+                lambda ctx: _get_difficulty_choices(ctx.options.get("name"))
             ),
         ),
     ):
         """Choose a language for your typing test"""
 
         # Checking if difficulty is valid
-        if difficulty not in (choices := get_difficulty_choices(name)):
+        if difficulty not in (choices := _get_difficulty_choices(name)):
             raise ImproperArgument(
                 "That is not a valid difficulty", options=list(choices.keys())
             )
@@ -359,13 +359,13 @@ class Customization(commands.Cog):
         )
 
         embed.add_field(
-            name="** **\n:earth_americas: Language",
+            name=f"** **\n{icons.language} Language",
             value=f"{user.language.capitalize()} ({user.level.capitalize()})",
             inline=False,
         )
 
         embed.add_field(
-            name="** **\n:timer: Pacer", value=f"{pacer_name}", inline=False
+            name=f"** **\n{icons.pacer} Pacer", value=f"{pacer_name}", inline=False
         )
 
         embed.set_thumbnail(url="https://i.imgur.com/2vUD4NF.png")

@@ -1,6 +1,7 @@
 from static.assets import badge_icon
 
-from .base import Achievement, Category, XPReward
+from .base import Achievement, Category
+from .rewards import XPReward
 
 
 class Badges(Achievement):

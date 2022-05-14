@@ -1,7 +1,8 @@
 from helpers.utils import calculate_score_consistency
 from static.assets import speed_icon
 
-from .base import Achievement, Category, XPReward, get_in_row
+from .base import Achievement, Category, get_in_row
+from .rewards import XPReward
 
 
 # TODO: add proper rewards and descriptions for all achievements

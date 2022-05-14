@@ -1,5 +1,4 @@
 import copy
-from collections import defaultdict
 from datetime import datetime
 
 import discord
@@ -8,8 +7,10 @@ from discord.ext.commands import errors
 from PIL import ImageDraw
 
 import icons
-from achievements import check_all
-from achievements.challenges import get_daily_challenges
+from challenges.achievements import check_all
+from challenges.daily import get_daily_challenges
+from challenges.rewards import group_rewards
+from challenges.season import check_season_rewards
 from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument, OnGoingTest
 from helpers.image import save_img_as_discord_png
@@ -19,8 +20,7 @@ from helpers.utils import format_slash_command
 from static.assets import achievement_base, uni_sans_heavy
 
 
-# TODO: add icons to achievement image
-def generate_achievement_image(name, icon):
+def _generate_achievement_image(name, icon):
     img = achievement_base.copy()
 
     if icon is not None:
@@ -146,7 +146,7 @@ class Events(commands.Cog):
                 if t is not None:
                     name += f" ({t + 1})"
 
-                image = generate_achievement_image(name, c.icon)
+                image = _generate_achievement_image(name, c.icon)
 
                 files.append(image)
             else:
@@ -179,6 +179,8 @@ class Events(commands.Cog):
 
         if days_between >= 1:
             new_user.last_streak = now
+
+        # Achievements
 
         a_earned = {}
         done_checking = False
@@ -214,7 +216,7 @@ class Events(commands.Cog):
 
         # Daily challenges
 
-        challenges, reward = get_daily_challenges()
+        challenges, daily_reward = get_daily_challenges()
 
         new_user.daily_completion = [
             (n and c.immutable) or await c.is_completed(ctx, new_user)
@@ -226,9 +228,17 @@ class Events(commands.Cog):
         )
 
         if new_daily_completion:
-            new_user = reward.changer(new_user)
+            new_user = daily_reward.changer(new_user)
 
         # Season rewards
+
+        season_rewards = [i async for i in check_season_rewards(ctx.bot, new_user)]
+
+        if season_rewards != []:
+            for v, r in season_rewards:
+                r.changer(new_user)
+
+            new_user.last_season_value = v
 
         # Updating the user's executed commands
 
@@ -249,13 +259,31 @@ class Events(commands.Cog):
         if user.to_mongo() != new_user.to_mongo():
             # Sending a message if the daily challenge has been completed
             if new_daily_completion:
+
+                desc = (
+                    None if daily_reward is None else f"**Reward:** {daily_reward.desc}"
+                )
+
                 embed = ctx.embed(
                     title=":tada: Daily Challenge Complete",
-                    description=None
-                    if reward is None
-                    else f"**Reward:** {reward.desc}",
+                    description=desc,
                     add_footer=False,
                 )
+                await ctx.respond(embed=embed, ephemeral=True)
+
+            if season_rewards != []:
+                _, rewards = zip(*season_rewards)
+
+                r_overview = "\n".join(group_rewards(rewards))
+
+                plural = "s" if len(season_rewards) > 1 else ""
+
+                embed = ctx.embed(
+                    title=f":trophy: Unlocked Season Reward{plural}",
+                    description=r_overview,
+                    add_footer=False,
+                )
+
                 await ctx.respond(embed=embed, ephemeral=True)
 
             # Sending a message with the achievements that have been completed
@@ -273,18 +301,7 @@ class Events(commands.Cog):
                 content = ""
 
                 if len(rewards) > 1:
-                    # Grouping the rewards by type
-                    groups = defaultdict(list)
-
-                    for r in rewards:
-                        groups[type(r)].append(r)
-
-                    r_overview = []
-
-                    for g_type, g in groups.items():
-                        r_overview += g_type.group(g)
-
-                    r_overview = "\n> ".join(r_overview)
+                    r_overview = "\n> ".join(group_rewards(rewards))
 
                     content += f"**Rewards Overview:**\n> {r_overview}\n** **\n"
 

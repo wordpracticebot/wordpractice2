@@ -10,7 +10,7 @@ from config import DBL_TOKEN, TESTING
 from constants import CHALLENGE_AMT, COMPILE_INTERVAL, UPDATE_24_HOUR_INTERVAL
 
 
-def to_json(value):
+def _topgg_payload_to_json(value):
     if json.__name__ == "ujson":
         return json.dumps(value, ensure_ascii=True)
     return json.dumps(value, separators=(",", ":"), ensure_ascii=True)
@@ -121,12 +121,12 @@ class Tasks(commands.Cog):
         # Making sure that all the guilds and shards have been loaded
         await asyncio.sleep(5)
 
-        payload = {
+        raw_payload = {
             "server_count": len(self.bot.guilds),
             "shard_count": len(self.bot.shards),
         }
 
-        payload = to_json(payload)
+        payload = _topgg_payload_to_json(raw_payload)
 
         async with self.bot.session.request(
             "POST", self.url, headers=self.headers, data=payload

@@ -15,14 +15,12 @@ class SingleStatEndurance(Achievement):
     async def user_progress(self, ctx, user):
         return user[self.key], self.value
 
-
-def generate_single_stat_endurance(name, key, values, desc):
-    return [
-        SingleStatEndurance(
-            name, desc.format(value, "s" if value > 1 else ""), key, value
-        )
-        for value in values
-    ]
+    @classmethod
+    def generate(cls, name, key, values, desc):
+        return [
+            cls(name, desc.format(value, "s" if value > 1 else ""), key, value)
+            for value in values
+        ]
 
 
 class Veteran(Achievement):
@@ -46,13 +44,13 @@ class Veteran(Achievement):
 endurance = Category(
     desc="Endurance based achievements",
     challenges=[
-        generate_single_stat_endurance(
+        SingleStatEndurance.generate(
             "Streakin'",
             "streak",
             (1, 5, 10, 25, 50, 75, 100, 150, 200, 365),
             "Play wordPractice for {} day{} in a row",
         ),
-        generate_single_stat_endurance(
+        SingleStatEndurance.generate(
             "Democracy!",
             "votes",
             (1, 5, 10, 25, 50, 100, 200, 350, 500, 750),

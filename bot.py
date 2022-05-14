@@ -30,6 +30,8 @@ from helpers.errors import OnGoingTest
 from helpers.ui import BaseView, CustomEmbed, create_link_view
 from static.hints import hints
 
+THIN_SPACE = "\N{THIN SPACE}"
+
 
 class LBCategory:
     def __init__(self, bot, name, unit, query, get_stat):
@@ -264,7 +266,7 @@ class WordPractice(commands.AutoShardedBot):
         )
 
         self.activity = discord.Activity(
-            type=discord.ActivityType.watching, name=" your wpm \N{EYES}\N{THIN SPACE}"
+            type=discord.ActivityType.watching, name=f" your wpm \N{EYES}{THIN_SPACE}"
         )
         self.session = aiohttp.ClientSession(loop=self.loop)
 
