@@ -64,7 +64,7 @@ class LBCategory:
 
     def get_placing(self, user_id: int):
         if self.data is None:
-            return None
+            return
 
         return next(
             ((i + 1, u) for i, u in enumerate(self.data) if u["_id"] == int(user_id)),
@@ -135,6 +135,18 @@ class WelcomeView(BaseView):
             description="We hope that you enjoy your time using wordPractice",
         )
 
+        embed.add_field(
+            name="Confused?",
+            value="Watch our informational video below or type `/help` for a list of commands",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="Got ask questions?",
+            value="Join our support server below!",
+            inline=False,
+        )
+
         embed.set_thumbnail(url="https://i.imgur.com/MF0xiLu.png")
 
         view = create_link_view(
@@ -161,7 +173,11 @@ class WelcomeView(BaseView):
             ),
         )
 
-        embed.set_footer(text="You will be able to click accept after 5 seconds")
+        accept_time = 5
+
+        embed.set_footer(
+            text=f"You will be able to click accept after {accept_time} seconds"
+        )
 
         self.accept.disabled = True
 
@@ -176,7 +192,7 @@ class WelcomeView(BaseView):
         await self.ctx.respond(embed=embed, view=self, ephemeral=True)
 
         # Enabling rules to be accepted after 5 seconds
-        await asyncio.sleep(5)
+        await asyncio.sleep(accept_time)
 
         self.accept.disabled = False
 

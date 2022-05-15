@@ -38,7 +38,7 @@ class Achievement(Challenge):
     @property
     def changer(self):
         if self.reward is None:
-            return None
+            return
 
         return self.reward.changer
 

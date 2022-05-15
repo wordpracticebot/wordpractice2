@@ -40,7 +40,7 @@ class Tasks(commands.Cog):
 
     @tasks.loop(minutes=UPDATE_24_HOUR_INTERVAL)
     async def update_24_hour(self):
-        every = int(1440 / UPDATE_24_HOUR_INTERVAL) - 1
+        every = int(24 * 60 / UPDATE_24_HOUR_INTERVAL) - 1
 
         self.bot.user_cache = {}
 

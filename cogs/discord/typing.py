@@ -96,7 +96,7 @@ def _get_test_warning(raw, acc, result):
     if result is None:
         return "Tests below 10 correct words are not saved."
 
-    return None
+    return
 
 
 def _get_test_time(start: float, end: float):
@@ -1137,7 +1137,7 @@ class Typing(commands.Cog):
                 ),
             )
             await ctx.respond(embed=embed)
-            return None
+            return
 
         else:
             end_time = _get_test_time(

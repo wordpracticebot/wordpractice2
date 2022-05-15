@@ -78,22 +78,28 @@ class SeasonView(ViewFromDict):
 
         challenges = [v async for v in get_season_tiers(self.ctx.bot)]
 
-        p = self.user.xp / challenges[-1][0]
+        if challenges == []:
+            embed.description = "Sorry, there are no rewards available..."
+        else:
 
-        bar = get_bar(
-            p, size=EMOJIS_PER_TIER * len(challenges), vertical=True, split=True
-        )
+            p = self.user.xp / challenges[-1][0]
 
-        for i, (amt, r) in enumerate(challenges):
-            emoji = (
-                icons.green_dot if self.user.last_season_value >= amt else icons.red_dot
+            bar = get_bar(
+                p, size=EMOJIS_PER_TIER * len(challenges), vertical=True, split=True
             )
 
-            index = (i + 1) * EMOJIS_PER_TIER - 1
+            for i, (amt, r) in enumerate(challenges):
+                emoji = (
+                    icons.green_dot
+                    if self.user.last_season_value >= amt
+                    else icons.red_dot
+                )
 
-            bar[index] += f"{emoji}**{r.badge_format()}** *{amt/1000:g}k*"
+                index = (i + 1) * EMOJIS_PER_TIER - 1
 
-        embed.description += "\n".join(bar)
+                bar[index] += f"{emoji}**{r.badge_format()}** *{amt/1000:g}k*"
+
+            embed.description += "\n".join(bar)
 
         return embed
 

@@ -19,7 +19,7 @@ def get_theme_display(clrs):
 
 def get_pacer_name(pacer: str):
     if pacer == "":
-        return None
+        return
 
     if pacer == "avg":
         return "Average"
@@ -88,7 +88,7 @@ def get_daily_stat(last24_stat: list[int]):
 
     # Amount of minutes left in the day
     time_left = (
-        1440
+        24 * 60
         + (
             time.mktime(get_start_of_day().timetuple())
             - time.mktime(datetime.utcnow().timetuple())
@@ -102,6 +102,6 @@ def get_daily_stat(last24_stat: list[int]):
 
 
 def get_expanded_24_hour_stat(stat: list[int]):
-    i_len = int(1440 / UPDATE_24_HOUR_INTERVAL)
+    i_len = int(24 * 60 / UPDATE_24_HOUR_INTERVAL)
 
     return stat[:i_len] + [0] * (i_len - len(stat))

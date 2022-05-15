@@ -39,8 +39,7 @@ class BadgeReward(Reward):
         return self.get_badge_format(self.badge_id)
 
     def changer(self, user):
-        if self.badge_id not in user.badges:
-            user.badges.append(self.badge_id)
+        user.add_badge(self.badge_id)
 
         return user
 

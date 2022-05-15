@@ -5,6 +5,7 @@ from typing import Union
 
 import discord
 import pymongo
+from cache import AsyncTTL
 from discord.ext import commands
 from discord.utils import escape_markdown
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -242,6 +243,10 @@ class User(UserBase):
         if self.best24 is None or score.wpm > self.best24.wpm:
             self.best24 = score
 
+    def add_badge(self, badge_id):
+        if badge_id not in self.badges:
+            self.badges.append(badge_id)
+
 
 # Backup for users that have been wiped
 class UserBackup(UserBase):
@@ -324,7 +329,7 @@ class Mongo(commands.Cog):
                     await self.replace_user_data(u)
                 else:
                     self.bot.user_cache[user_id] = None
-                    return None
+                    return
 
                 return u
 
@@ -449,9 +454,18 @@ class Mongo(commands.Cog):
             # Caching new user data
             self.bot.user_cache[new_user.id] = pickle.dumps(new_user.to_mongo())
 
+    @AsyncTTL(time_to_live=10 * 60, maxsize=32)
+    async def get_info_data(self, info_id: str):
+        return await self.db.info.find_one({"_id": info_id})
+
     async def get_season_info(self):
-        # TODO: fetch season info from database
-        return {"enabled": True, "badges": ["rainbow", "shovel", "ornament"]}
+        """
+        Schema:
+
+        enabled: bool
+        badges: list[str]
+        """
+        return await self.get_info_data("season_data")
 
     async def add_inf(self, ctx, user, user_data, mod, reason, is_ban: bool):
         """Doesn't update in the database"""

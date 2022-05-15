@@ -4,8 +4,11 @@ from .rewards import BadgeReward
 async def get_season_tiers(bot):
     season_info = await bot.mongo.get_season_info()
 
+    if season_info is None or season_info["enabled"] is None:
+        return
+
     for i, badge_id in enumerate(season_info["badges"]):
-        yield (i + 1) * 15000, BadgeReward(badge_id)
+        yield (i + 1) * 20000, BadgeReward(badge_id)
 
 
 async def check_season_rewards(bot, user):

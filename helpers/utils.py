@@ -122,7 +122,7 @@ def get_test_input_stats(u_input: list, quote: list):
             if u_input[mu_index] == quote[mw_index] + quote[mw_index + 1]:
                 return 4
 
-        return None
+        return
 
     while (u_index := u_shift + u) < len(u_input) and (w_index := w_shift + u) < len(
         quote
@@ -307,6 +307,7 @@ def get_bar(
 def get_xp_earned(cc: int) -> int:
     return round(1 + (cc * 2))
 
+
 def get_test_type(test_type_int: int, length: int):
     zone = next(
         (f"{t.capitalize()} " for t, v in TEST_ZONES.items() if length in v), ""
@@ -327,9 +328,10 @@ def get_test_type(test_type_int: int, length: int):
         )
     # fmt: on
 
+
 def get_test_zone_name(cw):
     for n, r in TEST_ZONES.items():
         if cw in r:
             return n, f"({r[0]}-{r[-1]}) words"
 
-    return None
+    return
