@@ -465,7 +465,7 @@ class Mongo(commands.Cog):
         enabled: bool
         badges: list[str]
         """
-        return await self.get_info_data("season_data")
+        return await self.get_info_data("season-info")
 
     async def add_inf(self, ctx, user, user_data, mod, reason, is_ban: bool):
         """Doesn't update in the database"""
