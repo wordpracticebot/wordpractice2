@@ -906,6 +906,24 @@ class Bot(commands.Cog):
 
         await view.start()
 
+    @cooldown(5, 2)
+    @commands.slash_command()
+    async def badges(self, ctx, user: opt_user()):
+        """View a user's badges"""
+        user_data = await user_check(ctx, user)
+
+        if len(user_data.badges) == 0:
+            embed = ctx.error_embed(
+                title=f"{icons.caution} User does not have any badges"
+            )
+
+        else:
+            badges = " ".join(self.user.badge_emojis)
+
+            embed = ctx.embed(title=user_data.display_name, description=badges)
+
+        await ctx.respond(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Bot(bot))

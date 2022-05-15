@@ -48,6 +48,16 @@ class AccuracyChallenge(Challenge):
         )
 
 
+class QuoteChallenge(Challenge):
+    def __init__(self, amt):
+        super().__init__(desc=f"Completed {amt} quote typing tests", immutable=True)
+
+        self.amt = amt
+
+    async def user_progress(self, ctx, user):
+        return int(user.scores[-1].test_type_int == 0), 1
+
+
 @lru_cache(maxsize=1)
 def _get_challenges_from_unix(start_unix):
     challenges = weighted_lottery(start_unix, CHALLENGES, CHALLENGE_AMT)
@@ -71,12 +81,14 @@ def get_daily_challenges():
 
 CHALLENGES = [
     [VoteChallenge(), 5],
-    [WordChallenge(750), 1],
-    [WordChallenge(1000), 2],
-    [WordChallenge(1250), 2],
-    [WordChallenge(1500), 1],
+    [WordChallenge(750), 2],
+    [WordChallenge(1000), 3],
+    [WordChallenge(1250), 3],
+    [WordChallenge(1500), 2],
     [AccuracyChallenge(3), 1],
     [AccuracyChallenge(5), 2],
     [AccuracyChallenge(8), 2],
     [AccuracyChallenge(10), 1],
+    [QuoteChallenge(2), 1],
+    [QuoteChallenge(4), 1],
 ]

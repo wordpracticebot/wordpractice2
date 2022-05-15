@@ -27,6 +27,18 @@ class Quoi(Achievement):
         return int(user.language != "english"), 1
 
 
+class Competition(Achievement):
+    def __init__(self):
+        super().__init__(
+            name="Competition",
+            desc="Complete a race against another user",
+            immutable=True,
+        )
+
+    async def user_progress(self, ctx, user):
+        return int(user.scores[-1].is_race), 1
+
+
 class OpenMinded(Achievement):
     def __init__(self):
         super().__init__(name="Open-minded", desc="Run every single command")
@@ -48,6 +60,6 @@ class OpenMinded(Achievement):
 
 beginning = Category(
     desc="Simple and basic achievements",
-    challenges=[StartingOut(), Quoi(), OpenMinded()],
+    challenges=[StartingOut(), Quoi(), Competition(), OpenMinded()],
     icon=beginning_icon,
 )

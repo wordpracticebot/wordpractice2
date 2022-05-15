@@ -257,6 +257,8 @@ class Events(commands.Cog):
                 self.bot.cmds_run[ctx.author.id] = new_cache_cmds
 
         if user.to_mongo() != new_user.to_mongo():
+            embeds = []
+
             # Sending a message if the daily challenge has been completed
             if new_daily_completion:
 
@@ -269,7 +271,7 @@ class Events(commands.Cog):
                     description=desc,
                     add_footer=False,
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
+                embeds.append(embed)
 
             if season_rewards != []:
                 _, rewards = zip(*season_rewards)
@@ -283,8 +285,10 @@ class Events(commands.Cog):
                     description=r_overview,
                     add_footer=False,
                 )
+                embeds.append(embed)
 
-                await ctx.respond(embed=embed, ephemeral=True)
+            if embeds != []:
+                await ctx.respond(embeds=embeds, ephemeral=True)
 
             # Sending a message with the achievements that have been completed
             if user.achievements != new_user.achievements:
