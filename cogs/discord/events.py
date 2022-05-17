@@ -156,6 +156,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_completion(self, ctx):
+
         if ctx.no_completion:
             return
 

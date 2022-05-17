@@ -4,6 +4,7 @@ import math
 import random
 import textwrap
 import time
+from copy import copy
 from datetime import datetime
 from itertools import chain, groupby
 
@@ -153,7 +154,9 @@ def _add_test_stats_to_embed(
 
 class RetryView(BaseView):
     def __init__(self, ctx, captcha_callback):
-        super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT)
+        super().__init__(
+            ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT, author_id=ctx.author.id
+        )
 
         self.captcha_callback = captcha_callback
 
@@ -169,9 +172,12 @@ class RetryView(BaseView):
 
 class HighScoreCaptchaView(BaseView):
     def __init__(self, ctx, user, original_wpm):
-        super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT, author_id=user.id)
+        super().__init__(
+            ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT, author_id=ctx.author.id
+        )
 
         self.user = user
+
         self.original_wpm = original_wpm
         self.attempts = 0
 
@@ -267,7 +273,7 @@ class HighScoreCaptchaView(BaseView):
         try:
             message = await self.ctx.bot.wait_for(
                 "message",
-                check=lambda m: m.author.id == self.user.id,
+                check=_author_is_user(self.ctx),
                 timeout=expire_time,
             )
         except asyncio.TimeoutError:
@@ -772,6 +778,9 @@ class RaceJoinView(BaseView):
                 # Refetching user to account for state changes
                 user = await self.ctx.bot.mongo.fetch_user(r.user)
 
+                special_ctx = copy(self.ctx)
+                special_ctx.other_author = r.user
+
                 if r.save_score:
 
                     user.add_score(score)
@@ -788,7 +797,7 @@ class RaceJoinView(BaseView):
                     zone, zone_range = r.zone
 
                     score, show_hs_captcha = await Typing.handle_highscore_captcha(
-                        ctx=self.ctx,
+                        ctx=special_ctx,
                         send=self.ctx.respond,
                         user=user,
                         score=score,
@@ -800,14 +809,13 @@ class RaceJoinView(BaseView):
                     await self.ctx.bot.mongo.replace_user_data(user, r.user)
 
                 await Typing.log_typing_test(
-                    self.ctx, "Race", score.wpm, additional, score.is_hs
+                    special_ctx, "Race", score.wpm, additional, score.is_hs, r.user
                 )
 
                 embed = get_log_embed(
-                    self.ctx,
+                    special_ctx,
                     title="Race",
                     additional=additional + race_size_display,
-                    author=r.user,
                 )
 
             embeds.append(embed)
@@ -973,6 +981,8 @@ class Typing(commands.Cog):
         "race",
         f"Take a multiplayer typing test. Up to {MAX_RACE_JOIN-1} other users can join your race.",
     )
+
+    interval_captcha_fails = {}  # user_id: amt_in_a_row
 
     def __init__(self, bot):
         self.bot = bot
@@ -1273,11 +1283,11 @@ class Typing(commands.Cog):
         await cls.log_typing_test(ctx, "Typing Test", wpm, additional, is_hs)
 
     @staticmethod
-    async def log_typing_test(ctx, name, wpm, additional: str, is_hs: bool):
+    async def log_typing_test(
+        ctx, name, wpm, additional: str, is_hs: bool, author=None
+    ):
         test_embed = get_log_embed(
-            ctx,
-            title=name,
-            additional=additional,
+            ctx, title=name, additional=additional, author=author
         )
 
         embeds = [test_embed]
@@ -1326,8 +1336,8 @@ class Typing(commands.Cog):
 
         return score, False
 
-    @staticmethod
-    async def handle_interval_captcha(ctx, user):
+    @classmethod
+    async def handle_interval_captcha(cls, ctx, user):
         # Getting the quote for the captcha
         words, _ = _load_test_file(word_list.languages["english"]["easy"])
         captcha_word = random.choice(words)
@@ -1362,6 +1372,8 @@ class Typing(commands.Cog):
 
         word_display = f"**Word:** {captcha_word}"
 
+        flag_embed = None
+
         # Evaluating the success of the captcha
         if message.content.lower() == captcha_word:
             embed = ctx.embed(
@@ -1386,13 +1398,31 @@ class Typing(commands.Cog):
                 ctx,
                 title="Interval Captcha Failed",
                 additional=word_display,
-                error=False,
+                error=True,
             )
+
+            # Handling the fail
+
+            fails = cls.interval_captcha_fails.get(ctx.author.id, 0) + 1
+
+            cls.interval_captcha_fails[ctx.author.id] = fails
+
+            if fails != 0 and fails % 5 == 0:
+                flag_embed = get_log_embed(
+                    ctx,
+                    title="Several Consecutive Interval Captcha Fails",
+                    additional=f"**Fails:** {fails}",
+                    error=True,
+                )
 
         ctx.bot.active_end(ctx.author.id)
 
         # Logging the captcha
         await ctx.bot.test_wh.send(embed=embed)
+
+        # Logging suspicious amount of fails
+        if flag_embed is not None:
+            await ctx.bot.impt_wh.send(embed=flag_embed)
 
 
 def setup(bot):

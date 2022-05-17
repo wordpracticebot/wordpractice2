@@ -213,6 +213,8 @@ class CustomContextItems:
 
         self.no_completion = False
 
+        self.other_author = None
+
         # Hint is chosen when defining context to ensure a consistent hint throughout each response
         self.hint = random.choice(hints)
 
@@ -255,11 +257,21 @@ class CustomAppContext(bridge.BridgeApplicationContext, CustomContextItems):
         bridge.BridgeApplicationContext.__init__(self, *args, **kwargs)
         CustomContextItems.__init__(self)
 
+    @discord.utils.cached_property
+    def user(self):
+        return self.other_author or self.interaction.user
+
+    author = user
+
 
 class CustomPrefixContext(bridge.BridgeExtContext, CustomContextItems):
     def __init__(self, *args, **kwargs):
         bridge.BridgeExtContext.__init__(self, *args, **kwargs)
         CustomContextItems.__init__(self)
+
+    @discord.utils.cached_property
+    def author(self):
+        return self.other_author or self.message.author
 
 
 class WordPractice(commands.AutoShardedBot):
