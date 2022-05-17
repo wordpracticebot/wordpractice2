@@ -87,7 +87,7 @@ def _get_log_additional(wpm, raw, acc, word_display, xp_earned):
 
 
 def _get_test_warning(raw, acc, result):
-    if raw > 350:
+    if raw > 300:
         return "Please try not to spam the test."
 
     if acc < 75:
@@ -169,7 +169,7 @@ class RetryView(BaseView):
 
 class HighScoreCaptchaView(BaseView):
     def __init__(self, ctx, user, original_wpm):
-        super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT)
+        super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT, author_id=user.id)
 
         self.user = user
         self.original_wpm = original_wpm
@@ -267,7 +267,7 @@ class HighScoreCaptchaView(BaseView):
         try:
             message = await self.ctx.bot.wait_for(
                 "message",
-                check=_author_is_user(self.ctx),
+                check=lambda m: m.author.id == self.user.id,
                 timeout=expire_time,
             )
         except asyncio.TimeoutError:
@@ -280,7 +280,7 @@ class HighScoreCaptchaView(BaseView):
 
         if finished_test:
             end_time = _get_test_time(
-                message.created_at.timestamp(), start_msg.create_at.timestamp() + lag
+                message.created_at.timestamp(), start_msg.created_at.timestamp() + lag
             )
 
             u_input = message.content.split()
@@ -524,7 +524,7 @@ class RaceJoinView(BaseView):
 
         # Cooldown for joining the race (prevents spamming join and leave)
         self.race_join_cooldown = commands.CooldownMapping.from_cooldown(
-            1, 10, commands.BucketType.user
+            1, 6, commands.BucketType.user
         )
 
         self.add_author_to_race()
@@ -671,7 +671,7 @@ class RaceJoinView(BaseView):
 
         lag = time.time() - start_lag
 
-        self.start_time = self.race_msg.create_at.timestamp() + lag
+        self.start_time = self.race_msg.created_at.timestamp() + lag
 
         try:
             await asyncio.wait_for(self.wait_for_inputs(), timeout=TEST_EXPIRE_TIME)
@@ -769,9 +769,10 @@ class RaceJoinView(BaseView):
             score = r.result
 
             if score is not None:
+                # Refetching user to account for state changes
+                user = await self.ctx.bot.mongo.fetch_user(r.user)
+
                 if r.save_score:
-                    # Refetching user to account for state changes
-                    user = await self.ctx.bot.mongo.fetch_user(r.user)
 
                     user.add_score(score)
                     user.add_words(score.cw)
@@ -869,7 +870,7 @@ class RaceJoinView(BaseView):
                 timespan = format_timespan(retry_after)
 
                 return await interaction.response.send_message(
-                    f"Sorry you are being rate limited, try again in {timespan}",
+                    f"Sorry, you are on cooldown, try again in {timespan}",
                     ephemeral=True,
                 )
 
@@ -1103,7 +1104,7 @@ class Typing(commands.Cog):
 
         file = save_img_as_discord_png(base_img, "test")
 
-        embed = ctx.embed(title=title, description=desc, add_footer=False)
+        embed = ctx.embed(title=title, add_footer=False)
 
         embed.set_image(url=f"attachment://test.{STATIC_IMAGE_FORMAT}")
 
@@ -1112,6 +1113,8 @@ class Typing(commands.Cog):
         await asyncio.sleep(5 - max(load_time, 0))
 
         start_lag = time.time()
+
+        embed.description = desc + f"\n**Started:** <t:{int(start_lag - 1)}:R>"
 
         send_msg = await ctx.respond(embed=embed, file=file)
 
@@ -1293,6 +1296,8 @@ class Typing(commands.Cog):
     @staticmethod
     async def handle_highscore_captcha(ctx, send, user, score, zone, zone_range):
         if score.wpm > user.highspeed[zone].wpm:
+            prev_hs = user.highest_speed
+
             score.is_hs = True
 
             user.highspeed[zone] = score
@@ -1305,9 +1310,8 @@ class Typing(commands.Cog):
             await send(embed=embed)
 
             # Test high score anti cheat system
-
             if (
-                user.highest_speed * (1 + CAPTCHA_WPM_DEC)
+                prev_hs * (1 + CAPTCHA_WPM_DEC)
                 <= score.wpm
                 >= CAPTCHA_STARTING_THRESHOLD
             ):

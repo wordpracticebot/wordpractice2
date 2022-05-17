@@ -57,7 +57,14 @@ class CustomEmbed(discord.Embed):
 
 
 class BaseView(discord.ui.View):
-    def __init__(self, ctx, timeout=DEFAULT_VIEW_TIMEOUT, message=None, personal=True):
+    def __init__(
+        self,
+        ctx,
+        timeout=DEFAULT_VIEW_TIMEOUT,
+        message=None,
+        personal=True,
+        author_id=None,
+    ):
         super().__init__(timeout=timeout)
 
         self.ctx = ctx
@@ -65,6 +72,11 @@ class BaseView(discord.ui.View):
 
         # Allows regular messages to work with on_timeout
         self.message = message
+
+        if author_id is None:
+            author_id = self.ctx.author.id
+
+        self.author_id = author_id
 
     async def on_timeout(self):
         if self.children:
@@ -84,7 +96,7 @@ class BaseView(discord.ui.View):
 
     async def interaction_check(self, interaction):
         if self.personal is False or (
-            interaction.user and interaction.user.id == self.ctx.author.id
+            interaction.user and interaction.user.id == self.author_id
         ):
             return True
 

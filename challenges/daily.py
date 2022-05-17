@@ -55,7 +55,7 @@ class QuoteChallenge(Challenge):
         self.amt = amt
 
     async def user_progress(self, ctx, user):
-        return int(user.scores[-1].test_type_int == 0), 1
+        return int(len(user.scores) == 0 or not user.scores[-1].test_type_int == 0), 1
 
 
 @lru_cache(maxsize=1)

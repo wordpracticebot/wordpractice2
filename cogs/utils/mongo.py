@@ -245,6 +245,10 @@ class User(UserBase):
 
     def add_badge(self, badge_id):
         if badge_id not in self.badges:
+            # Setting as status if it's their first badge
+            if len(self.badges) == 0:
+                self.status = badge_id
+
             self.badges.append(badge_id)
 
 
