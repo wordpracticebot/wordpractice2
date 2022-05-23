@@ -7,6 +7,7 @@ from io import BytesIO, StringIO
 import discord
 import humanize
 from discord.ext import commands
+from matplotlib.figure import Figure
 
 import icons
 from challenges.achievements import categories, get_achievement_tier
@@ -118,6 +119,27 @@ class GraphView(ViewFromDict):
     @property
     def user_scores(self):
         return self.user.scores[::-1][: self.the_dict[self.page]]
+
+    def create_graph(self, amt: int):
+        fig = Figure(figsize=(8, 2.5))
+
+        axis = fig.add_subplot(1, 1, 1)
+
+        axis.set_xlabel("Tests")
+
+        scores = self.user.scores[-amt:]
+
+        axis.plot([10, 20, 30], [1, 2, 3], label="Wpm", marker="o")
+
+        fig.legend()
+
+        # Saving the graph as bytes
+        buffer = BytesIO()
+
+        fig.savefig(buffer, format="png")
+        buffer.seek(0)
+
+        return discord.File(buffer, filename="graph.png")
 
     async def create_page(self):
 
@@ -422,7 +444,7 @@ class ProfileView(BaseView):
 
     async def update_message(self, interaction):
         embed = self.get_embed()
-        await interaction.message.edit(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=self)
 
     def get_embed(self):
         """Generates the base embed for all the pages"""
@@ -638,15 +660,11 @@ class ProfileView(BaseView):
 
         return embed
 
-    def create_ranking_page(self, embed):
-        return embed
-
     def get_embed_callbacks(self):
         return {
             "Account": ["\N{BAR CHART}", self.create_account_page],
             "Typing": ["\N{KEYBOARD}", self.create_typing_page],
             "Achievements": ["\N{SHIELD}", self.create_achievements_page],
-            "Rankings": ["\N{TROPHY}", self.create_ranking_page],
         }
 
     async def start(self):
@@ -809,9 +827,9 @@ class Bot(commands.Cog):
 
     @cooldown(5, 2)
     @commands.slash_command()
-    async def achievements(self, ctx):
+    async def achievements(self, ctx, user: opt_user()):
         """See all the achievements"""
-        user_data = await self.bot.mongo.fetch_user(ctx.author)
+        user_data = await self.bot.mongo.fetch_user(user)
 
         view = AchievementsView(ctx, user_data)
 

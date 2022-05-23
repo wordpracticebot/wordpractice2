@@ -89,8 +89,7 @@ class BaseView(discord.ui.View):
             if not msg.components:
                 return
 
-            for child in self.children:
-                child.disabled = True
+            self.disable_all_items()
 
             await msg.edit(view=self)
 
@@ -163,7 +162,7 @@ class PageView(BaseView):
             for item in items:
                 view.add_item(item)
 
-        await interaction.message.edit(embed=embed, view=view)
+        await interaction.response.edit_message(embed=embed, view=view)
 
         if items is not None:
             for item in items:

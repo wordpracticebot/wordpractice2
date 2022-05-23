@@ -41,7 +41,7 @@ class Consistency(Achievement):
         result = (
             0
             if len(user.scores) < 30
-            else calculate_score_consistency(user.scores[:30])
+            else calculate_score_consistency(user.scores[-30:])
         )
 
         return result, 30

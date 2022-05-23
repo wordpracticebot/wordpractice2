@@ -10,6 +10,7 @@ SUPPORT_SERVER_INVITE = "https://discord.gg/wordpractice"
 
 # Images
 STATIC_IMAGE_FORMAT = "png"
+GRAPH_CDN_ENDPOINT = ""
 
 PRIVACY_POLICY_LINK = "https://wordpracticebot.github.io/privacy-policy/"
 RULES_LINK = "https://wordpracticebot.github.io/privacy-policy/rules"

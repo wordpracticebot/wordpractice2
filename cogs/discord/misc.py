@@ -137,7 +137,7 @@ class HelpView(BaseView):
 
     async def update_message(self, interaction, option):
         embed = await self.create_page(option)
-        await interaction.message.edit(embed=embed, view=self)
+        await interaction.response.edit_message(embed=embed, view=self)
 
     async def start(self):
         embed = await self.create_page("Welcome")

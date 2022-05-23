@@ -1124,7 +1124,7 @@ class Typing(commands.Cog):
 
         start_lag = time.time()
 
-        embed.description = desc + f"\n**Started:** <t:{int(start_lag - 1)}:R>"
+        embed.description = desc + f"\n**Started:** <t:{int(start_lag)}:R>"
 
         send_msg = await ctx.respond(embed=embed, file=file)
 

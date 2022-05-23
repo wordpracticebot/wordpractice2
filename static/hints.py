@@ -13,4 +13,5 @@ hints = [
     "Race against others with /race",
     "Change your typing test language with /language",
     "Equip one of your badges with /equip",
+    "Learn about the monthly season with /season",
 ]

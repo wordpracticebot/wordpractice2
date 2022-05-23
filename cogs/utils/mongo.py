@@ -204,7 +204,7 @@ class User(UserBase):
 
     @property
     def is_premium(self):
-        return not PREMIUM_LAUNCHED or self.premium
+        return PREMIUM_LAUNCHED is False or self.premium
 
     @property
     def is_daily_complete(self):

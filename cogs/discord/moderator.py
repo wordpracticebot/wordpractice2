@@ -2,7 +2,6 @@ import math
 
 import discord
 from discord.commands import Option
-from discord.commands.permissions import CommandPermission
 from discord.ext import commands
 
 import icons
@@ -29,10 +28,6 @@ async def cog_check(ctx):
 
 mod_command = commands.slash_command(
     guild_ids=[SUPPORT_GUILD_ID],
-    default_permission=False,
-    permissions=[
-        CommandPermission(id=user_id, type=2, permission=True) for user_id in MODERATORS
-    ],
     checks=[cog_check],
 )
 
@@ -84,7 +79,7 @@ class RestoreConfirm(BaseView):
     async def confirm_restore(self, button, interaction):
         embed = self.ctx.default_embed(title="Restored user's account")
 
-        await interaction.message.edit(embed=embed, view=None)
+        await interaction.response.edit_message(embed=embed, view=None)
 
         await self.ctx.bot.mongo.replace_user_data(self.user)
 

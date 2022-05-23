@@ -87,7 +87,7 @@ class EquipSelect(discord.ui.Select):
             add_footer=False,
         )
 
-        await interaction.message.edit(embed=embed, view=None)
+        await interaction.response.edit_message(embed=embed, view=None)
 
         user = await self.ctx.bot.mongo.fetch_user(self.ctx.author)
 
@@ -132,7 +132,7 @@ class ThemeSelect(discord.ui.Select):
 
         embed.set_image(url=f"attachment://preview.{STATIC_IMAGE_FORMAT}")
 
-        await interaction.message.edit(embed=embed, file=file, view=None)
+        await interaction.response.edit_message(embed=embed, file=file, view=None)
 
         user = await self.ctx.bot.mongo.fetch_user(self.ctx.author)
 

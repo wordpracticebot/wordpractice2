@@ -59,7 +59,7 @@ def get_typing_average(user, amount: int = 10):
     tw = 0
     cw = 0
 
-    scores = user.scores[:amount]
+    scores = user.scores[-amount:]
 
     for score in scores:
         wpm += score.wpm
