@@ -18,7 +18,7 @@ captcha = "^0.4"
 python-decouple = "^3.6"
 py-cord = "2.0.0rc1"
 async-cache = "^1.1.1"
-matplotlib = "^3.5.2"
+cryptography = "^37.0.2"
 
 [tool.poetry.dev-dependencies]
 isort = "^5.10.1"

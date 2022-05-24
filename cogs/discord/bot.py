@@ -1,19 +1,29 @@
 import csv
 import json
 import math
+import time
+from base64 import b64encode
 from datetime import datetime, timezone
 from io import BytesIO, StringIO
 
 import discord
 import humanize
+from cryptography.fernet import Fernet
 from discord.ext import commands
-from matplotlib.figure import Figure
 
 import icons
 from challenges.achievements import categories, get_achievement_tier
 from challenges.daily import get_daily_challenges
 from challenges.season import get_season_tiers
-from constants import COMPILE_INTERVAL, LB_DISPLAY_AMT, LB_LENGTH, PREMIUM_LINK
+from config import GRAPH_CND_SECRET
+from constants import (
+    COMPILE_INTERVAL,
+    GRAPH_CDN_BASE_URL,
+    GRAPH_EXPIRE_TIME,
+    LB_DISPLAY_AMT,
+    LB_LENGTH,
+    PREMIUM_LINK,
+)
 from helpers.checks import cooldown, user_check
 from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
@@ -36,6 +46,14 @@ SCORE_DATA_LABELS = {
 SCORES_PER_PAGE = 3
 
 EMOJIS_PER_TIER = 4
+
+
+def _encrypt_data(data: dict):
+    encoded_data = b64encode(json.dumps(data).encode())
+
+    encrypted_data = Fernet(GRAPH_CND_SECRET.encode()).encrypt(encoded_data)
+
+    return encrypted_data.decode()
 
 
 class SeasonView(ViewFromDict):
@@ -116,36 +134,39 @@ class GraphView(ViewFromDict):
 
         self.user = user
 
-    @property
-    def user_scores(self):
-        return self.user.scores[::-1][: self.the_dict[self.page]]
+    def get_graph_link(self, amt: int):
+        values = [[], [], []]
 
-    def create_graph(self, amt: int):
-        fig = Figure(figsize=(8, 2.5))
+        for s in self.user.scores[-amt:]:
+            values[0].append(s.wpm)
+            values[1].append(s.raw)
+            values[2].append(s.acc)
 
-        axis = fig.add_subplot(1, 1, 1)
+        labels = ["Wpm", "Raw Wpm", "Accuracy"]
 
-        axis.set_xlabel("Tests")
+        y_values = dict(zip(labels, values))
 
-        scores = self.user.scores[-amt:]
+        payload = {
+            "title": f"Last {amt} Test Scores",
+            "fig_size": (6, 4),
+            "until": time.time() + GRAPH_EXPIRE_TIME,
+            "y_values": y_values,
+        }
 
-        axis.plot([10, 20, 30], [1, 2, 3], label="Wpm", marker="o")
+        data = _encrypt_data(payload)
 
-        fig.legend()
-
-        # Saving the graph as bytes
-        buffer = BytesIO()
-
-        fig.savefig(buffer, format="png")
-        buffer.seek(0)
-
-        return discord.File(buffer, filename="graph.png")
+        return f"{GRAPH_CDN_BASE_URL}/score_graph?raw_data={data}"
 
     async def create_page(self):
+        amt = self.the_dict[self.page]
 
         embed = self.ctx.embed(
-            title="Graph",
+            title=f"Last {amt} Scores",
         )
+
+        url = self.get_graph_link(amt)
+
+        embed.set_image(url=url)
 
         return embed
 
@@ -493,11 +514,6 @@ class ProfileView(BaseView):
 
         return emoji, True
 
-    def create_achievements_page(self, embed):
-        embed.set_thumbnail(url="https://i.imgur.com/sQQXQsw.png")
-
-        return embed
-
     def get_thin_spacing(self, text: str, is_emoji: bool):
         if is_emoji:
             s = 9
@@ -664,7 +680,6 @@ class ProfileView(BaseView):
         return {
             "Account": ["\N{BAR CHART}", self.create_account_page],
             "Typing": ["\N{KEYBOARD}", self.create_typing_page],
-            "Achievements": ["\N{SHIELD}", self.create_achievements_page],
         }
 
     async def start(self):
@@ -731,7 +746,9 @@ class AchievementsView(ViewFromDict):
     async def create_page(self):
         c = self.the_dict[self.page]
 
-        embed = self.ctx.embed(title=f"{self.page}", description=c.desc)
+        embed = self.ctx.embed(
+            title=f"{self.user.display_name} | {self.page}", description=c.desc
+        )
 
         for a in c.challenges:
             tier_display = ""
@@ -829,7 +846,7 @@ class Bot(commands.Cog):
     @commands.slash_command()
     async def achievements(self, ctx, user: opt_user()):
         """See all the achievements"""
-        user_data = await self.bot.mongo.fetch_user(user)
+        user_data = await user_check(ctx, user)
 
         view = AchievementsView(ctx, user_data)
 

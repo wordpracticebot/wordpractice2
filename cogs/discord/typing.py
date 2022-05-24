@@ -219,7 +219,7 @@ class HighScoreCaptchaView(BaseView):
 
         button.disabled = True
 
-        await self.message.edit(view=view)
+        await interaction.message.edit(view=view)
 
         # Generating the quote for the test
         quote, wrap_width = await Typing.handle_dictionary_input(self.ctx, 35)
@@ -374,7 +374,7 @@ class HighScoreCaptchaView(BaseView):
             ),
         )
 
-        self.message = await self.ctx.respond(embed=embed, view=self)
+        await self.ctx.respond(embed=embed, view=self)
 
 
 class TestResultView(BaseView):

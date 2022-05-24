@@ -1,3 +1,5 @@
+from base64 import b64encode
+
 from decouple import config
 
 BOT_TOKEN = config("BOT_TOKEN")
@@ -18,6 +20,7 @@ DEBUG_GUILD_ID = config("DEBUG_GUILD_ID", cast=int)
 TESTING = config("TESTING", cast=bool, default=False)
 
 DBL_TOKEN = config("DBL_TOKEN", default=None)
+GRAPH_CND_SECRET = config("GRAPH_CND_SECRET")
 
 MODERATORS = config(
     "MODERATORS", cast=lambda x: [int(m.strip()) for m in x.split(",")], default=[]

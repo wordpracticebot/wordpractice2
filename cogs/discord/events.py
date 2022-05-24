@@ -64,8 +64,6 @@ class Events(commands.Cog):
 
             return self.bot.active_end(ctx.author.id)
 
-        error = error.original
-
         if isinstance(error, OnGoingTest):
             return await self.bot.handle_ongoing_test_error(ctx.respond)
 

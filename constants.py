@@ -10,7 +10,8 @@ SUPPORT_SERVER_INVITE = "https://discord.gg/wordpractice"
 
 # Images
 STATIC_IMAGE_FORMAT = "png"
-GRAPH_CDN_ENDPOINT = ""
+GRAPH_CDN_BASE_URL = "https://image-cdn.principle105.repl.co"
+GRAPH_EXPIRE_TIME = 60 * 60 * 24
 
 PRIVACY_POLICY_LINK = "https://wordpracticebot.github.io/privacy-policy/"
 RULES_LINK = "https://wordpracticebot.github.io/privacy-policy/rules"
