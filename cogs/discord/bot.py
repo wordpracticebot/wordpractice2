@@ -15,7 +15,7 @@ import icons
 from challenges.achievements import categories, get_achievement_tier
 from challenges.daily import get_daily_challenges
 from challenges.season import get_season_tiers
-from config import GRAPH_CND_SECRET
+from config import GRAPH_CDN_SECRET
 from constants import (
     COMPILE_INTERVAL,
     GRAPH_CDN_BASE_URL,
@@ -51,9 +51,34 @@ EMOJIS_PER_TIER = 4
 def _encrypt_data(data: dict):
     encoded_data = b64encode(json.dumps(data).encode())
 
-    encrypted_data = Fernet(GRAPH_CND_SECRET.encode()).encrypt(encoded_data)
+    encrypted_data = Fernet(GRAPH_CDN_SECRET.encode()).encrypt(encoded_data)
 
     return encrypted_data.decode()
+
+
+def get_graph_link(user, amt: int, dimensions: tuple):
+    values = [[], [], []]
+
+    for s in user.scores[-amt:]:
+        values[0].append(s.wpm)
+        values[1].append(s.raw)
+        values[2].append(s.acc)
+
+    labels = ["Wpm", "Raw Wpm", "Accuracy"]
+
+    y_values = dict(zip(labels, values))
+
+    payload = {
+        "title": f"Last {amt} Test Scores",
+        "fig_size": dimensions,
+        "until": time.time() + GRAPH_EXPIRE_TIME,
+        "y_values": y_values,
+        "colours": user.theme + ["#ffffff"],
+    }
+
+    data = _encrypt_data(payload)
+
+    return f"{GRAPH_CDN_BASE_URL}/score_graph?raw_data={data}"
 
 
 class SeasonView(ViewFromDict):
@@ -134,29 +159,6 @@ class GraphView(ViewFromDict):
 
         self.user = user
 
-    def get_graph_link(self, amt: int):
-        values = [[], [], []]
-
-        for s in self.user.scores[-amt:]:
-            values[0].append(s.wpm)
-            values[1].append(s.raw)
-            values[2].append(s.acc)
-
-        labels = ["Wpm", "Raw Wpm", "Accuracy"]
-
-        y_values = dict(zip(labels, values))
-
-        payload = {
-            "title": f"Last {amt} Test Scores",
-            "fig_size": (6, 4),
-            "until": time.time() + GRAPH_EXPIRE_TIME,
-            "y_values": y_values,
-        }
-
-        data = _encrypt_data(payload)
-
-        return f"{GRAPH_CDN_BASE_URL}/score_graph?raw_data={data}"
-
     async def create_page(self):
         amt = self.the_dict[self.page]
 
@@ -164,7 +166,7 @@ class GraphView(ViewFromDict):
             title=f"Last {amt} Scores",
         )
 
-        url = self.get_graph_link(amt)
+        url = get_graph_link(self.user, amt, (6, 4))
 
         embed.set_image(url=url)
 
@@ -673,6 +675,10 @@ class ProfileView(BaseView):
         )
 
         embed.add_field(name="Recent Typing Scores", value="** **", inline=False)
+
+        url = get_graph_link(self.user, 10, (8, 4))
+
+        embed.set_image(url=url)
 
         return embed
 

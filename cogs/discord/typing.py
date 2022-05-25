@@ -259,6 +259,8 @@ class HighScoreCaptchaView(BaseView):
 
         start_lag = time.time()
 
+        embed.description += f"\n**Started:** <t:{int(start_lag)}:R>"
+
         start_msg = await self.ctx.respond(embed=embed, file=file)
 
         lag = time.time() - start_lag
@@ -526,6 +528,7 @@ class RaceJoinView(BaseView):
         self.racers = {}  # id: user object (for preserve uniqueness)
 
         self.race_msg = None
+        self.start_lag = None
         self.start_time = None
 
         # Cooldown for joining the race (prevents spamming join and leave)
@@ -601,6 +604,9 @@ class RaceJoinView(BaseView):
             add_footer=False,
         )
 
+        if self.start_lag is not None:
+            embed.description += f"\n**Started:** <t:{int(self.start_lag)}:R>"
+
         return embed
 
     async def handle_racer_finish(self, m):
@@ -651,7 +657,6 @@ class RaceJoinView(BaseView):
 
         file = save_img_as_discord_png(loading_img, "loading")
 
-        # Loading image
         embed = self.get_race_embed()
 
         embed.set_image(url=f"attachment://loading.{STATIC_IMAGE_FORMAT}")
@@ -663,19 +668,19 @@ class RaceJoinView(BaseView):
 
         file = save_img_as_discord_png(base_img, "test")
 
-        embed = self.get_race_embed()
-
-        embed.set_image(url=f"attachment://test.{STATIC_IMAGE_FORMAT}")
-
         load_time = time.time() - load_start
 
         await asyncio.sleep(5 - max(load_time, 0))
 
-        start_lag = time.time()
+        self.start_lag = time.time()
+
+        embed = self.get_race_embed()
+
+        embed.set_image(url=f"attachment://test.{STATIC_IMAGE_FORMAT}")
 
         self.race_msg = await self.ctx.respond(embed=embed, file=file)
 
-        lag = time.time() - start_lag
+        lag = time.time() - self.start_lag
 
         self.start_time = self.race_msg.created_at.timestamp() + lag
 
