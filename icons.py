@@ -49,3 +49,8 @@ mistake = ":x:"
 pacer = ":timer:"
 language = ":earth_americas:"
 words = ":1234:"
+
+# Badges
+dev_badge = "<:dev_badge:979447783331332198>"
+artist_badge = "<:artist_badge:979447783465553970>"
+idea_badge = "<:idea_badge:979447783478145054>"

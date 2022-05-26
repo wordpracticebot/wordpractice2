@@ -175,6 +175,22 @@ class Misc(commands.Cog):
 
         await ctx.respond(embed=embed)
 
+    @commands.slash_command(name="attribution")
+    async def _attribution(self, ctx):
+        """View the bot's attribution"""
+
+        embed = ctx.embed(
+            title=f"{icons.dev_badge} | Attribution",
+            description=f"```Thank you to everyone who helped make this bot possible!```\n > **Development:** {icons.dev_badge} \n > **Ideas/Suggestions:** {icons.idea_badge} \n > **Art/Graphics:** {icons.artist_badge}\n ㅤ\n",
+            )
+        embed.add_field(name=f"`Principle#0853` | {icons.dev_badge} {icons.idea_badge}", value = f"> Thank you for all the development done! Thomas would be proud.", inline=True)
+        embed.add_field(name=f"`Harold#2398` | {icons.idea_badge} {icons.artist_badge}", value = f"> Just a cheese man eating cheese", inline=True)
+        embed.add_field(name=f"`Someone#9878` | {icons.idea_badge}", value = f"> All hail the Cat Lady for her tireless efforts on the mod-team!", inline=True)
+
+        embed.add_field(name=f"Miodec#1512", value = f"> Thank you for all the ideas and suggestions! I would be proud.", inline=True)
+        embed.add_field(name=f"`Freepik` | {icons.artist_badge}", value = f"> Thank you to freepik for the awesome free assets!", inline=False)
+        await ctx.respond(embed=embed)
+
     @commands.slash_command(name="help")
     async def _help(self, ctx):
         """Help with bot usage and list of commands"""
