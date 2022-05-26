@@ -174,11 +174,18 @@ class WelcomeView(BaseView):
         )
 
         accept_time = 5
+        #timestamp = int(time.time() + accept_time)
+        # embed.set_footer(
 
+        #     text=f"You will be able to click accept in <t:{timestamp}:R>"
+        # )
+        
         embed.set_footer(
-            text=f"You will be able to click accept after {accept_time} seconds"
-        )
 
+            text=f"You will be able to click accept in 5 seconds!"
+        )
+        #TODO: Add a timer to the footer, replace current gif with a timer
+        embed.set_thumbnail(url="https://i.imgur.com/2vUD4NF.png")
         self.accept.disabled = True
 
         # Adding the links
