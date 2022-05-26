@@ -14,7 +14,7 @@ from helpers.ui import BaseView, ScrollView, create_link_view
 INFRACTIONS_PER_PAGE = 3
 
 BAN_AUTOCOMPLETE = [
-    "Cheating",
+    "Unfair Advantage",
     "Trading",
     "Advertisement",
     "Exploiting",

@@ -357,18 +357,18 @@ class Customization(commands.Cog):
 
         embed.add_field(
             name=":paintbrush: Theme",
-            value=f"{theme_icon} {theme_name} ({user.theme[0]} {user.theme[1]})"
+            value=f"> {theme_icon} {theme_name} (`{user.theme[0]}`, `{user.theme[1]}`)"
             + (
                 ""
                 if author_data.is_premium
-                else f"\n**[Patrons]({PREMIUM_LINK})** can unlock custom themes!"
+                else f"\n**[Donators]({PREMIUM_LINK})** can unlock custom themes!"
             ),
             inline=False,
         )
 
         embed.add_field(
             name=f"** **\n{icons.language} Language",
-            value=f"{user.language.capitalize()} ({user.level.capitalize()})",
+            value=f"> {user.language.capitalize()} ({user.level.capitalize()})",
             inline=False,
         )
 
