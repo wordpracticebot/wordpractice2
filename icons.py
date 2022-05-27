@@ -4,13 +4,15 @@
 xp = "<:xp:934865195438854155>"
 
 # Success indicators
-success = ":white_check_mark:"
-caution = ":warning:"
-danger = ":no_entry:"
+success = "<a:success:979725804592316486>"
+caution = "<:yellow_dot:97972934214381569>"
+error = "<a:error:979728003422650388>"
+fatal = "<a:error:979728003422650388>"
 
 # Dots
 green_dot = "<:green_dot:974116115108229120>"
 red_dot = "<:red_dot:974116115141783573>"
+caution = "<:yellow_dot:97972934214381569>"
 
 # Progress bars
 h_progress_bar = [

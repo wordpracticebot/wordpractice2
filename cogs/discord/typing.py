@@ -565,7 +565,7 @@ class RaceJoinView(BaseView):
             self.end_all_racers()
 
             embed = self.ctx.error_embed(
-                title=f"{icons.caution} Race Ended",
+                title=f"{icons.error} | Race Ended",
                 description="The race leader left the race",
             )
 
@@ -934,7 +934,7 @@ class RaceJoinView(BaseView):
         timespan = format_timespan(RACE_JOIN_EXPIRE_TIME)
 
         embed = self.ctx.error_embed(
-            title=f"{icons.caution} Race Expired",
+            title=f"{icons.error} Race Expired",
             description=f"The race was not started within {timespan}",
         )
 
@@ -1395,7 +1395,7 @@ class Typing(commands.Cog):
             )
 
         else:
-            embed = ctx.error_embed(title=f"{icons.caution} Captcha Failed")
+            embed = ctx.error_embed(title=f"{icons.error} Captcha Failed")
 
             await ctx.respond(embed=embed)
 

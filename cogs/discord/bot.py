@@ -778,7 +778,7 @@ class AchievementsView(ViewFromDict):
             emoji = (
                 icons.success
                 if await a.is_completed(self.ctx, self.user)
-                else icons.danger
+                else icons.error
             )
 
             reward_display = (
@@ -938,7 +938,7 @@ class Bot(commands.Cog):
 
         if len(user_data.scores) == 0:
             embed = ctx.error_embed(
-                title=f"{icons.caution} User does not have any scores saved",
+                title=f"{icons.error} | User does not have any scores saved",
                 description="Complete at least 1 typing test or race",
             )
             return await ctx.respond(embed=embed)
@@ -955,7 +955,7 @@ class Bot(commands.Cog):
 
         if len(user_data.badges) == 0:
             embed = ctx.error_embed(
-                title=f"{icons.caution} User does not have any badges"
+                title=f"{icons.error} | User does not have any badges"
             )
 
         else:

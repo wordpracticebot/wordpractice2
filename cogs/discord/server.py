@@ -26,7 +26,7 @@ class Server(commands.Cog):
         """Update your wordPractice roles on the server"""
 
         if SERVER_ROLES is False:
-            embed = ctx.error_embed(title=f"{icons.caution} Roles have been disabled")
+            embed = ctx.error_embed(title=f"{icons.error} Roles have been disabled")
 
             return await ctx.respond(embed=embed)
 
@@ -34,7 +34,7 @@ class Server(commands.Cog):
 
         if len(user.scores) == 0:
             embed = ctx.error_embed(
-                title=f"{icons.caution} User does not have any scores saved",
+                title=f"{icons.error} | User does not have any scores saved",
                 description="Complete at least 1 typing test to update your roles.",
             )
             return await ctx.respond(embed=embed)

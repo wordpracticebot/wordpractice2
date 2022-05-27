@@ -219,7 +219,7 @@ class Moderator(commands.Cog):
         result = await self.bot.mongo.restore_user(user_data)
 
         if result is False:
-            embed = ctx.error_embed(title=f"{icons.caution} User backup not found")
+            embed = ctx.error_embed(title=f"{icons.error} User backup not found")
 
             return await ctx.respond(embed=embed)
 
