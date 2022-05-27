@@ -171,6 +171,8 @@ class Misc(commands.Cog):
         # Discord API latency
         latency = round(self.bot.latency * 1000, 3)
 
+        0 / 0
+
         embed = ctx.embed(title=f"Pong! {latency} ms", add_footer=False)
 
         await ctx.respond(embed=embed)
@@ -181,23 +183,55 @@ class Misc(commands.Cog):
 
         embed = ctx.embed(
             title=f"{icons.dev_badge} | Attribution",
-            description=f"```Thank you to everyone who helped make this bot possible!```\n > **Development:** {icons.dev_badge} \n > **Ideas/Suggestions:** {icons.idea_badge} \n > **Art/Graphics:** {icons.artist_badge}\n ㅤ\n",
-            )
-        embed.add_field(name=f"`Principle#0853` | {icons.dev_badge} {icons.idea_badge}", value = f"> Thank you for all the development done! Thomas would be proud.", inline=True)
-        embed.add_field(name=f"`Harold#2398` | {icons.idea_badge} {icons.artist_badge}", value = f"> Just a cheese man eating cheese", inline=True)
-        embed.add_field(name=f"`Someone#9878` | {icons.idea_badge}", value = f"> All hail the Cat Lady for her tireless efforts on the mod-team!", inline=True)
-        embed.add_field(name=f"`loboru#1994` | {icons.idea_badge}", value = f"> Thank you so much for your initial support on the wordPractice project! Without your help, we could have never gotten here.", inline=True)
-        embed.add_field(name=f"`Miodec#1512`", value = f"> WP's WPM formula as well as typing words are derived from Miodec's work. Thank you so much!", inline=True)
+            description=(
+                f"```Thank you to everyone who helped make this bot possible!```\n"
+                "> **Development:** {icons.dev_badge}\n"
+                "> **Ideas/Suggestions:** {icons.idea_badge}\n"
+                "> **Art/Graphics:** {icons.artist_badge}\n\n** **"
+            ),
+        )
+        embed.add_field(
+            name=f"`Principle#0853` | {icons.dev_badge} {icons.idea_badge}",
+            value=f"> Thank you for all the development done! Thomas would be proud.",
+            inline=True,
+        )
+        embed.add_field(
+            name=f"`Harold#2398` | {icons.idea_badge} {icons.artist_badge}",
+            value=f"> Just a cheese man eating cheese",
+            inline=True,
+        )
+        embed.add_field(
+            name=f"`Someone#9878` | {icons.idea_badge}",
+            value=f"> All hail the Cat Lady for her tireless efforts on the mod-team!",
+            inline=True,
+        )
+        embed.add_field(
+            name=f"`loboru#1994` | {icons.idea_badge}",
+            value=f"> Thank you so much for your initial support on the wordPractice project! Without your help, we could have never gotten here.",
+            inline=True,
+        )
+        embed.add_field(
+            name=f"`Miodec#1512`",
+            value=f"> WP's consistency formula as well as typing words are derived from Miodec's work. Thank you so much!",
+            inline=True,
+        )
 
-        embed.add_field(name=f"`Freepik` | {icons.artist_badge}", value = f"> Thank you to freepik for the awesome free assets!", inline=False)
+        embed.add_field(
+            name=f"`Freepik` | {icons.artist_badge}",
+            value=f"> Thank you to freepik for the awesome free assets!",
+            inline=False,
+        )
+
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name="help")
     async def _help(self, ctx):
         """Help with bot usage and list of commands"""
+
         view = HelpView(
             ctx, timeout=30
         )  # longer timeout gives time for people to run the commands
+
         await view.start()
 
     @cooldown(3, 1)

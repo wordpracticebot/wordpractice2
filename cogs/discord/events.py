@@ -47,20 +47,23 @@ class Events(commands.Cog):
         await self.bot.cmd_wh.send(embed=embed)
 
     @staticmethod
-    async def send_basic_error(ctx, title, desc):
-        embed = ctx.error_embed(title=f"{icons.error} {title}", description=desc)
+    async def send_basic_error(
+        ctx, *, title, desc=None, severe=False, ephemeral=False, view=None
+    ):
+        added = f"{icons.danger} `ERROR!`" if severe else icons.caution
 
-        await ctx.respond(embed=embed)
+        embed = ctx.error_embed(title=f"{added} {title}", description=desc)
+
+        await ctx.respond(embed=embed, ephemeral=ephemeral, view=view)
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
         if isinstance(error, (discord.errors.CheckFailure, commands.CheckFailure)):
 
             if isinstance(error, errors.BotMissingPermissions):
-                embed = ctx.error_embed(
-                    title=f"{icons.error} `ERROR! Bot Missing Permissions",
+                await self.send_basic_error(
+                    ctx, title="Bot Missing Permissions", severe=True
                 )
-                await ctx.respond(embed=embed, ephemeral=True)
 
             return self.bot.active_end(ctx.author.id)
 
@@ -73,8 +76,8 @@ class Events(commands.Cog):
             try:
                 await self.send_basic_error(
                     ctx,
-                    "Permission Error",
-                    "I am missing the correct permissions",
+                    title="Permission Error",
+                    desc="I am missing the correct permissions",
                 )
             except Exception:
                 pass
@@ -94,12 +97,14 @@ class Events(commands.Cog):
                 options = " ".join(f"`{o}`" for o in error.options)
                 message += f"\n\n**Did you mean?**\n{options}"
 
-            return await self.send_basic_error(ctx, "Invalid Argument", message)
+            return await self.send_basic_error(
+                ctx, title="Invalid Argument", desc=message
+            )
 
         await self.send_basic_error(
             ctx,
-            "Invalid Input",
-            (
+            title="Invalid Input",
+            desc=(
                 "Your input is malformed"
                 f"Type `{ctx.prefix}help` for a list of commands"
             ),
@@ -108,12 +113,13 @@ class Events(commands.Cog):
     async def handle_unexpected_error(self, ctx, error):
         view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
 
-        embed = ctx.error_embed(
-            title=f"{icons.fatal} `ERROR!!` Unexpected Error",
-            description="> Report this through our support server so we can fix it.",
+        await self.send_basic_error(
+            ctx,
+            title="Unexpected Error",
+            desc="> Report this through our support server so we can fix it.",
+            view=view,
+            severe=True,
         )
-
-        await ctx.respond(embed=embed, view=view)
 
         command = format_slash_command(ctx.command)
 
