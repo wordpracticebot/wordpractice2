@@ -58,7 +58,7 @@ class Events(commands.Cog):
 
             if isinstance(error, errors.BotMissingPermissions):
                 embed = ctx.error_embed(
-                    title=f"{icons.error} Bot Missing Permissions",
+                    title=f"{icons.error} `ERROR! Bot Missing Permissions",
                 )
                 await ctx.respond(embed=embed, ephemeral=True)
 
@@ -109,8 +109,8 @@ class Events(commands.Cog):
         view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
 
         embed = ctx.error_embed(
-            title=f"{icons.fatal} Unexpected Error",
-            description="Report this through our support server so we can fix it.",
+            title=f"{icons.fatal} `ERROR!!` Unexpected Error",
+            description="> Report this through our support server so we can fix it.",
         )
 
         await ctx.respond(embed=embed, view=view)

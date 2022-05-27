@@ -938,8 +938,8 @@ class Bot(commands.Cog):
 
         if len(user_data.scores) == 0:
             embed = ctx.error_embed(
-                title=f"{icons.error} | User does not have any scores saved",
-                description="Complete at least 1 typing test or race",
+                title=f"{icons.error} `ERROR!` User does not have any scores saved:",
+                description="> Please complete at least 1 typing test or race using `/tt`",
             )
             return await ctx.respond(embed=embed)
 
@@ -955,7 +955,7 @@ class Bot(commands.Cog):
 
         if len(user_data.badges) == 0:
             embed = ctx.error_embed(
-                title=f"{icons.error} | User does not have any badges"
+                title=f"{icons.error} `ERROR!` User does not have any badges"
             )
 
         else:

@@ -223,7 +223,7 @@ class Customization(commands.Cog):
             )
 
         embed = ctx.embed(
-            title=f"{icons.success} | **Updated language to:** `{name.capitalize()} {difficulty.capitalize()}`",
+            title=f"{icons.success} `{name.capitalize()} {difficulty.capitalize()}` is now your set language!",
             add_footer=False,
         )
 
@@ -319,7 +319,7 @@ class Customization(commands.Cog):
 
         if len(user.badges) == 0:
             embed = ctx.error_embed(
-                title=f"{icons.error} | You don't have any badges!",
+                title=f"{icons.error} `ERROR!` You don't have any badges!",
                 description="Earn badges through achievements and monthly seasons",
             )
             return await ctx.respond(embed=embed)
