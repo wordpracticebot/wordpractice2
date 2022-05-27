@@ -17,7 +17,7 @@ from static import themes
 
 
 def _get_theme_preview_file(theme):
-    raw_quote = "This is a preview of your theme. Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut nulla quas eius temporibus ex facilis ipsum culpa quod non possimus."
+    raw_quote = "This is a preview of your theme. Thomas the chatbot was walking down the street with an ice cream cone. He dropped the cone on the ground and was sad. The End."
 
     base_img = get_base_img(raw_quote, DEFAULT_WRAP, theme)
 

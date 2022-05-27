@@ -98,7 +98,7 @@ class Events(commands.Cog):
                 message += f"\n\n**Did you mean?**\n{options}"
 
             return await self.send_basic_error(
-                ctx, title="Invalid Argument", desc=message
+                ctx, title="Invalid Argument", desc=message, severe=True
             )
 
         await self.send_basic_error(
