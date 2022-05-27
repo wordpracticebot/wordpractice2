@@ -90,6 +90,8 @@ async def user_check(ctx, user):
     user = await ctx.bot.mongo.fetch_user(user)
 
     if user is None:
-        raise commands.BadArgument("User not in database, have they used wordPractice before?")
+        raise commands.BadArgument(
+            "User not in database, have they used wordPractice before?"
+        )
 
     return user

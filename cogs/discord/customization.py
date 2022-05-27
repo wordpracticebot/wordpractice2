@@ -25,7 +25,7 @@ def _get_theme_preview_file(theme):
 
 
 # Formula from: https://gist.github.com/ryancat/9972419b2a78f329ce3aebb7f1a09152
-def _get_colour_perceptual_distance(self, c1, c2):
+def _get_colour_perceptual_distance(c1, c2):
     """Calculates perceptual distance between two colours"""
     c1 = math.sqrt(c1[1] * c1[1] + c1[2] * c1[2])
     c2 = math.sqrt(c2[1] * c2[1] + c2[2] * c2[2])
@@ -319,7 +319,7 @@ class Customization(commands.Cog):
 
         if len(user.badges) == 0:
             embed = ctx.error_embed(
-                title=f"{icons.error} `ERROR!` You don't have any badges!",
+                title=f"{icons.caution} You don't have any badges!",
                 description="Earn badges through achievements and monthly seasons",
             )
             return await ctx.respond(embed=embed)
@@ -357,7 +357,7 @@ class Customization(commands.Cog):
 
         embed.add_field(
             name=":paintbrush: Theme",
-            value=f"> {theme_icon} {theme_name} (`{user.theme[0]}`, `{user.theme[1]}`)"
+            value=f"{theme_icon} {theme_name} (`{user.theme[0]}`, `{user.theme[1]}`)"
             + (
                 ""
                 if author_data.is_premium
@@ -368,7 +368,7 @@ class Customization(commands.Cog):
 
         embed.add_field(
             name=f"** **\n{icons.language} Language",
-            value=f"> {user.language.capitalize()} ({user.level.capitalize()})",
+            value=f"{user.language.capitalize()} ({user.level.capitalize()})",
             inline=False,
         )
 

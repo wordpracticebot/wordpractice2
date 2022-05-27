@@ -238,7 +238,7 @@ class ScoreView(ScrollView):
             title=f"{self.user.display_name} | Recent Scores ({start_page + 1} - {end_page} of {total_scores})",
             description=" "
             if self.user.is_premium
-            else f"**[Patrons]({PREMIUM_LINK})** can download test scores",
+            else f"**[Donators]({PREMIUM_LINK})** can download test scores",
         )
 
         for i, s in enumerate(self.user.scores[::-1][start_page:end_page]):
@@ -778,7 +778,7 @@ class AchievementsView(ViewFromDict):
             emoji = (
                 icons.success
                 if await a.is_completed(self.ctx, self.user)
-                else icons.error
+                else icons.danger
             )
 
             reward_display = (
@@ -938,7 +938,7 @@ class Bot(commands.Cog):
 
         if len(user_data.scores) == 0:
             embed = ctx.error_embed(
-                title=f"{icons.error} `ERROR!` User does not have any scores saved:",
+                title=f"{icons.caution} User does not have any scores saved:",
                 description="> Please complete at least 1 typing test or race using `/tt`",
             )
             return await ctx.respond(embed=embed)
@@ -955,7 +955,7 @@ class Bot(commands.Cog):
 
         if len(user_data.badges) == 0:
             embed = ctx.error_embed(
-                title=f"{icons.error} `ERROR!` User does not have any badges"
+                title=f"{icons.caution} User does not have any badges"
             )
 
         else:

@@ -19,6 +19,39 @@ from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
 from helpers.utils import can_run, cmd_run_before, format_slash_command, get_bar
 
+CREDITS = [
+    [
+        "Principle",
+        [icons.dev_badge, icons.idea_badge],
+        "Thank you for all the development done! Thomas would be proud",
+    ],
+    [
+        "Harold",
+        [icons.idea_badge, icons.artist_badge],
+        "Just a cheese man eating cheese",
+    ],
+    [
+        "Someone",
+        [icons.idea_badge],
+        "All hail the Cat Lady for her tireless efforts on the mod-team!",
+    ],
+    [
+        "loboru",
+        [icons.idea_badge],
+        "Thank you so much for your initial support on the wordPractice project! Without your help, we could have never gotten here.",
+    ],
+    [
+        "Miodec",
+        [],
+        "Consistency formula as well as typing words are derived from Miodec's Monkeytype. Thank you so much!",
+    ],
+    [
+        "Freepik",
+        [icons.artist_badge],
+        "Thank you to freepik for the awesome free assets!",
+    ],
+]
+
 
 def _add_commands(embed, cmds):
     """Formats commands fields and adds them to embeds"""
@@ -175,29 +208,40 @@ class Misc(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(name="attribution")
-    async def _attribution(self, ctx):
+    @commands.slash_command()
+    async def attribution(self, ctx):
         """View the bot's attribution"""
-
         embed = ctx.embed(
             title=f"{icons.dev_badge} | Attribution",
-            description=f"```Thank you to everyone who helped make this bot possible!```\n > **Development:** {icons.dev_badge} \n > **Ideas/Suggestions:** {icons.idea_badge} \n > **Art/Graphics:** {icons.artist_badge}\n ㅤ\n",
-            )
-        embed.add_field(name=f"`Principle#0853` | {icons.dev_badge} {icons.idea_badge}", value = f"> Thank you for all the development done! Thomas would be proud.", inline=True)
-        embed.add_field(name=f"`Harold#2398` | {icons.idea_badge} {icons.artist_badge}", value = f"> Just a cheese man eating cheese", inline=True)
-        embed.add_field(name=f"`Someone#9878` | {icons.idea_badge}", value = f"> All hail the Cat Lady for her tireless efforts on the mod-team!", inline=True)
-        embed.add_field(name=f"`loboru#1994` | {icons.idea_badge}", value = f"> Thank you so much for your initial support on the wordPractice project! Without your help, we could have never gotten here.", inline=True)
-        embed.add_field(name=f"`Miodec#1512`", value = f"> WP's WPM formula as well as typing words are derived from Miodec's work. Thank you so much!", inline=True)
+            description=(
+                f"```Thank you to everyone who helped make this bot possible!```\n"
+                f"**Development:** {icons.dev_badge}\n"
+                f"**Ideas/Suggestions:** {icons.idea_badge}\n"
+                f"**Art/Graphics:** {icons.artist_badge}\n\n** **"
+            ),
+        )
 
-        embed.add_field(name=f"`Freepik` | {icons.artist_badge}", value = f"> Thank you to freepik for the awesome free assets!", inline=False)
+        for i, (name, badges, desc) in enumerate(CREDITS):
+            if badges:
+                badge_display = " | " + " ".join(badges)
+            else:
+                badge_display = ""
+
+            embed.add_field(name=f"`{name}`{badge_display}", value=f"> {desc}\n\n** **")
+
+            if i % 2 == 1:
+                embed.add_field(name="** **", value="** **")
+
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name="help")
     async def _help(self, ctx):
         """Help with bot usage and list of commands"""
+
         view = HelpView(
             ctx, timeout=30
         )  # longer timeout gives time for people to run the commands
+
         await view.start()
 
     @cooldown(3, 1)
