@@ -94,7 +94,7 @@ class Events(commands.Cog):
                 options = " ".join(f"`{o}`" for o in error.options)
                 message += f"\n\n**Did you mean?**\n{options}"
 
-            return await self.send_basic_error(ctx, "Invalid Argument", message)
+            return await self.send_basic_error(ctx, "`ERROR!` Invalid Argument", message)
 
         await self.send_basic_error(
             ctx,
