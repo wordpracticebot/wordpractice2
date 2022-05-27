@@ -123,7 +123,7 @@ class ThemeSelect(discord.ui.Select):
         theme_value = themes.default[option]["colours"]
 
         embed = self.ctx.custom_embed(
-            title=f"Theme Selected",
+            title="Theme Selected",
             color=int(theme_value[1].replace("#", "0x"), 16),
             add_footer=False,
         )
