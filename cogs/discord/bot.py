@@ -56,7 +56,10 @@ def _encrypt_data(data: dict):
     return encrypted_data.decode()
 
 
-def get_graph_link(user, amt: int, dimensions: tuple):
+def get_graph_link(*, user, amt: int, dimensions: tuple, current_time=None):
+    if current_time is None:
+        current_time = time.time()
+
     values = [[], [], []]
 
     for s in user.scores[-amt:]:
@@ -69,9 +72,8 @@ def get_graph_link(user, amt: int, dimensions: tuple):
     y_values = dict(zip(labels, values))
 
     payload = {
-        "title": f"Last {amt} Test Scores",
         "fig_size": dimensions,
-        "until": time.time() + GRAPH_EXPIRE_TIME,
+        "until": current_time + GRAPH_EXPIRE_TIME,
         "y_values": y_values,
         "colours": user.theme + ["#ffffff"],
     }
@@ -159,6 +161,8 @@ class GraphView(ViewFromDict):
 
         self.user = user
 
+        self.current_time = time.time()
+
     async def create_page(self):
         amt = self.the_dict[self.page]
 
@@ -166,7 +170,9 @@ class GraphView(ViewFromDict):
             title=f"Last {amt} Scores",
         )
 
-        url = get_graph_link(self.user, amt, (6, 4))
+        url = get_graph_link(
+            user=self.user, amt=amt, dimensions=(6, 4), current_time=self.current_time
+        )
 
         embed.set_image(url=url)
 
@@ -676,7 +682,7 @@ class ProfileView(BaseView):
 
         embed.add_field(name="Recent Typing Scores", value="** **", inline=False)
 
-        url = get_graph_link(self.user, 10, (8, 4))
+        url = get_graph_link(user=self.user, amt=10, dimensions=(8, 4))
 
         embed.set_image(url=url)
 
