@@ -118,7 +118,7 @@ class BaseView(discord.ui.View):
         view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
 
         embed = self.ctx.error_embed(
-            title=f"{icons.fatal} `ERROR!!` An Unexpected Error Occured!",
+            title=f"{icons.danger} `ERROR!!` An Unexpected Error Occured!",
             description="> Please report this through our support server so we can fix it.",
         )
 

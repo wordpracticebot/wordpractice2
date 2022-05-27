@@ -259,7 +259,7 @@ class HighScoreCaptchaView(BaseView):
 
         start_lag = time.time()
 
-        embed.description += f"\n**Started:** <t:{int(start_lag)}:R>"
+        embed.description = f"\n**Started:** <t:{int(start_lag)}:R>"
 
         start_msg = await self.ctx.respond(embed=embed, file=file)
 
