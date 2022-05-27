@@ -215,9 +215,9 @@ class Misc(commands.Cog):
             title=f"{icons.dev_badge} | Attribution",
             description=(
                 f"```Thank you to everyone who helped make this bot possible!```\n"
-                f"> **Development:** {icons.dev_badge}\n"
-                f"> **Ideas/Suggestions:** {icons.idea_badge}\n"
-                f"> **Art/Graphics:** {icons.artist_badge}\n\n** **"
+                f"**Development:** {icons.dev_badge}\n"
+                f"**Ideas/Suggestions:** {icons.idea_badge}\n"
+                f"**Art/Graphics:** {icons.artist_badge}\n\n** **"
             ),
         )
 
