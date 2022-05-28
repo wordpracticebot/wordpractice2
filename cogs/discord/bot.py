@@ -29,6 +29,7 @@ from helpers.converters import opt_user
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_pacer_display, get_theme_display, get_typing_average
 from helpers.utils import calculate_score_consistency, cmd_run_before, get_bar
+from static.badges import get_badge_from_id
 
 THIN_SPACE = "\N{THIN SPACE}"
 LINE_SPACE = "\N{BOX DRAWINGS LIGHT HORIZONTAL}"
@@ -353,7 +354,9 @@ class LeaderboardView(ScrollView):
                 self.placing = p, u
                 extra = "__"
 
-            username = f"{u['name']}#{u['discriminator']} {u['status']}"
+            badge_icon = get_badge_from_id(u["status"])
+
+            username = f"{u['name']}#{u['discriminator']} {badge_icon}"
 
             embed.add_field(
                 name=f"`{p + 1}.` {extra}{username} - {u['count']} {c.unit}{extra}",
