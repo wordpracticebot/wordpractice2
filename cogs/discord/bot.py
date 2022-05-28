@@ -132,7 +132,7 @@ class SeasonView(ViewFromDict):
             p = self.user.xp / challenges[-1][0]
 
             bar = get_bar(
-                p, size=EMOJIS_PER_TIER * len(challenges), vertical=True, split=True
+                p, size=EMOJIS_PER_TIER * len(challenges), variant=2, split=True
             )
 
             for i, (amt, r) in enumerate(challenges):
@@ -795,14 +795,16 @@ class AchievementsView(ViewFromDict):
 
             p = await a.progress(self.ctx, self.user)
 
-            bar = get_bar(p[0] / p[1])
-
-            emoji = (
-                icons.success
-                if await a.is_completed(self.ctx, self.user)
+            # fmt: off
+            is_completed = (
+                await a.is_completed(self.ctx, self.user)
                 or (display and tier + 1 > amt)
-                else icons.danger
             )
+            # fmt: on
+
+            bar = get_bar(p[0] / p[1], variant=int(bool(is_completed and display)))
+
+            emoji = icons.success if is_completed else icons.danger
 
             embed.add_field(
                 name=f"**{emoji} {a.name}{display}**",

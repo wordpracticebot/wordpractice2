@@ -9,7 +9,9 @@ from discord.ext import commands
 
 from constants import TEST_ZONES
 from helpers.user import get_user_cmds_run
-from icons import h_progress_bar, v_progress_bar
+from icons import h_progress_bar, overflow_bar, v_progress_bar
+
+BARS = (h_progress_bar, overflow_bar, v_progress_bar)
 
 
 def format_slash_command(command: SlashCommand):
@@ -274,11 +276,9 @@ def get_test_stats(u_input, quote, end_time):
     return wpm, raw, acc, cc, cw, word_history
 
 
-def get_bar(
-    progress: float, *, size: int = 10, vertical: bool = False, split: bool = False
-):
+def get_bar(progress: float, *, size: int = 10, variant: int = 0, split: bool = False):
     """Creates a progress bar out of emojis"""
-    bar_list = v_progress_bar if vertical else h_progress_bar
+    bar_list = BARS[variant]
 
     p = progress * size
 
@@ -299,7 +299,7 @@ def get_bar(
             bar.append(bar_list[1][level])
 
     if split is False:
-        return ("\n" if vertical else "").join(bar)
+        return ("\n" if variant > 1 else "").join(bar)
 
     return bar
 
