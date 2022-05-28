@@ -236,20 +236,22 @@ class HighScoreCaptchaView(BaseView):
 
         # Generating the loading embed
 
-        embed = self.ctx.embed(title="High Score Captcha")
+        i_embed = embed = self.ctx.embed(
+            title=f"{self.ctx.author} | High Score Captcha"
+        )
 
-        embed.set_image(url=f"attachment://captcha.{STATIC_IMAGE_FORMAT}")
-        embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
+        i_embed.set_image(url=f"attachment://captcha.{STATIC_IMAGE_FORMAT}")
+        i_embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
 
-        await interaction.response.send_message(embed=embed, file=file, delete_after=5)
+        await interaction.response.send_message(
+            embed=i_embed, file=file, delete_after=5
+        )
 
         load_start = time.time()
 
         file = save_img_as_discord_png(captcha_img, "test")
 
         # Generating the test embed
-
-        embed = self.ctx.embed(title="High Score Captcha")
 
         embed.set_image(url=f"attachment://test.{STATIC_IMAGE_FORMAT}")
 
@@ -365,7 +367,7 @@ class HighScoreCaptchaView(BaseView):
 
     async def start(self):
         embed = self.ctx.embed(
-            title="High Score Captcha",
+            title=f"{self.ctx.author} | High Score Captcha",
             description=(
                 f"You got a new high score of **{self.original_wpm}**!\n\n"
                 "Please complete a short typing test captcha so we can make\n"
@@ -376,7 +378,7 @@ class HighScoreCaptchaView(BaseView):
             ),
         )
 
-        await self.ctx.respond(embed=embed, view=self)
+        self.message = await self.ctx.respond(embed=embed, view=self)
 
 
 class TestResultView(BaseView):
@@ -1308,7 +1310,7 @@ class Typing(commands.Cog):
             user.highspeed[zone] = score
 
             embed = ctx.embed(
-                title=":trophy: New High Score",
+                title=f":trophy: {user.display_name} | New High Score",
                 description=f"You got a new high score of **{score.wpm}** on the {zone} test {zone_range}",
             )
 
