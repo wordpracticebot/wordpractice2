@@ -7,7 +7,7 @@ from discord.ext.commands import errors
 from PIL import ImageDraw
 
 import icons
-from challenges.achievements import check_all
+from challenges.achievements import check_achievements, check_categories
 from challenges.daily import get_daily_challenges
 from challenges.rewards import group_rewards
 from challenges.season import check_season_rewards
@@ -54,7 +54,10 @@ class Events(commands.Cog):
 
         embed = ctx.error_embed(title=f"{added} {title}", description=desc)
 
-        await ctx.respond(embed=embed, ephemeral=ephemeral, view=view)
+        if view is None:
+            await ctx.respond(embed=embed, ephemeral=ephemeral)
+        else:
+            await ctx.respond(embed=embed, ephemeral=ephemeral, view=view)
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
@@ -188,12 +191,16 @@ class Events(commands.Cog):
         # Achievements
 
         a_earned = {}
+        c_completed = {}
+
         done_checking = False
 
         while done_checking is False:
+
             new_a = False
-            # Looping through all the finished achievements
-            async for a, count, cv, identifier in check_all(ctx, new_user):
+
+            # Looping through the finished achievements
+            async for a, count, cv, identifier in check_achievements(ctx, new_user):
                 a_earned[identifier] = a_earned.get(identifier, []) + [(a, count, cv)]
                 new_a = True
 
@@ -205,15 +212,12 @@ class Events(commands.Cog):
 
                 new_user.achievements[a.name] = current
 
-                if a.reward is None:
-                    continue
+            # Looping through the finished categories
+            for n, c in check_categories(new_user):
+                c_completed[n] = c.reward
 
-                # Checking if the state doesn't need to be updated
-                if a.changer is None:
-                    continue
-
-                # Updating the new user state
-                new_user = a.changer(new_user)
+                if c.changer is not None:
+                    new_user = c.changer(new_user)
 
             # Continues checking until no new achievements are given in a round (allows chaining achievements)
             if new_a is False:
@@ -299,20 +303,17 @@ class Events(commands.Cog):
             if user.achievements != new_user.achievements:
                 files, extra = self.get_files_from_earned(a_earned)
 
-                # Getting a list of rewards out of all the achievements
-                rewards = [
-                    b
-                    for a in a_earned.values()
-                    for c in a
-                    if (b := c[0].reward) is not None
-                ]
-
                 content = ""
 
-                if len(rewards) > 1:
-                    r_overview = "\n> ".join(group_rewards(rewards))
+                if c_completed:
 
-                    content += f"**Rewards Overview:**\n> {r_overview}\n** **\n"
+                    r_overview = "\n".join(
+                        f"{n} - {r.desc}" if r else n for n, r in c_completed.items()
+                    )
+
+                    content += (
+                        f":trophy: **Categories Completed:**\n{r_overview}\n** **\n"
+                    )
 
                 if extra:
                     content += f"and {extra} more achievements..."

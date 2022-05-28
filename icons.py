@@ -4,8 +4,8 @@
 xp = "<:xp:934865195438854155>"
 
 # Success indicators
-success = "<a:success:979725804592316486>"
-danger = "<a:error:979728003422650388>"
+success = "<a:success:979932746250063882>"
+danger = "<a:danger:979932746174562334>"
 caution = ":warning:"
 
 # Dots

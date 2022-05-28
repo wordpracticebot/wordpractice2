@@ -11,14 +11,13 @@ categories = {
 }
 
 
-async def check_all(ctx, user: dict):
+async def check_achievements(ctx, user: dict):
     for iii, cv in enumerate(categories.values()):
-        for ii, a in enumerate(cv.challenges):
-            # Handling if it's not a tier
-            if not isinstance(a, list):
-                a = [a]
+        for ii, c in enumerate(cv.challenges):
+            a = sum(c, []) if isinstance(c, list) else [c]
 
             all_names = [b.name for b in a]
+
             for i, n in enumerate(a):
                 a_count = all_names[: i + 1].count(n.name)
 
@@ -34,6 +33,15 @@ async def check_all(ctx, user: dict):
                     yield n, i if all_names.count(n.name) > 1 else None, cv, (iii, ii)
 
                 continue
+
+
+def check_categories(user: dict):
+    for n, c in categories.items():
+
+        if c.is_done(user):
+            yield n, c
+
+        continue
 
 
 def get_achievement_tier(user, total: int, names: set):

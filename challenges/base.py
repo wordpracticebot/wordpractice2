@@ -29,18 +29,10 @@ class Challenge:
 
 
 class Achievement(Challenge):
-    def __init__(self, *, name: str, reward=None, **kwargs):
+    def __init__(self, *, name: str, **kwargs):
         super().__init__(**kwargs)
 
         self.name = name
-        self.reward = reward
-
-    @property
-    def changer(self):
-        if self.reward is None:
-            return
-
-        return self.reward.changer
 
     def in_achievements(self, user):
         return self.name in user.achievements
@@ -58,14 +50,24 @@ class Achievement(Challenge):
 
 
 class Category:
-    def __init__(self, *, desc: str, challenges: list, icon: Image = None):
+    def __init__(self, *, desc: str, challenges: list, reward=None, icon: Image = None):
         self.desc = desc
-        self.challenges = challenges
         self.icon = icon
+
+        self.challenges = challenges
+
+        self.reward = reward
+
+    @property
+    def changer(self):
+        if self.reward is None:
+            return
+
+        return self.reward.changer
 
     def is_done(self, user):
         return all(
-            (e if not isinstance(e, list) else e[-1]).in_achievements(user)
+            (e if not isinstance(e, list) else e[0][-1]).in_achievements(user)
             for e in self.challenges
         )
 

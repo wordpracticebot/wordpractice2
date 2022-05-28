@@ -137,7 +137,7 @@ def _add_test_stats_to_embed(
         name="** **",
         value=(
             f"**Word History**\n> {word_history}\n\n"
-            f"```ansi\n{space*13}{escape}[2;34mTest Settings{escape}[0m```\n** **"
+            f"```ansi\n{escape}[2;36mTest Settings{escape}[0m```\n** **"
         ),
         inline=False,
     )
@@ -556,11 +556,6 @@ class RaceJoinView(BaseView):
         # If the author leaves, the race is ended
         is_author = user.id == self.ctx.author.id
 
-        msg = (
-            self.ctx.interaction.message
-            or await self.ctx.interaction.original_message()
-        )
-
         if is_author:
             self.end_all_racers()
 
@@ -569,7 +564,7 @@ class RaceJoinView(BaseView):
                 description="The race leader left the race",
             )
 
-            await msg.edit(embed=embed, view=None)
+            await interaction.message.edit(embed=embed, view=None)
             return self.stop()
 
         if user.id not in self.racers:
@@ -581,7 +576,7 @@ class RaceJoinView(BaseView):
 
         embed = self.get_race_join_embed()
 
-        await msg.edit(embed=embed, view=self)
+        await interaction.message.edit(embed=embed, view=self)
 
         return await interaction.response.send_message(
             "You left the race", ephemeral=True
@@ -857,11 +852,6 @@ class RaceJoinView(BaseView):
                 "You are already in this race!", ephemeral=True
             )
 
-        msg = (
-            self.ctx.interaction.message
-            or await self.ctx.interaction.original_message()
-        )
-
         # If the author joins, the race starts
 
         if is_author and len(self.racers) <= 1:
@@ -893,7 +883,7 @@ class RaceJoinView(BaseView):
 
         embed = self.get_race_join_embed(is_author)
 
-        await msg.edit(embed=embed, view=self)
+        await interaction.message.edit(embed=embed, view=self)
 
         if is_author:
             self.stop()

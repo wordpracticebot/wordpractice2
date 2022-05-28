@@ -2,18 +2,24 @@ from helpers.utils import calculate_score_consistency
 from static.assets import speed_icon
 
 from .base import Achievement, Category, get_in_row
-from .rewards import XPReward
 
 
-# TODO: add proper rewards and descriptions for all achievements
 class Speed(Achievement):
     def __init__(self, name, wpm):
-        super().__init__(name=name, desc=f"Type {wpm} wpm", reward=XPReward(5000))
+        super().__init__(name=name, desc=f"Type {wpm} wpm")
 
         self.wpm = wpm
 
     async def user_progress(self, ctx, user):
         return user.highest_speed, self.wpm
+
+
+class OverflowSpeed(Speed):
+    def __init__(self, name, wpm):
+        super().__init__(
+            name,
+            wpm,
+        )
 
 
 class Perfectionist(Achievement):
@@ -65,19 +71,27 @@ typing = Category(
     desc="Typing related achievements",
     challenges=[
         [
-            Speed("Beginner Typist", 60),
-            Speed("Amateur Typist", 80),
-            Speed("Proficient Typist", 100),
-            Speed("Fast Typist", 120),
-            Speed("Pro Typist", 150),
-            Speed("Crazy Typist", 180),
-            Speed("200 Barrier", 200),
-            Speed("Steno?", 220),
-            Speed("Cheating?", 240),
+            [
+                Speed("Beginner Typist", 60),
+                Speed("Amateur Typist", 80),
+                Speed("Proficient Typist", 100),
+                Speed("Fast Typist", 120),
+                Speed("Pro Typist", 150),
+            ],
+            [
+                Speed("Crazy Typist", 180),
+                Speed("200 Barrier", 200),
+                Speed("Steno?", 220),
+                Speed("Cheating?", 240),
+            ],
         ],
-        [Perfectionist(amt) for amt in [10, 25, 50, 100, 250, 500]],
+        [
+            [Perfectionist(amt) for amt in [10, 25, 50, 100, 250, 500]],
+        ],
         Consistency(),
-        [BeepBoop(amt) for amt in [3, 7, 13, 20]],
+        [
+            [BeepBoop(amt) for amt in [3, 7, 13, 20]],
+        ],
     ],
     icon=speed_icon,
 )

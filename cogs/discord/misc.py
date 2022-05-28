@@ -339,11 +339,11 @@ class Misc(commands.Cog):
         # Voting achievement progress
         all_achievements = categories["Endurance"].challenges[1]
 
-        all_names = [i.name for i in all_achievements]
+        all_names = [m.name for m in sum(all_achievements, [])]
 
         names = set(all_names)
 
-        tier = get_achievement_tier(user, len(all_names), names)
+        tier = get_achievement_tier(user, len(all_achievements[0]), names)
 
         a = all_achievements[tier]
 
@@ -353,8 +353,7 @@ class Misc(commands.Cog):
 
         embed.add_field(
             name="** **\nVote Achievement Progress",
-            value=("" if a.reward is None else f">>> **Reward:** {a.reward.desc}\n")
-            + f"{bar} `{p[0]}/{p[1]}`",
+            value=f"{bar} `{p[0]}/{p[1]}`",
             inline=False,
         )
 

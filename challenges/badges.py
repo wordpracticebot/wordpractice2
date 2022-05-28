@@ -1,7 +1,6 @@
 from static.assets import badge_icon
 
 from .base import Achievement, Category
-from .rewards import XPReward
 
 
 class Badges(Achievement):
@@ -9,7 +8,6 @@ class Badges(Achievement):
         super().__init__(
             name=name,
             desc="Earn {} badge{}".format(amt, "s" if amt > 1 else ""),
-            reward=XPReward(2000),
         )
 
         self.amt = amt
@@ -22,13 +20,18 @@ badges = Category(
     desc="Badge related achievements",
     challenges=[
         [
-            Badges("First Badge", 1),
-            Badges("Badge Enthusiast", 5),
-            Badges("Badge Collector", 10),
-            Badges("Badge Hoarder", 20),
-            Badges("Badge Exporter", 50),
-            Badges("Badge Tycoon", 100),
+            [
+                Badges("First Badge", 1),
+                Badges("Badge Enthusiast", 5),
+                Badges("Badge Collector", 10),
+                Badges("Badge Hoarder", 25),
+            ],
+            [
+                Badges("Badge Exporter", 50),
+                Badges("Badge Tycoon", 100),
+            ],
         ]
     ],
     icon=badge_icon,
+    reward=None,
 )

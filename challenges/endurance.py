@@ -18,7 +18,7 @@ class SingleStatEndurance(Achievement):
     @classmethod
     def generate(cls, name, key, values, desc):
         return [
-            cls(name, desc.format(value, "s" if value > 1 else ""), key, value)
+            [cls(name, desc.format(v, "s" if v > 1 else ""), key, v) for v in value]
             for value in values
         ]
 
@@ -47,16 +47,18 @@ endurance = Category(
         SingleStatEndurance.generate(
             "Streakin'",
             "streak",
-            (1, 5, 10, 25, 50, 75, 100, 150, 200, 365),
+            ((1, 5, 10, 25, 50, 75), (100, 150, 365)),
             "Play wordPractice for {} day{} in a row",
         ),
         SingleStatEndurance.generate(
             "Democracy!",
             "votes",
-            (1, 5, 10, 25, 50, 100, 200, 350, 500, 750),
+            ((1, 5, 10, 25, 50, 100, 200), (350, 500, 750)),
             "Vote for wordPractice {} time{}",
         ),
-        [Veteran(days) for days in [7, 14, 30, 90, 180, 365]],
+        [
+            [Veteran(days) for days in [7, 14, 30, 90, 180, 365]],
+        ],
     ],
     icon=endurance_icon,
 )

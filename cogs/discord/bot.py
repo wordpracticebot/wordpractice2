@@ -742,6 +742,10 @@ class AchievementsButton(DictButton):
             else discord.ButtonStyle.danger
         )
 
+    @property
+    def is_display_success(self):
+        return self.disabled
+
     def toggle_success(self):
         self.disabled = True
 
@@ -762,23 +766,32 @@ class AchievementsView(ViewFromDict):
         c = self.the_dict[self.page]
 
         embed = self.ctx.embed(
-            title=f"{self.user.display_name} | {self.page}", description=c.desc
+            title=f"{self.user.display_name} | {self.page}",
+            description=c.desc
+            + (
+                f"\n\n**Completion Reward:** {c.reward.desc}"
+                if c.reward is not None
+                else ""
+            ),
         )
 
         for a in c.challenges:
-            tier_display = ""
+            display = ""
 
             # Tiers
             if isinstance(a, list):
-                all_names = [m.name for m in a]
+                all_a = sum(a, [])
 
+                amt = len(a[0])
+
+                all_names = [m.name for m in all_a]
                 names = set(all_names)
 
                 tier = get_achievement_tier(self.user, len(all_names), names)
 
-                a = a[tier]
+                display = f" `[{tier + 1}/{amt}]`"
 
-                tier_display = f" `[{tier + 1}/{len(all_names)}]`"
+                a = all_a[tier]
 
             p = await a.progress(self.ctx, self.user)
 
@@ -787,16 +800,13 @@ class AchievementsView(ViewFromDict):
             emoji = (
                 icons.success
                 if await a.is_completed(self.ctx, self.user)
+                or (display and tier + 1 > amt)
                 else icons.danger
             )
 
-            reward_display = (
-                f"**Reward:** {a.reward.desc}\n" if a.reward is not None else ""
-            )
-
             embed.add_field(
-                name=f"**{emoji} {a.name}{tier_display}**",
-                value=f">>> {a.desc}\n{reward_display}{bar} `{p[0]}/{p[1]}`",
+                name=f"**{emoji} {a.name}{display}**",
+                value=f">>> {a.desc}\n{bar} `{p[0]}/{p[1]}`",
                 inline=False,
             )
 

@@ -118,7 +118,7 @@ class BaseView(discord.ui.View):
         view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
 
         embed = self.ctx.error_embed(
-            title=f"{icons.danger} `ERROR!!` An Unexpected Error Occured!",
+            title=f"{icons.danger} `ERROR!` An Unexpected Error Occured!",
             description="> Please report this through our support server so we can fix it.",
         )
 
@@ -263,6 +263,10 @@ class DictButton(discord.ui.Button):
     success = discord.ButtonStyle.success
     regular = discord.ButtonStyle.primary
 
+    @property
+    def is_display_success(self):
+        return self.style == self.success
+
     def toggle_success(self):
         self.style = self.success
 
@@ -270,7 +274,7 @@ class DictButton(discord.ui.Button):
         self.style = self.regular
 
     async def callback(self, interaction):
-        if self.style != self.success:
+        if self.is_display_success is False:
             self.toggle_success()
 
             await self.view.update_all(interaction, self.label)

@@ -15,6 +15,9 @@ class Reward:
     def raw(self):
         ...
 
+    def display(self) -> str:
+        ...
+
     @classmethod
     def group(cls, ins: list):
         ...
@@ -45,7 +48,7 @@ class BadgeReward(Reward):
 
     @classmethod
     def group(cls, ins: list):
-        return [cls.get_badge_format(i.badge_id) for i in ins]
+        return [i.desc for i in ins]
 
 
 class XPReward(Reward):
