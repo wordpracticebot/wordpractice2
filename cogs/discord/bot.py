@@ -980,9 +980,11 @@ class Bot(commands.Cog):
             )
 
         else:
-            badges = " ".join(self.user.badge_emojis)
+            badges = " ".join(user_data.badge_emojis)
 
-            embed = ctx.embed(title=user_data.display_name, description=badges)
+            embed = ctx.embed(
+                title=f"{user_data.display_name} | Badges", description=badges
+            )
 
         await ctx.respond(embed=embed)
 
