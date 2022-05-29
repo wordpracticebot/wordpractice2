@@ -157,9 +157,11 @@ class WelcomeView(BaseView):
             }
         )
 
+        self.ctx.initial_user = user
+
         await interaction.response.edit_message(embed=embed, view=view)
 
-        await self.ctx.bot.handle_after_welcome_check(self.ctx, user)
+        await self.ctx.bot.handle_after_welcome_check(self.ctx)
 
     async def start(self):
         embed = self.ctx.default_embed(
@@ -206,7 +208,7 @@ def get_embed_theme(user):
 
 class CustomContextItems:
     def __init__(self):
-        self.theme = None
+        self.initial_user = None
 
         self.testing = False  # if set to true, cooldowns are avoided
 
@@ -219,14 +221,9 @@ class CustomContextItems:
         # Hint is chosen when defining context to ensure a consistent hint throughout each response
         self.hint = random.choice(hints)
 
-    def embed(self, **kwargs):
-        color = kwargs.pop("color", self.theme or PRIMARY_CLR)
-        return CustomEmbed(self.bot, color=color, hint=self.hint, **kwargs)
-
-    async def add_theme(self, user):
-        user_data = await self.bot.mongo.fetch_user(user)
-
-        self.theme = get_embed_theme(user_data)
+    @property
+    def theme(self):
+        return get_embed_theme(self.initial_user)
 
     @property
     def error_embed(self):
@@ -239,6 +236,15 @@ class CustomContextItems:
     @property
     def custom_embed(self):
         return self.bot.custom_embed
+
+    def embed(self, **kwargs):
+        color = kwargs.pop("color", self.theme or PRIMARY_CLR)
+        return CustomEmbed(self.bot, color=color, hint=self.hint, **kwargs)
+
+    async def add_initial_user(self, user):
+        user_data = await self.bot.mongo.fetch_user(user)
+
+        self.initial_user = user_data
 
 
 class CustomAppContext(bridge.BridgeApplicationContext, CustomContextItems):
@@ -356,9 +362,9 @@ class WordPractice(commands.AutoShardedBot):
         if user_id in self.active_tests:
             self.active_tests.remove(user_id)
 
-    async def handle_after_welcome_check(self, ctx, user):
+    async def handle_after_welcome_check(self, ctx):
         # Checking if the user is banned
-        if user.banned:
+        if ctx.initial_user.banned:
             embed = ctx.error_embed(
                 title="You are banned",
                 description="Join the support server and create a ticket to request a ban appeal",
@@ -400,14 +406,14 @@ class WordPractice(commands.AutoShardedBot):
     async def get_application_context(self, interaction, cls=CustomAppContext):
         ctx = await super().get_application_context(interaction, cls)
 
-        await ctx.add_theme(interaction.user)
+        await ctx.add_initial_user(interaction.user)
 
         return ctx
 
     async def get_context(self, message, *, cls=CustomPrefixContext):
         ctx = await super().get_context(message, cls=cls)
 
-        await ctx.add_theme(message.author)
+        await ctx.add_initial_user(message.author)
 
         return ctx
 
@@ -454,17 +460,13 @@ class WordPractice(commands.AutoShardedBot):
     async def on_interaction(self, interaction):
         if interaction.type is InteractionType.application_command:
 
-            temp_ctx = await self.get_application_context(interaction)
-
-            user = await self.mongo.fetch_user(interaction.user)
-
-            # Asking the user to accept the rules before using the bot
-            if user is None:
-                return await self.handle_new_user(temp_ctx)
-
             ctx = await self.get_application_context(interaction)
 
-            if await self.handle_after_welcome_check(ctx, user):
+            # Asking the user to accept the rules before using the bot
+            if ctx.initial_user is None:
+                return await self.handle_new_user(ctx)
+
+            if await self.handle_after_welcome_check(ctx):
                 return
 
         # Processing command

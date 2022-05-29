@@ -85,7 +85,7 @@ def get_graph_link(*, user, amt: int, dimensions: tuple, current_time=None):
 
 
 class SeasonView(ViewFromDict):
-    def __init__(self, ctx, user):
+    def __init__(self, ctx):
         categories = {
             "Information": self.get_info_embed,
             "Rewards": self.get_reward_embed,
@@ -93,7 +93,9 @@ class SeasonView(ViewFromDict):
 
         super().__init__(ctx, categories)
 
-        self.user = user
+    @property
+    def user(self):
+        return self.ctx.initial_user
 
     async def get_info_embed(self):
         embed = self.ctx.embed(title="Season Information")
@@ -864,9 +866,8 @@ class Bot(commands.Cog):
     async def leaderboard(self, ctx):
         """See the top users in any category"""
 
-        user = await self.bot.mongo.fetch_user(ctx.author)
+        view = LeaderboardView(ctx, ctx.initial_user)
 
-        view = LeaderboardView(ctx, user)
         await view.start()
 
     @cooldown(5, 2)
@@ -884,7 +885,7 @@ class Bot(commands.Cog):
     async def challenges(self, ctx):
         """View the daily challenges and your progress on them"""
 
-        user = await ctx.bot.mongo.fetch_user(ctx.author)
+        user = ctx.initial_user
 
         challenges, reward = get_daily_challenges()
 
@@ -946,9 +947,7 @@ class Bot(commands.Cog):
     @commands.slash_command()
     async def season(self, ctx):
         """Information about the monthly season and your progress in it"""
-        user = await self.bot.mongo.fetch_user(ctx.author)
-
-        view = SeasonView(ctx, user)
+        view = SeasonView(ctx)
         await view.start()
 
     @cooldown(6, 2)

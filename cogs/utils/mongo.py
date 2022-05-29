@@ -288,7 +288,9 @@ class Mongo(commands.Cog):
         return mod, mod_id
 
     async def get_user_from_cache(self, user_id: int):
+        a = time.perf_counter()
         u = await self.bot.redis.hget("user", user_id)
+        print(time.perf_counter() - a)
 
         if u is not None:
             u = self.User.build_from_mongo(pickle.loads(u))

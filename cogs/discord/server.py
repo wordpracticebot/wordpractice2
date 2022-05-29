@@ -30,7 +30,7 @@ class Server(commands.Cog):
 
             return await ctx.respond(embed=embed)
 
-        user = await self.bot.mongo.fetch_user(ctx.author)
+        user = ctx.initial_user
 
         if len(user.scores) == 0:
             embed = ctx.error_embed(

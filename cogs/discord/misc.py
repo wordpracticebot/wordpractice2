@@ -325,7 +325,7 @@ class Misc(commands.Cog):
     async def vote(self, ctx):
         """Get the voting link for the bot"""
 
-        user = await self.bot.mongo.fetch_user(ctx.author)
+        user = ctx.initial_user
 
         embed = ctx.embed(
             title="Vote for wordPractice",

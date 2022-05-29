@@ -13,9 +13,7 @@ def premium_command():
         if ctx.testing:
             return True
 
-        user = await ctx.bot.mongo.fetch_user(ctx.author)
-
-        if user.is_premium is False:
+        if ctx.initial_user.is_premium is False:
             view = create_link_view({"Support wordPractice by donating!": PREMIUM_LINK})
 
             embed = ctx.error_embed(
@@ -42,7 +40,7 @@ def cooldown(regular: int, premium: int):
         # Checking if there is a cooldown
         cooldown = ctx.bot.cooldowns.get(c)
 
-        user = await ctx.bot.mongo.fetch_user(ctx.author)
+        user = ctx.initial_user
 
         if cooldown:
             # Checking if cooldown has expired
@@ -85,9 +83,9 @@ async def user_check(ctx, user):
         raise commands.BadArgument("`Beep boop!` That user is a bot :robot:")
 
     if user is None:
-        user = ctx.author
-
-    user = await ctx.bot.mongo.fetch_user(user)
+        user = ctx.initial_user
+    else:
+        user = await ctx.bot.mongo.fetch_user(user)
 
     if user is None:
         raise commands.BadArgument(

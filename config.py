@@ -1,5 +1,3 @@
-from base64 import b64encode
-
 from decouple import config
 
 BOT_TOKEN = config("BOT_TOKEN")

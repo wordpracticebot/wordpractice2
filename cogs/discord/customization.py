@@ -186,7 +186,7 @@ class Customization(commands.Cog):
 
         await ctx.respond(embed=embed, file=file)
 
-        user = await self.bot.mongo.fetch_user(ctx.author)
+        user = ctx.initial_user
 
         user.theme = colours
 
@@ -229,7 +229,7 @@ class Customization(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-        user = await self.bot.mongo.fetch_user(ctx.author)
+        user = ctx.initial_user
 
         user.language = name
         user.level = difficulty
@@ -242,7 +242,7 @@ class Customization(commands.Cog):
         )
         await ctx.respond(embed=embed)
 
-        user = await self.bot.mongo.fetch_user(ctx.author)
+        user = ctx.initial_user
 
         user.pacer_speed = value
 
@@ -270,7 +270,7 @@ class Customization(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-        user = await self.bot.mongo.fetch_user(ctx.author)
+        user = ctx.initial_user
 
         user.pacer_type = update
 
@@ -315,7 +315,7 @@ class Customization(commands.Cog):
     @commands.slash_command()
     async def equip(self, ctx):
         """Equip a badge that you own"""
-        user = await ctx.bot.mongo.fetch_user(ctx.author)
+        user = ctx.initial_user
 
         if len(user.badges) == 0:
             embed = ctx.error_embed(

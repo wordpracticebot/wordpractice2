@@ -1025,7 +1025,7 @@ class Typing(commands.Cog):
                 f"The typing test must be between {TEST_RANGE[0]} and {TEST_RANGE[1]} words"
             )
 
-        user = await ctx.bot.mongo.fetch_user(ctx.author)
+        user = ctx.initial_user
 
         words, wrap = _load_test_file(word_list.languages[user.language][user.level])
 
@@ -1057,10 +1057,8 @@ class Typing(commands.Cog):
 
     @staticmethod
     async def show_race_start(ctx, is_dict, quote_info):
-        user = await ctx.bot.mongo.fetch_user(ctx.author)
-
         # Storing is_dict and quote in RaceJoinView because do_race method will be called inside it
-        view = RaceJoinView(ctx, user, is_dict, *quote_info)
+        view = RaceJoinView(ctx, ctx.initial_user, is_dict, *quote_info)
         await view.start()
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
