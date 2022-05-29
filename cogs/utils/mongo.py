@@ -287,8 +287,8 @@ class Mongo(commands.Cog):
 
         return mod, mod_id
 
-    def get_user_from_cache(self, user_id: int):
-        u = self.bot.user_cache.get(user_id)
+    async def get_user_from_cache(self, user_id: int):
+        u = await self.bot.redis.hget("user", user_id)
 
         if u is not None:
             u = self.User.build_from_mongo(pickle.loads(u))
@@ -310,7 +310,7 @@ class Mongo(commands.Cog):
             user_id = user.id
 
         # Checking if the user is in the cache
-        u = self.get_user_from_cache(user_id)
+        u = await self.get_user_from_cache(user_id)
 
         if u is None:
             u = await self.User.find_one({"id": user_id})
@@ -332,7 +332,7 @@ class Mongo(commands.Cog):
 
                     await self.replace_user_data(u)
                 else:
-                    self.bot.user_cache[user_id] = None
+                    await self.bot.redis.hset("user", user_id, None)
                     return
 
                 return u
@@ -350,7 +350,7 @@ class Mongo(commands.Cog):
             u = self.User.build_from_mongo(uj)
 
         # Updating in cache
-        self.bot.user_cache[user_id] = pickle.dumps(uj)
+        await self.bot.redis.hset("user", user_id, pickle.dumps(uj))
 
         return u
 
@@ -432,17 +432,9 @@ class Mongo(commands.Cog):
         else:
             user_id = user.id
 
-        # Updating user data
-        if not isinstance(user, int):
-            current = self.get_current(user)
-
-            if "$set" in query:
-                query["$set"].update(current)
-
         await self.db.users.update_one({"_id": user_id}, query)
 
-        if user_id in self.bot.user_cache:
-            del self.bot.user_cache[user_id]
+        await self.bot.redis.hdel("user", user_id)
 
     async def replace_user_data(self, new_user, member=None):
         if member is not None:
@@ -456,7 +448,9 @@ class Mongo(commands.Cog):
             pass
         else:
             # Caching new user data
-            self.bot.user_cache[new_user.id] = pickle.dumps(new_user.to_mongo())
+            await self.bot.redis.hset(
+                "user", new_user.id, pickle.dumps(new_user.to_mongo())
+            )
 
     @AsyncTTL(time_to_live=10 * 60, maxsize=32)
     async def get_info_data(self, info_id: str):

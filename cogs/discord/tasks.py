@@ -1,5 +1,4 @@
 import asyncio
-import json
 import time
 from datetime import datetime, timedelta
 
@@ -10,23 +9,14 @@ from config import DBL_TOKEN, TESTING
 from constants import CHALLENGE_AMT, COMPILE_INTERVAL, UPDATE_24_HOUR_INTERVAL
 
 
-def _topgg_payload_to_json(value):
-    if json.__name__ == "ujson":
-        return json.dumps(value, ensure_ascii=True)
-    return json.dumps(value, separators=(",", ":"), ensure_ascii=True)
-
-
 class Tasks(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
         # For guild and shard count
         self.headers = {
-            "User-Agent": "wordPractice",
-            "Content-Type": "application/json",
             "Authorization": DBL_TOKEN,
         }
-        self.url = "https://top.gg/api/bots/stats"
 
         for u in [
             self.update_leaderboards,
@@ -42,34 +32,41 @@ class Tasks(commands.Cog):
     async def update_24_hour(self):
         every = int(24 * 60 / UPDATE_24_HOUR_INTERVAL) - 1
 
-        self.bot.user_cache = {}
+        all_ids = set()
 
-        # Have to update each field in two steps because of update conflict
+        for i in range(2):
+            cursor = self.bot.mongo.db.users.find(
+                {f"last24.{1}.{every}": {"$exists": True}}
+            )
 
-        await self.bot.mongo.db.users.update_many(
-            {f"last24.0.{every}": {"$exists": True}},
-            {"$pop": {"last24.0": -1}},
-        )
-        await self.bot.mongo.db.users.update_many(
-            {f"last24.0.{every-1}": {"$exists": True}},
-            {"$push": {"last24.0": 0}},
-        )
+            user_ids = [u["_id"] async for u in cursor]
 
-        await self.bot.mongo.db.users.update_many(
-            {f"last24.1.{every}": {"$exists": True}},
-            {"$pop": {"last24.1": -1}},
-        )
-        await self.bot.mongo.db.users.update_many(
-            {f"last24.1.{every-1}": {"$exists": True}},
-            {"$push": {f"last24.1": 0}},
-        )
+            # Has to be done in two queries because of update conflict
+            await self.bot.mongo.db.users.update_many(
+                {"_id": {"$in": user_ids}},
+                {"$pop": {f"last24.{i}": -1}},
+            )
+            await self.bot.mongo.db.users.update_many(
+                {"_id": {"$in": user_ids}},
+                {"$push": {f"last24.{i}": 0}},
+            )
+
+            all_ids.update(user_ids)
 
         # Resetting the best score in the last 24 hours
+        cursor = self.bot.mongo.db.users.find({"best24": {"$ne": None}})
+
+        user_ids = [u["_id"] async for u in cursor]
+
         await self.bot.mongo.db.users.update_many(
-            {"best24": {"$ne": None}}, {"$set": {"best24": None}}
+            {"_id": {"$in": user_ids}},
+            {"$set": {"best24": None}},
         )
 
-        self.bot.user_cache = {}
+        all_ids.update(user_ids)
+
+        if all_ids:
+            await self.bot.redis.hdel("users", *all_ids)
 
     @tasks.loop(minutes=COMPILE_INTERVAL)
     async def update_leaderboards(self):
@@ -116,47 +113,55 @@ class Tasks(commands.Cog):
         if TESTING or DBL_TOKEN is None:
             return
 
-        await self.bot.wait_until_ready()
-
-        # Making sure that all the guilds and shards have been loaded
-        await asyncio.sleep(5)
-
-        raw_payload = {
+        payload = {
             "server_count": len(self.bot.guilds),
             "shard_count": len(self.bot.shards),
         }
 
-        payload = _topgg_payload_to_json(raw_payload)
+        url = f"https://top.gg/api/bots/{self.bot.user.id}/stats"
 
         async with self.bot.session.request(
-            "POST", self.url, headers=self.headers, data=payload
+            "POST", url, headers=self.headers, data=payload
         ) as resp:
             assert resp.status == 200
 
+    @post_guild_count.before_loop
+    async def before_post_dbl(self):
+        await self.bot.wait_until_ready()
+
     @tasks.loop(hours=24)
     async def daily_restart(self):
-        self.bot.user_cache = {}
-
         # Removing excess items if user hasn't typed in last 24 hours
-        await self.bot.mongo.db.users.update_many(
-            {"last24.0": [0] * 96},
-            {"$set": {"last24.0": [0]}},
+
+        cursor = self.bot.mongo.db.users.find(
+            {"$or": [{"last24.0": [0] * 96}, {"last24.1": [0] * 96}]}
         )
+
+        last24_ids = [u["_id"] async for u in cursor]
+
         await self.bot.mongo.db.users.update_many(
-            {"last24.1": [0] * 96},
-            {"$set": {"last24.1": [0]}},
+            {"_id": {"$in": last24_ids}},
+            {"$set": {"last24.1": [0], "test_amt": 0, "last24.0": [0]}},
         )
+
+        # Resetting daily challenge completions and tests
+
+        cursor = self.bot.mongo.db.users.find({"daily_completion": {"$ne": default}})
+
+        daily_completion_ids = [u["_id"] async for u in cursor]
 
         default = [False] * CHALLENGE_AMT
 
-        # Resetting daily challenge completions and tests
         await self.bot.mongo.db.users.update_many(
-            {"daily_completion": {"$ne": default}},
+            {"_id": {"$in": daily_completion_ids}},
             {"$set": {"daily_completion": default}},
         )
-        await self.bot.mongo.db.users.update_many({}, {"$set": {"test_amt": 0}})
 
-        self.bot.user_cache = {}
+        # Removing updated users from the cache
+        users_to_remove = set(last24_ids, daily_completion_ids)
+
+        if users_to_remove:
+            await self.bot.redis.hdel("users", *users_to_remove)
 
     # Clearing cache
     @tasks.loop(minutes=10)

@@ -7,6 +7,7 @@ BOT_TOKEN = config("BOT_TOKEN")
 # Database
 DATABASE_URI = config("DATABASE_URI")
 DATABASE_NAME = config("DATABASE_NAME")
+REDIS_URL = config("REDIS_URL")
 
 # Logging
 COMMAND_LOG = config("COMMAND_LOG")

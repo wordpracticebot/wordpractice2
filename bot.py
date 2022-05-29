@@ -206,7 +206,7 @@ def get_embed_theme(user):
 
 class CustomContextItems:
     def __init__(self):
-        self._theme = None
+        self.theme = None
 
         self.testing = False  # if set to true, cooldowns are avoided
 
@@ -219,17 +219,6 @@ class CustomContextItems:
         # Hint is chosen when defining context to ensure a consistent hint throughout each response
         self.hint = random.choice(hints)
 
-    @property
-    def theme(self):
-        cached_user = self.bot.mongo.get_user_from_cache(self.author.id)
-
-        new_theme = get_embed_theme(cached_user)
-
-        if new_theme is not None:
-            self._theme = new_theme
-
-        return self._theme
-
     def embed(self, **kwargs):
         color = kwargs.pop("color", self.theme or PRIMARY_CLR)
         return CustomEmbed(self.bot, color=color, hint=self.hint, **kwargs)
@@ -237,7 +226,7 @@ class CustomContextItems:
     async def add_theme(self, user):
         user_data = await self.bot.mongo.fetch_user(user)
 
-        self._theme = get_embed_theme(user_data)
+        self.theme = get_embed_theme(user_data)
 
     @property
     def error_embed(self):
@@ -302,7 +291,6 @@ class WordPractice(commands.AutoShardedBot):
         self.cooldowns = {}
 
         # Cache
-        self.user_cache = {}
         self.cmds_run = {}  # user_id: set{cmds}
         self.avg_perc = []  # [wpm (33% 66%), raw, acc]
 
@@ -386,6 +374,10 @@ class WordPractice(commands.AutoShardedBot):
     @property
     def mongo(self):
         return self.get_cog("Mongo")
+
+    @property
+    def redis(self):
+        return self.get_cog("Redis").pool
 
     @property
     def log(self):
