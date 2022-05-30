@@ -12,7 +12,7 @@ from cryptography.fernet import Fernet
 from discord.ext import commands
 
 import icons
-from challenges.achievements import categories, get_achievement_tier
+from challenges.achievements import categories, get_achievement_display
 from challenges.daily import get_daily_challenges
 from challenges.season import get_season_tiers
 from config import GRAPH_CDN_SECRET
@@ -778,39 +778,13 @@ class AchievementsView(ViewFromDict):
         )
 
         for a in c.challenges:
-            display = ""
-
-            # Tiers
-            if isinstance(a, list):
-                all_a = sum(a, [])
-
-                amt = len(a[0])
-
-                all_names = [m.name for m in all_a]
-                names = set(all_names)
-
-                tier = get_achievement_tier(self.user, len(all_names), names)
-
-                display = f" `[{tier + 1}/{amt}]`"
-
-                a = all_a[tier]
-
-            p = await a.progress(self.ctx, self.user)
-
-            # fmt: off
-            is_completed = (
-                await a.is_completed(self.ctx, self.user)
-                or (display and tier + 1 > amt)
+            a, emoji, display, bar_display = await get_achievement_display(
+                self.ctx, self.user, a
             )
-            # fmt: on
-
-            bar = get_bar(p[0] / p[1], variant=int(bool(is_completed and display)))
-
-            emoji = icons.success if is_completed else icons.danger
 
             embed.add_field(
                 name=f"**{emoji} {a.name}{display}**",
-                value=f">>> {a.desc}\n{bar} `{p[0]}/{p[1]}`",
+                value=f">>> {a.desc}\n{bar_display}",
                 inline=False,
             )
 

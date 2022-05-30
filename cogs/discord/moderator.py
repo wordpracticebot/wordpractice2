@@ -100,6 +100,8 @@ class RestoreConfirm(BaseView):
 class Moderator(commands.Cog):
     """Commands only for moderators..."""
 
+    hidden = True
+
     def __init__(self, bot):
         self.bot = bot
 

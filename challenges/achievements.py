@@ -1,3 +1,6 @@
+import icons
+from helpers.utils import get_bar
+
 from .badges import badges
 from .beginning import beginning
 from .endurance import endurance
@@ -53,3 +56,39 @@ def get_achievement_tier(user, total: int, names: set):
     tier = sum([len(user.achievements[x]) for x in unique])
 
     return min(tier, total - 1)
+
+
+async def get_achievement_display(ctx, user, a):
+    display = ""
+
+    # Tiers
+    if isinstance(a, list):
+        all_a = sum(a, [])
+
+        amt = len(a[0])
+
+        all_names = [m.name for m in all_a]
+        names = set(all_names)
+
+        tier = get_achievement_tier(user, len(all_names), names)
+
+        display = f" `[{tier + 1}/{amt}]`"
+
+        a = all_a[tier]
+
+    p = await a.progress(ctx, user)
+
+    # fmt: off
+    is_completed = (
+        await a.is_completed(ctx, user)
+        or (display and tier + 1 > amt)
+    )
+    # fmt: on
+
+    bar = get_bar(p[0] / p[1], variant=int(bool(is_completed and display)))
+
+    bar_display = f"{bar} `{p[0]}/{p[1]}`"
+
+    emoji = icons.success if is_completed else icons.danger
+
+    return a, emoji, display, bar_display

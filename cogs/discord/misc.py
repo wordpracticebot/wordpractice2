@@ -7,7 +7,7 @@ from discord.commands import SlashCommand, SlashCommandGroup
 from discord.ext import bridge, commands
 
 import icons
-from challenges.achievements import categories, get_achievement_tier
+from challenges.achievements import categories, get_achievement_display
 from constants import (
     INFO_VIDEO,
     PRIVACY_POLICY_LINK,
@@ -17,7 +17,7 @@ from constants import (
 )
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
-from helpers.utils import can_run, cmd_run_before, format_slash_command, get_bar
+from helpers.utils import can_run, cmd_run_before, format_slash_command
 
 CREDITS = [
     [
@@ -337,24 +337,18 @@ class Misc(commands.Cog):
         )
 
         # Voting achievement progress
-        all_achievements = categories["Endurance"].challenges[1]
+        a = categories["Endurance"].challenges[1]
 
-        all_names = [m.name for m in sum(all_achievements, [])]
-
-        names = set(all_names)
-
-        tier = get_achievement_tier(user, len(all_achievements[0]), names)
-
-        a = all_achievements[tier]
-
-        p = await a.progress(ctx, user)
-
-        bar = get_bar(p[0] / p[1])
+        a, emoji, display, bar_display = await get_achievement_display(ctx, user, a)
 
         embed.add_field(
-            name="** **\nVote Achievement Progress",
-            value=f"{bar} `{p[0]}/{p[1]}`",
+            name="** **",
+            value="**Vote Achievement Progress:**",
             inline=False,
+        )
+
+        embed.add_field(
+            name=f"**{emoji} {a.name}{display}**", value=bar_display, inline=False
         )
 
         view = discord.ui.View()

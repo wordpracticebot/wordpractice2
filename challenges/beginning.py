@@ -1,7 +1,7 @@
 from discord.commands import SlashCommand
 
 from helpers.user import get_user_cmds_run
-from helpers.utils import can_run, format_slash_command
+from helpers.utils import format_slash_command
 from static.assets import beginning_icon
 
 from .base import Achievement, Category
@@ -44,16 +44,13 @@ class OpenMinded(Achievement):
         super().__init__(name="Open-minded", desc="Run every single command")
 
     async def user_progress(self, ctx, user):
-        ctx.testing = True
-
         slash_cmds = filter(
-            lambda c: isinstance(c, SlashCommand), ctx.bot.walk_application_commands()
+            lambda c: isinstance(c, SlashCommand)
+            and not getattr(c.cog, "hidden", False),
+            ctx.bot.walk_application_commands(),
         )
 
-        # Getting total commands that the user can run
-        all_cmds = [
-            format_slash_command(cmd) for cmd in slash_cmds if await can_run(ctx, cmd)
-        ]
+        all_cmds = [format_slash_command(cmd) for cmd in slash_cmds]
 
         return len(set(all_cmds) & set(get_user_cmds_run(ctx.bot, user))), len(all_cmds)
 
