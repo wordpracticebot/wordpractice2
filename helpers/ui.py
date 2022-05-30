@@ -80,11 +80,15 @@ class BaseView(discord.ui.View):
 
     async def on_timeout(self):
         if self.children:
-            msg = (
-                self.message
-                or self.ctx.interaction.message
-                or await self.ctx.interaction.original_message()
-            )
+            try:
+                msg = (
+                    self.message
+                    or self.ctx.interaction.message
+                    or await self.ctx.interaction.original_message()
+                )
+
+            except discord.NotFound:
+                return
 
             if not msg.components:
                 return
