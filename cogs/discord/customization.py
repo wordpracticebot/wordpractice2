@@ -6,11 +6,11 @@ from discord.ext import commands
 
 import icons
 import word_list
-from constants import DEFAULT_WRAP, PREMIUM_LINK, STATIC_IMAGE_FORMAT
+from constants import DEFAULT_WRAP, MIN_PACER_SPEED, PREMIUM_LINK, STATIC_IMAGE_FORMAT
 from helpers.checks import cooldown, premium_command, user_check
 from helpers.converters import opt_user, rgb_to_hex, rqd_colour
 from helpers.errors import ImproperArgument
-from helpers.image import get_base_img, save_img_as_discord_png
+from helpers.image import get_base_img, save_discord_static_img
 from helpers.ui import BaseView
 from helpers.user import get_pacer_display, get_theme_display
 from static import themes
@@ -21,7 +21,7 @@ def _get_theme_preview_file(theme):
 
     base_img = get_base_img(raw_quote, DEFAULT_WRAP, theme)
 
-    return save_img_as_discord_png(base_img, "preview")
+    return save_discord_static_img(base_img, "preview")
 
 
 # Formula from: https://gist.github.com/ryancat/9972419b2a78f329ce3aebb7f1a09152
@@ -301,13 +301,15 @@ class Customization(commands.Cog):
         ctx,
         speed: Option(
             int,
-            "Choose a pacer speed from 10-300",
+            f"Choose a pacer speed from {MIN_PACER_SPEED}-300",
             required=True,
         ),
     ):
         """Set your typing test pacer to a custom speed"""
-        if speed not in range(10, 300):
-            raise commands.BadArgument("Pacer speed must be between 10 and 300")
+        if speed not in range(MIN_PACER_SPEED, 301):
+            raise commands.BadArgument(
+                f"Pacer speed must be between {MIN_PACER_SPEED} and 300"
+            )
 
         await self.handle_update_pacer_speed(ctx, f"{speed} wpm", str(speed))
 

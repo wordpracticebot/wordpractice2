@@ -16,6 +16,20 @@ class Badges(Achievement):
         return len(user.badges), self.amt
 
 
+class Collector(Achievement):
+    def __init__(self):
+        super().__init__(
+            name="Collector", desc="Earn every badge in a season", immutable=True
+        )
+
+    async def user_progress(self, ctx, user):
+        season_info = await ctx.bot.mongo.get_season_info()
+
+        badges = season_info["badges"]
+
+        return len(set(badges) & set(user.badges)), len(badges)
+
+
 badges = Category(
     desc="Badge related achievements",
     challenges=[
@@ -30,7 +44,8 @@ badges = Category(
                 Badges("Badge Exporter", 50),
                 Badges("Badge Tycoon", 100),
             ],
-        ]
+        ],
+        Collector(),
     ],
     icon=badge_icon,
     reward=None,

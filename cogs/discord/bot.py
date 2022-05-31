@@ -556,7 +556,6 @@ class ProfileView(BaseView):
         in_between = 35
         b = in_between * THIN_SPACE
 
-        # TODO: add placings
         embed.title += f"\n\nAlltime{b}Season{b}24h{b}** **"
 
         fr_words = self.format_account_stat(f"{self.user.words:,}", 6 + in_between)

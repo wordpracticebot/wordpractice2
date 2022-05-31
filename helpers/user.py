@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 
-from constants import UPDATE_24_HOUR_INTERVAL
+from constants import MIN_PACER_SPEED, UPDATE_24_HOUR_INTERVAL
 from static.themes import default
 
 
@@ -105,3 +105,22 @@ def get_expanded_24_hour_stat(stat: list[int]):
     i_len = int(24 * 60 / UPDATE_24_HOUR_INTERVAL)
 
     return stat[:i_len] + [0] * (i_len - len(stat))
+
+
+def get_pacer_speed(user, zone: int):
+    if user.pacer_speed == "":
+        return
+
+    if user.pacer_speed == "avg":
+        pacer, *_ = get_typing_average(user)
+
+    elif user.pacer_speed == "pb":
+        pacer = user.highspeed[zone].wpm
+
+    else:
+        pacer = int(user.pacer_speed)
+
+    if pacer < MIN_PACER_SPEED:
+        return False
+
+    return pacer

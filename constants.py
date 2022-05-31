@@ -10,7 +10,7 @@ SUPPORT_SERVER_INVITE = "https://discord.gg/wordpractice"
 
 # Images
 STATIC_IMAGE_FORMAT = "png"
-GRAPH_CDN_BASE_URL = "https://image-cdn.principle105.repl.co"
+GRAPH_CDN_BASE_URL = "https://image-cdn.thomascoin.repl.co"
 GRAPH_EXPIRE_TIME = 60 * 60 * 24
 
 PRIVACY_POLICY_LINK = "https://wordpracticebot.github.io/privacy-policy/"
@@ -37,6 +37,7 @@ RACE_JOIN_EXPIRE_TIME = 120  # seconds
 TEST_EXPIRE_TIME = 180  # seconds
 TEST_RANGE = (1, 100)
 TEST_ZONES = {"short": range(10, 21), "medium": range(21, 51), "long": range(51, 101)}
+TEST_LOAD_TIME = 5
 
 # Typing test anti cheat
 SUSPICIOUS_THRESHOLD = 180
@@ -52,6 +53,7 @@ TOP_BORDER = 5
 SIDE_BORDER = 10
 SPACING = 5
 DEFAULT_WRAP = 45
+MIN_PACER_SPEED = 60
 
 # Voting
 VOTING_SITES = {

@@ -13,7 +13,7 @@ from challenges.rewards import group_rewards
 from challenges.season import check_season_rewards
 from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument, OnGoingTest
-from helpers.image import save_img_as_discord_png
+from helpers.image import save_discord_static_img
 from helpers.ui import create_link_view, get_log_embed
 from helpers.user import get_user_cmds_run
 from helpers.utils import format_slash_command
@@ -30,7 +30,7 @@ def _generate_achievement_image(name, icon):
     draw = ImageDraw.Draw(img)
     draw.text((240, 110), name, font=uni_sans_heavy)
 
-    return save_img_as_discord_png(img, "achievement")
+    return save_discord_static_img(img, "achievement")
 
 
 class Events(commands.Cog):

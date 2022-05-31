@@ -329,9 +329,20 @@ def get_test_type(test_type_int: int, length: int):
     # fmt: on
 
 
-def get_test_zone_name(cw):
+def get_test_zone(cw: int):
     for n, r in TEST_ZONES.items():
         if cw in r:
-            return n, f"({r[0]}-{r[-1]}) words"
+            return n, r
 
     return
+
+
+def get_test_zone_name(cw: int):
+    m = get_test_zone(cw)
+
+    if m is None:
+        return
+
+    n, r = m
+
+    return n, f"({r[0]}-{r[-1]}) words"

@@ -25,11 +25,13 @@ from constants import (
     DEFAULT_WRAP,
     MAX_CAPTCHA_ATTEMPTS,
     MAX_RACE_JOIN,
+    MIN_PACER_SPEED,
     RACE_JOIN_EXPIRE_TIME,
     STATIC_IMAGE_FORMAT,
     SUPPORT_SERVER_INVITE,
     SUSPICIOUS_THRESHOLD,
     TEST_EXPIRE_TIME,
+    TEST_LOAD_TIME,
     TEST_RANGE,
     TEST_ZONES,
 )
@@ -39,14 +41,17 @@ from helpers.image import (
     get_base_img,
     get_highscore_captcha_img,
     get_loading_img,
-    save_img_as_discord_png,
+    get_pacer,
+    get_raw_base_img,
+    save_discord_static_img,
 )
 from helpers.ui import BaseView, create_link_view, get_log_embed
-from helpers.user import get_pacer_display
+from helpers.user import get_pacer_display, get_pacer_speed
 from helpers.utils import (
     cmd_run_before,
     get_test_stats,
     get_test_type,
+    get_test_zone,
     get_test_zone_name,
     get_xp_earned,
 )
@@ -232,7 +237,7 @@ class HighScoreCaptchaView(BaseView):
 
         captcha_loading_img = get_loading_img(captcha_img, self.user.theme[1])
 
-        file = save_img_as_discord_png(captcha_loading_img, "captcha")
+        file = save_discord_static_img(captcha_loading_img, "captcha")
 
         # Generating the loading embed
 
@@ -244,12 +249,12 @@ class HighScoreCaptchaView(BaseView):
         i_embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
 
         await interaction.response.send_message(
-            embed=i_embed, file=file, delete_after=5
+            embed=i_embed, file=file, delete_after=TEST_LOAD_TIME
         )
 
         load_start = time.time()
 
-        file = save_img_as_discord_png(captcha_img, "test")
+        file = save_discord_static_img(captcha_img, "test")
 
         # Generating the test embed
 
@@ -257,7 +262,7 @@ class HighScoreCaptchaView(BaseView):
 
         load_time = time.time() - load_start
 
-        await asyncio.sleep(5 - max(load_time, 0))
+        await asyncio.sleep(TEST_LOAD_TIME - max(load_time, 0))
 
         start_lag = time.time()
 
@@ -652,22 +657,24 @@ class RaceJoinView(BaseView):
 
         loading_img = get_loading_img(base_img, author_theme[1])
 
-        file = save_img_as_discord_png(loading_img, "loading")
+        file = save_discord_static_img(loading_img, "loading")
 
         embed = self.get_race_embed()
 
         embed.set_image(url=f"attachment://loading.{STATIC_IMAGE_FORMAT}")
         embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
 
-        await interaction.response.send_message(embed=embed, file=file, delete_after=5)
+        await interaction.response.send_message(
+            embed=embed, file=file, delete_after=TEST_LOAD_TIME
+        )
 
         load_start = time.time()
 
-        file = save_img_as_discord_png(base_img, "test")
+        file = save_discord_static_img(base_img, "test")
 
         load_time = time.time() - load_start
 
-        await asyncio.sleep(5 - max(load_time, 0))
+        await asyncio.sleep(TEST_LOAD_TIME - max(load_time, 0))
 
         self.start_lag = time.time()
 
@@ -1077,7 +1084,12 @@ class Typing(commands.Cog):
 
         test_type = get_test_type(test_type_int, word_count)
 
-        pacer_name = get_pacer_display(user.pacer_type, user.pacer_speed)
+        pacer = get_pacer_speed(user, get_test_zone(word_count))
+
+        if pacer is False:
+            pacer_name = f"N/A (Pacer below minium of {MIN_PACER_SPEED} wpm)"
+        else:
+            pacer_name = get_pacer_display(user.pacer_type, user.pacer_speed)
 
         title = f"{user.display_name} | {test_type} Test ({word_count} words)"
         desc = f"**Pacer:** {pacer_name}"
@@ -1088,38 +1100,52 @@ class Typing(commands.Cog):
             add_footer=False,
         )
 
+        if pacer:
+            embed.set_footer(text="Test time is adjusted for image load time")
+
         raw_quote = " ".join(quote)
 
-        base_img = get_base_img(raw_quote, wrap_width, user.theme)
+        base_img, word_list = get_raw_base_img(raw_quote, wrap_width, user.theme)
 
         loading_img = get_loading_img(base_img, user.theme[1])
 
-        file = save_img_as_discord_png(loading_img, "loading")
+        file = save_discord_static_img(loading_img, "loading")
 
         embed.set_image(url=f"attachment://loading.{STATIC_IMAGE_FORMAT}")
         embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
 
-        await send(embed=embed, file=file, delete_after=5)
+        await send(embed=embed, file=file, delete_after=TEST_LOAD_TIME)
 
         load_start = time.time()
 
         # Generating the acutal test image
 
-        # TODO: generate pacer if the user has a pacer
+        if pacer:
 
-        file = save_img_as_discord_png(base_img, "test")
+            buffer = get_pacer(base_img, user.theme[1], quote, word_list, pacer)
+
+            file = discord.File(buffer, filename="test.gif")
+
+            image_format = "gif"
+        else:
+            file = save_discord_static_img(base_img, "test")
+            image_format = STATIC_IMAGE_FORMAT
 
         embed = ctx.embed(title=title, add_footer=False)
 
-        embed.set_image(url=f"attachment://test.{STATIC_IMAGE_FORMAT}")
+        embed.set_image(url=f"attachment://test.{image_format}")
+
+        # Waiting for remaining time
 
         load_time = time.time() - load_start
 
-        await asyncio.sleep(5 - max(load_time, 0))
+        await asyncio.sleep(TEST_LOAD_TIME - max(load_time, 0))
 
         start_lag = time.time()
 
-        embed.description = desc + f"\n**Started:** <t:{int(start_lag)}:R>"
+        # Currently only showing timer for non-pacer because of delayed loading time
+        if not pacer:
+            embed.description = desc + f"\n**Started:** <t:{int(start_lag)}:R>"
 
         send_msg = await ctx.respond(embed=embed, file=file)
 

@@ -145,12 +145,11 @@ class Tasks(commands.Cog):
         )
 
         # Resetting daily challenge completions and tests
+        default = [False] * CHALLENGE_AMT
 
         cursor = self.bot.mongo.db.users.find({"daily_completion": {"$ne": default}})
 
         daily_completion_ids = [u["_id"] async for u in cursor]
-
-        default = [False] * CHALLENGE_AMT
 
         await self.bot.mongo.db.users.update_many(
             {"_id": {"$in": daily_completion_ids}},

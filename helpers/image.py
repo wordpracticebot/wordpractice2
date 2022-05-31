@@ -100,7 +100,7 @@ def get_loading_img(img, text_colour):
     return blurred
 
 
-def save_img_as_discord_png(img, name):
+def save_discord_static_img(img, name):
     buffer = BytesIO()
 
     img.save(buffer, STATIC_IMAGE_FORMAT)
@@ -109,9 +109,62 @@ def save_img_as_discord_png(img, name):
     return discord.File(buffer, filename=f"{name}.{STATIC_IMAGE_FORMAT}")
 
 
-def get_base_img(raw_quote, wrap_width, theme):
+def get_raw_base_img(raw_quote, wrap_width, theme):
     word_list, fquote = _wrap_text(raw_quote, wrap_width)
 
     width, height = get_width_height(word_list, wrap_width)
 
-    return get_base(width, height, theme, fquote)
+    return get_base(width, height, theme, fquote), word_list
+
+
+def get_base_img(raw_quote, wrap_width, theme):
+    return get_raw_base_img(raw_quote, wrap_width, theme)[0]
+
+
+def get_pacer(base, text_colour, quote, word_list, pacer):
+    smooth = round(-0.1 * pacer + 31, 2)
+
+    images = []
+
+    y = TOP_BORDER
+
+    line_spacing = arial.getsize("A")[1] + SPACING
+
+    for i, group in enumerate(word_list):
+        y += line_spacing
+
+        for i in range(int(arial.getsize(group)[0] // smooth)):
+            im = base.copy()
+
+            d = ImageDraw.Draw(im)
+
+            d.rectangle(
+                [
+                    SIDE_BORDER + i * smooth,
+                    y,
+                    SIDE_BORDER + arial.size / 3 + i * smooth,
+                    y + 2,
+                ],
+                fill=text_colour,
+            )
+
+            images.append(im)
+
+    t = (12 * len(" ".join(quote)) / pacer) - (0.5 / len(images))
+
+    t = round((t / len(images) * 1000) - 0.5)
+
+    buffer = BytesIO()
+
+    images[0].save(
+        buffer,
+        format="gif",
+        save_all=True,
+        append_images=images[1:],
+        duration=t,
+        optimize=False,
+    )
+
+    buffer.seek(0)
+
+    return buffer
