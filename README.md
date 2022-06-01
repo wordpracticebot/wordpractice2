@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="https://i.imgur.com/zuEi84v.png" alt="Logo" width="230" height="230">
+    <img src="https://i.imgur.com/zuEi84v.png" alt="Logo" width="240" height="240">
     <h1 >wordPractice v2</h1>
     <p >Practice your typing skills while having fun, compete with typists from around the world.</p>
     <a href="https://discord.gg/wordpractice">
@@ -7,21 +7,15 @@
     </a>
 </div>
 
-# How to run
-
-### 1. Clone the repository
-
-`git clone https://github.com/wordPractice-Bot/wordpractice2`
-
-### 2. Configuration
+# Configuration
 
 1. Create a `.env` file in the root directory of the repository.
 
 2. Copy the content from `.env.example` into `.env` and fill it with the necessary information.
 
-3. Configure variables in `roles.py` and `icons.py` (all emojis can be found in the emoji directory)
+3. Configure variables in `roles.py` and `icons.py` (all emojis can be found in the `emoji` directory)
 
-### 3. Running
+# Running
 
 ### Production
 
