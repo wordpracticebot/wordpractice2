@@ -16,10 +16,10 @@ from helpers.user import get_pacer_display, get_theme_display
 from static import themes
 
 
-def _get_theme_preview_file(theme):
+async def _get_theme_preview_file(bot, theme):
     raw_quote = "This is a preview of your theme. Thomas the chatbot was walking down the street with an ice cream cone. He dropped the cone on the ground and was sad. The End."
 
-    base_img = get_base_img(raw_quote, DEFAULT_WRAP, theme)
+    base_img = await get_base_img(bot, raw_quote, DEFAULT_WRAP, theme)
 
     return save_discord_static_img(base_img, "preview")
 
@@ -128,7 +128,7 @@ class ThemeSelect(discord.ui.Select):
             add_footer=False,
         )
 
-        file = _get_theme_preview_file(theme_value)
+        file = await _get_theme_preview_file(self.ctx.bot, theme_value)
 
         embed.set_image(url=f"attachment://preview.{STATIC_IMAGE_FORMAT}")
 
@@ -180,7 +180,7 @@ class Customization(commands.Cog):
                 add_footer=False,
             )
 
-        file = _get_theme_preview_file(colours)
+        file = await _get_theme_preview_file(self.bot, colours)
 
         embed.set_image(url=f"attachment://preview.{STATIC_IMAGE_FORMAT}")
 

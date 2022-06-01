@@ -1,5 +1,6 @@
 import calendar
 import difflib
+import functools
 import math
 import random
 from datetime import datetime, timezone
@@ -346,3 +347,13 @@ def get_test_zone_name(cw: int):
     n, r = m
 
     return n, f"({r[0]}-{r[-1]}) words"
+
+
+# https://stackoverflow.com/a/64506715
+def run_in_executor(_func):
+    @functools.wraps(_func)
+    def wrapped(bot, *args, **kwargs):
+        func = functools.partial(_func, *args, **kwargs)
+        return bot.loop.run_in_executor(executor=None, func=func)
+
+    return wrapped

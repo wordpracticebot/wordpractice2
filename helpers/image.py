@@ -9,6 +9,8 @@ from PIL import Image, ImageDraw, ImageFilter
 from constants import SIDE_BORDER, SPACING, STATIC_IMAGE_FORMAT, TOP_BORDER
 from static.assets import arial
 
+from .utils import run_in_executor
+
 
 def _wrap_text(text, wrap_width):
     word_list = textwrap.wrap(text=text, width=wrap_width)
@@ -18,7 +20,7 @@ def _wrap_text(text, wrap_width):
     return word_list, joined
 
 
-def quantize_img(img):
+def _quantize_img(img):
     return img.quantize(method=Image.NONE)
 
 
@@ -40,6 +42,7 @@ def get_width_height(word_list, wrap_width):
     )
 
 
+@run_in_executor
 def get_base(width, height, colours, fquote):
     img = Image.new("RGB", (width, height), color=colours[0])
     d = ImageDraw.Draw(img)
@@ -51,6 +54,7 @@ def get_base(width, height, colours, fquote):
     return img
 
 
+@run_in_executor
 def get_highscore_captcha_img(base_img, text_colour):
     img = np.array(base_img)
 
@@ -84,6 +88,7 @@ def get_highscore_captcha_img(base_img, text_colour):
     return img
 
 
+@run_in_executor
 def get_loading_img(img, text_colour):
     width, height = img.size
 
@@ -100,29 +105,23 @@ def get_loading_img(img, text_colour):
     return blurred
 
 
-def save_discord_static_img(img, name):
-    buffer = BytesIO()
-
-    img.save(buffer, STATIC_IMAGE_FORMAT)
-    buffer.seek(0)
-
-    return discord.File(buffer, filename=f"{name}.{STATIC_IMAGE_FORMAT}")
-
-
-def get_raw_base_img(raw_quote, wrap_width, theme):
+async def get_raw_base_img(bot, raw_quote, wrap_width, theme):
     word_list, fquote = _wrap_text(raw_quote, wrap_width)
 
     width, height = get_width_height(word_list, wrap_width)
 
-    return get_base(width, height, theme, fquote), word_list
+    return await get_base(bot, width, height, theme, fquote), word_list
 
 
-def get_base_img(raw_quote, wrap_width, theme):
-    return get_raw_base_img(raw_quote, wrap_width, theme)[0]
+async def get_base_img(bot, raw_quote, wrap_width, theme):
+    return await get_raw_base_img(bot, raw_quote, wrap_width, theme)[0]
 
 
+@run_in_executor
 def get_pacer(base, text_colour, quote, word_list, pacer):
-    smooth = round(-0.1 * pacer + 31, 2)
+    base = _quantize_img(base)
+
+    smooth = round(-0.02 * pacer + 14, 2)
 
     images = []
 
@@ -150,9 +149,9 @@ def get_pacer(base, text_colour, quote, word_list, pacer):
 
             images.append(im)
 
-    t = (12 * len(" ".join(quote)) / pacer) - (0.5 / len(images))
+    t = 12 * len(" ".join(quote)) / pacer - 0.25
 
-    t = round((t / len(images) * 1000) - 0.5)
+    t = round((t / len(images) * 1000))
 
     buffer = BytesIO()
 
@@ -168,3 +167,12 @@ def get_pacer(base, text_colour, quote, word_list, pacer):
     buffer.seek(0)
 
     return buffer
+
+
+def save_discord_static_img(img, name):
+    buffer = BytesIO()
+
+    img.save(buffer, STATIC_IMAGE_FORMAT)
+    buffer.seek(0)
+
+    return discord.File(buffer, filename=f"{name}.{STATIC_IMAGE_FORMAT}")

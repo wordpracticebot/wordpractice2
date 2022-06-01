@@ -105,6 +105,10 @@ def _get_test_warning(raw, acc, result):
     return
 
 
+def get_user_input(message):
+    return [] if message.content is None else message.content.split()
+
+
 def _get_test_time(start: float, end: float):
     return max(round((start - end), 2), 0.01)
 
@@ -231,11 +235,17 @@ class HighScoreCaptchaView(BaseView):
 
         raw_quote = " ".join(quote)
 
-        base_img = get_base_img(raw_quote, wrap_width, self.user.theme)
+        base_img = await get_base_img(
+            self.ctx.bot, raw_quote, wrap_width, self.user.theme
+        )
 
-        captcha_img = get_highscore_captcha_img(base_img, self.user.theme[1])
+        captcha_img = await get_highscore_captcha_img(
+            self.ctx.bot, base_img, self.user.theme[1]
+        )
 
-        captcha_loading_img = get_loading_img(captcha_img, self.user.theme[1])
+        captcha_loading_img = await get_loading_img(
+            self.ctx.bot, captcha_img, self.user.theme[1]
+        )
 
         file = save_discord_static_img(captcha_loading_img, "captcha")
 
@@ -286,7 +296,7 @@ class HighScoreCaptchaView(BaseView):
                 timeout=expire_time,
             )
         except asyncio.TimeoutError:
-            acc = raw = None
+            acc = None
             finished_test = False
 
         self.ctx.bot.active_end(self.ctx.author.id)
@@ -298,7 +308,7 @@ class HighScoreCaptchaView(BaseView):
                 message.created_at.timestamp(), start_msg.created_at.timestamp() + lag
             )
 
-            u_input = message.content.split()
+            u_input = get_user_input(message)
 
             _, raw, _, cc, _, word_history = get_test_stats(u_input, quote, end_time)
 
@@ -618,7 +628,7 @@ class RaceJoinView(BaseView):
 
         r = self.racers[m.author.id]
 
-        u_input = m.content.split()
+        u_input = get_user_input(m)
 
         wpm, raw, _, cc, cw, _ = get_test_stats(u_input, self.quote, end_time)
 
@@ -653,9 +663,11 @@ class RaceJoinView(BaseView):
 
         raw_quote = " ".join(self.quote)
 
-        base_img = get_base_img(raw_quote, self.wrap_width, author_theme)
+        base_img = await get_base_img(
+            self.ctx.bot, raw_quote, self.wrap_width, author_theme
+        )
 
-        loading_img = get_loading_img(base_img, author_theme[1])
+        loading_img = await get_loading_img(self.ctx.bot, base_img, author_theme[1])
 
         file = save_discord_static_img(loading_img, "loading")
 
@@ -1092,6 +1104,7 @@ class Typing(commands.Cog):
             pacer_name = get_pacer_display(user.pacer_type, user.pacer_speed)
 
         title = f"{user.display_name} | {test_type} Test ({word_count} words)"
+
         desc = f"**Pacer:** {pacer_name}"
 
         embed = ctx.embed(
@@ -1105,9 +1118,11 @@ class Typing(commands.Cog):
 
         raw_quote = " ".join(quote)
 
-        base_img, word_list = get_raw_base_img(raw_quote, wrap_width, user.theme)
+        base_img, word_list = await get_raw_base_img(
+            ctx.bot, raw_quote, wrap_width, user.theme
+        )
 
-        loading_img = get_loading_img(base_img, user.theme[1])
+        loading_img = await get_loading_img(ctx.bot, base_img, user.theme[1])
 
         file = save_discord_static_img(loading_img, "loading")
 
@@ -1122,7 +1137,9 @@ class Typing(commands.Cog):
 
         if pacer:
 
-            buffer = get_pacer(base_img, user.theme[1], quote, word_list, pacer)
+            buffer = await get_pacer(
+                ctx.bot, base_img, user.theme[1], quote, word_list, pacer
+            )
 
             file = discord.File(buffer, filename="test.gif")
 
@@ -1145,7 +1162,9 @@ class Typing(commands.Cog):
 
         # Currently only showing timer for non-pacer because of delayed loading time
         if not pacer:
-            embed.description = desc + f"\n**Started:** <t:{int(start_lag)}:R>"
+            desc += f"\n**Started:** <t:{int(start_lag)}:R>"
+
+        embed.description = desc
 
         send_msg = await ctx.respond(embed=embed, file=file)
 
@@ -1396,7 +1415,7 @@ class Typing(commands.Cog):
         flag_embed = None
 
         # Evaluating the success of the captcha
-        if message.content.lower() == captcha_word:
+        if message.content is not None and message.content.lower() == captcha_word:
             embed = ctx.embed(
                 title=f"{icons.success} Captcha Completed", add_footer=False
             )

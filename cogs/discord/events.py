@@ -62,7 +62,6 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
         if isinstance(error, (discord.errors.CheckFailure, commands.CheckFailure)):
-
             if isinstance(error, errors.BotMissingPermissions):
                 await self.send_basic_error(
                     ctx, title="Bot Missing Permissions", severe=True
@@ -75,7 +74,7 @@ class Events(commands.Cog):
 
         self.bot.active_end(ctx.author.id)
 
-        if isinstance(error, discord.errors.Forbidden):
+        if isinstance(error.original, discord.errors.Forbidden):
             try:
                 await self.send_basic_error(
                     ctx,
