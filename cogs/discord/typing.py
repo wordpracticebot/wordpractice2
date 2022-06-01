@@ -1138,7 +1138,13 @@ class Typing(commands.Cog):
         if pacer:
 
             buffer = await get_pacer(
-                ctx.bot, base_img, user.theme[1], quote, word_list, pacer
+                ctx.bot,
+                base_img,
+                user.theme[1],
+                quote,
+                word_list,
+                pacer,
+                user.pacer_type,
             )
 
             file = discord.File(buffer, filename="test.gif")

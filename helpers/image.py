@@ -117,10 +117,48 @@ async def get_base_img(bot, raw_quote, wrap_width, theme):
     return await get_raw_base_img(bot, raw_quote, wrap_width, theme)[0]
 
 
+def get_horizontal_pacer_rect(base, smooth, text_colour, i, y, _):
+    im = base.copy()
+
+    d = ImageDraw.Draw(im)
+
+    d.rectangle(
+        [
+            SIDE_BORDER + i * smooth,
+            y,
+            SIDE_BORDER + arial.size / 3 + i * smooth,
+            y + 2,
+        ],
+        fill=text_colour,
+    )
+
+    return im
+
+
+def get_vertical_pacer_rect(base, smooth, text_colour, i, y, line_spacing):
+    im = base.copy()
+
+    d = ImageDraw.Draw(im)
+
+    d.rectangle(
+        [
+            SIDE_BORDER + i * smooth,
+            y - line_spacing * 0.8,
+            SIDE_BORDER + 2 + i * smooth,
+            y - 2,
+        ],
+        fill=text_colour,
+    )
+
+    return im
+
+
 @run_in_executor
-def get_pacer(base, text_colour, quote, word_list, pacer):
+def get_pacer(base, text_colour, quote, word_list, pacer, pacer_type):
+    # Removes the dithering and reduces image size
     base = _quantize_img(base)
 
+    # Scales the frame rate of the pacer so that slow pacers don't take forever to load
     smooth = round(-0.02 * pacer + 14, 2)
 
     images = []
@@ -129,23 +167,13 @@ def get_pacer(base, text_colour, quote, word_list, pacer):
 
     line_spacing = arial.getsize("A")[1] + SPACING
 
+    rect_gen = get_horizontal_pacer_rect if pacer_type == 0 else get_vertical_pacer_rect
+
     for i, group in enumerate(word_list):
         y += line_spacing
 
         for i in range(int(arial.getsize(group)[0] // smooth)):
-            im = base.copy()
-
-            d = ImageDraw.Draw(im)
-
-            d.rectangle(
-                [
-                    SIDE_BORDER + i * smooth,
-                    y,
-                    SIDE_BORDER + arial.size / 3 + i * smooth,
-                    y + 2,
-                ],
-                fill=text_colour,
-            )
+            im = rect_gen(base, smooth, text_colour, i, y, line_spacing)
 
             images.append(im)
 

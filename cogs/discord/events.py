@@ -74,7 +74,12 @@ class Events(commands.Cog):
 
         self.bot.active_end(ctx.author.id)
 
-        if isinstance(error.original, discord.errors.Forbidden):
+        if isinstance(error, errors.UserInputError):
+            return await self.handle_user_input_error(ctx, error)
+
+        if hasattr(error, "original") and isinstance(
+            error.original, discord.errors.Forbidden
+        ):
             try:
                 await self.send_basic_error(
                     ctx,
@@ -85,9 +90,6 @@ class Events(commands.Cog):
                 pass
 
             return
-
-        if isinstance(error, errors.UserInputError):
-            return await self.handle_user_input_error(ctx, error)
 
         await self.handle_unexpected_error(ctx, error)
 
