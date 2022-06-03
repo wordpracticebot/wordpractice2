@@ -28,6 +28,8 @@ from constants import (
     CHALLENGE_AMT,
     DEFAULT_THEME,
     PREMIUM_LAUNCHED,
+    PREMIUM_SCORE_LIMIT,
+    REGULAR_SCORE_LIMIT,
     TEST_ZONES,
     VOTING_SITES,
 )
@@ -233,7 +235,7 @@ class User(UserBase):
             self.last24[1] = current
 
     def add_score(self, score: Score):
-        limit = 200 if self.is_premium else 50
+        limit = PREMIUM_SCORE_LIMIT if self.is_premium else REGULAR_SCORE_LIMIT
 
         if len(self.scores) >= limit:
             del self.scores[: len(self.scores) - limit + 1]

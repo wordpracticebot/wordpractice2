@@ -8,7 +8,7 @@ import icons
 from config import MODERATORS, SUPPORT_GUILD_ID
 from constants import SUPPORT_SERVER_INVITE
 from helpers.checks import user_check
-from helpers.converters import rqd_user
+from helpers.converters import user_option
 from helpers.ui import BaseView, ScrollView, create_link_view
 
 INFRACTIONS_PER_PAGE = 3
@@ -112,7 +112,8 @@ class Moderator(commands.Cog):
         return await user_check(ctx, user)
 
     @mod_command
-    async def wipe(self, ctx, user: rqd_user()):
+    @user_option
+    async def wipe(self, ctx, user: discord.User):
         """Wipe a user"""
         await ctx.defer()
 
@@ -125,17 +126,17 @@ class Moderator(commands.Cog):
         await ctx.respond(embed=embed)
 
     @mod_command
-    async def ban(
-        self,
-        ctx,
-        user: rqd_user(),
-        reason: Option(
-            str,
-            "Reason for the ban",
-            autocomplete=discord.utils.basic_autocomplete(BAN_AUTOCOMPLETE),
-        ),
-        wipe: Option(bool, "Whether the user's account should be wiped"),
-    ):
+    @user_option
+    @discord.option(
+        "reason",
+        str,
+        description="Reason for the ban",
+        autocomplete=discord.utils.basic_autocomplete(BAN_AUTOCOMPLETE),
+    )
+    @discord.option(
+        "wipe", bool, description="Whether the user's account should be wiped"
+    )
+    async def ban(self, ctx, user: discord.User, reason: str, wipe: bool):
         """Ban a user"""
         await ctx.defer()
 
@@ -181,7 +182,8 @@ class Moderator(commands.Cog):
         await ctx.respond(embed=embed)
 
     @mod_command
-    async def unban(self, ctx, user: rqd_user(), reason):
+    @user_option
+    async def unban(self, ctx, user, reason):
         """Unban a user"""
         await ctx.defer()
 
@@ -201,7 +203,8 @@ class Moderator(commands.Cog):
         await ctx.respond(embed=embed)
 
     @mod_command
-    async def cat(self, ctx, user: rqd_user()):
+    @user_option
+    async def cat(self, ctx, user):
         """View the infractions of a user"""
         await ctx.defer()
 
@@ -212,7 +215,8 @@ class Moderator(commands.Cog):
         await view.start()
 
     @mod_command
-    async def restore(self, ctx, user: rqd_user()):
+    @user_option
+    async def restore(self, ctx, user):
         """Restore a user's account"""
         await ctx.defer()
 

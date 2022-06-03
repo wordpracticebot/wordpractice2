@@ -2,7 +2,7 @@ import math
 
 import discord
 from discord.commands import Option, SlashCommandGroup
-from discord.ext import commands
+from discord.ext import bridge, commands
 
 import icons
 import word_list
@@ -202,7 +202,7 @@ class Customization(commands.Cog):
         await ctx.respond(content="** **", view=view)
 
     @cooldown(8, 3)
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def language(
         self,
         ctx,
@@ -314,7 +314,7 @@ class Customization(commands.Cog):
         await self.handle_update_pacer_speed(ctx, f"{speed} wpm", str(speed))
 
     @cooldown(8, 3)
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def equip(self, ctx):
         """Equip a badge that you own"""
         user = ctx.initial_user
@@ -338,7 +338,7 @@ class Customization(commands.Cog):
         await self.handle_settings_cmd(ctx, member)
 
     @cooldown(5, 2)
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def settings(self, ctx, user: opt_user()):
         """View user settings"""
         await self.handle_settings_cmd(ctx, user)

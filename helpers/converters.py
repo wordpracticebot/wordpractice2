@@ -33,8 +33,13 @@ def rgb_to_hex(r, g, b):
 
 # Users
 opt_user = lambda: Option(
-    discord.User, "Enter a user or user id", required=False, default=None
+    name="user", description="Enter a user or user id", required=False, default=None
 )
+
+user_option = discord.option(
+    name="user", type=discord.User, description="Enter a user or user id"
+)
+
 rqd_user = lambda: Option(discord.User, "Enter a user or user id", required=True)
 
 # Colours

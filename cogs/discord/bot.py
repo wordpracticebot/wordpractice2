@@ -9,7 +9,7 @@ from io import BytesIO, StringIO
 import discord
 import humanize
 from cryptography.fernet import Fernet
-from discord.ext import commands
+from discord.ext import bridge, commands
 
 import icons
 from challenges.achievements import categories, get_achievement_display
@@ -23,9 +23,11 @@ from constants import (
     LB_DISPLAY_AMT,
     LB_LENGTH,
     PREMIUM_LINK,
+    PREMIUM_SCORE_LIMIT,
+    REGULAR_SCORE_LIMIT,
 )
 from helpers.checks import cooldown, user_check
-from helpers.converters import opt_user
+from helpers.converters import opt_user, user_option
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_pacer_display, get_theme_display, get_typing_average
 from helpers.utils import calculate_score_consistency, cmd_run_before, get_bar
@@ -156,6 +158,17 @@ class SeasonView(ViewFromDict):
         return await self.the_dict[self.page]()
 
 
+class GraphButton(DictButton):
+    def __init__(self, is_premium, **kwargs):
+        self.is_premium = is_premium
+
+        super().__init__(**kwargs)
+
+    def toggle_eligible(self, value):
+        if self.is_premium is False and value >= REGULAR_SCORE_LIMIT:
+            self.disabled = True
+
+
 class GraphView(ViewFromDict):
     def __init__(self, ctx, user):
         test_amts = [10, 25, 50, 100]
@@ -166,16 +179,42 @@ class GraphView(ViewFromDict):
 
         self.current_time = time.time()
 
+    def button(self, **kwargs):
+        return GraphButton(self.user.is_premium, **kwargs)
+
     async def create_page(self):
         amt = self.the_dict[self.page]
 
         embed = self.ctx.embed(
-            title=f"Last {amt} Scores",
+            title=f"Last {amt} Scores", add_footer=self.user.is_premium
         )
+
+        wpm, raw, acc, cw, tw, scores = get_typing_average(self.user, amt)
+
+        # Getting the best score
+        highest = max(scores, key=lambda x: x.wpm)
+        lowest = min(scores, key=lambda x: x.wpm)
+
+        embed.add_field(
+            name="Average",
+            value=(
+                f">>> **Wpm:** {wpm}\n"
+                f">>> **Raw Wpm:** {raw}\n"
+                f">>> **Accuracy:** {acc}% ({cw} / {tw})"
+            ),
+            inline=True,
+        )
+
+        embed.add_field(name="Best", value=f"**Wpm:** {highest.wpm}", inline=True)
+
+        embed.add_field(name="Lowest", value=f"**Wpm:** {lowest.wpm}", inline=True)
 
         url = get_graph_link(
             user=self.user, amt=amt, dimensions=(6, 4), current_time=self.current_time
         )
+
+        if self.user.is_premium is False:
+            embed.set_footer(text="Donators can save up to 250 tests")
 
         embed.set_image(url=url)
 
@@ -393,7 +432,7 @@ class LeaderboardView(ScrollView):
             )
 
         # Getting the page where the user is placed
-        page = int((self.placing - 1) / 10)
+        page = int((self.placing[0] - 1) / 10)
 
         if self.page != page:
             self.page = page
@@ -800,8 +839,9 @@ class Bot(commands.Cog):
         self.bot = bot
 
     @cooldown(7, 2)
-    @commands.slash_command()
-    async def profile(self, ctx, user: opt_user()):
+    @bridge.bridge_command()
+    @user_option
+    async def profile(self, ctx, user: discord.User = None):
         """View user statistics"""
         await self.handle_profile_cmd(ctx, user)
 
@@ -818,8 +858,9 @@ class Bot(commands.Cog):
         await view.start()
 
     @cooldown(5, 2)
-    @commands.slash_command()
-    async def graph(self, ctx, user: opt_user()):
+    @bridge.bridge_command()
+    @user_option
+    async def graph(self, ctx, user: discord.User = None):
         """See a graph of a user's typing scores"""
         await self.handle_graph_cmd(ctx, user)
 
@@ -829,13 +870,16 @@ class Bot(commands.Cog):
         await self.handle_graph_cmd(ctx, member)
 
     async def handle_graph_cmd(self, ctx, user):
-        user = await user_check(ctx, user)
+        user_data = await self.handle_scores(ctx, user)
+
+        if user_data is None:
+            return
 
         view = GraphView(ctx, user)
         await view.start()
 
     @cooldown(6, 2)
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def leaderboard(self, ctx):
         """See the top users in any category"""
 
@@ -844,8 +888,9 @@ class Bot(commands.Cog):
         await view.start()
 
     @cooldown(5, 2)
-    @commands.slash_command()
-    async def achievements(self, ctx, user: opt_user()):
+    @bridge.bridge_command()
+    @user_option
+    async def achievements(self, ctx, user: discord.User = None):
         """See all the achievements"""
         user_data = await user_check(ctx, user)
 
@@ -854,7 +899,7 @@ class Bot(commands.Cog):
         await view.start()
 
     @cooldown(5, 2)
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def challenges(self, ctx):
         """View the daily challenges and your progress on them"""
 
@@ -917,16 +962,13 @@ class Bot(commands.Cog):
             )
 
     @cooldown(6, 2)
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def season(self, ctx):
         """Information about the monthly season and your progress in it"""
         view = SeasonView(ctx)
         await view.start()
 
-    @cooldown(6, 2)
-    @commands.slash_command()
-    async def scores(self, ctx, user: opt_user()):
-        """View and download a user's recent typing scores"""
+    async def handle_scores(self, ctx, user):
         user_data = await user_check(ctx, user)
 
         if len(user_data.scores) == 0:
@@ -934,14 +976,27 @@ class Bot(commands.Cog):
                 title=f"{icons.caution} User does not have any scores saved:",
                 description="> Please complete at least 1 typing test or race using `/tt`",
             )
-            return await ctx.respond(embed=embed)
+            await ctx.respond(embed=embed)
+            return
+
+        return user_data
+
+    @cooldown(6, 2)
+    @bridge.bridge_command()
+    @user_option
+    async def scores(self, ctx, user: discord.User = None):
+        """View and download a user's recent typing scores"""
+        user_data = await self.handle_scores(ctx, user)
+
+        if user_data is None:
+            return
 
         view = ScoreView(ctx, user_data)
 
         await view.start()
 
     @cooldown(5, 2)
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def badges(self, ctx, user: opt_user()):
         """View a user's badges"""
         user_data = await user_check(ctx, user)

@@ -156,9 +156,12 @@ def get_test_input_stats(u_input: list, quote: list):
                 w_shift -= 1
 
             elif result == 3:
-                combined = u_input[u_index] + u_input[u_index + 1]
+                combined = u_input[u_index] + " " + u_input[u_index + 1]
+
                 word_history.append(f"__{combined}__")
-                cc += len(combined)
+
+                cc += len(combined) - 1
+
                 w_shift += 1
                 u_shift += 1
 

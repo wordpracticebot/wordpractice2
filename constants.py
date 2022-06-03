@@ -53,7 +53,7 @@ TOP_BORDER = 5
 SIDE_BORDER = 10
 SPACING = 5
 DEFAULT_WRAP = 45
-MIN_PACER_SPEED = 60
+MIN_PACER_SPEED = 50
 
 # Voting
 VOTING_SITES = {
@@ -72,6 +72,9 @@ VOTING_SITES = {
 # Premium
 PREMIUM_LAUNCHED = False
 PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
+
+PREMIUM_SCORE_LIMIT = 250
+REGULAR_SCORE_LIMIT = 50
 
 # Daily challenges
 CHALLENGE_AMT = 2

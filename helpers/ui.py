@@ -80,14 +80,21 @@ class BaseView(discord.ui.View):
 
     async def on_timeout(self):
         if self.children:
-            try:
-                msg = (
-                    self.message
-                    or self.ctx.interaction.message
-                    or await self.ctx.interaction.original_message()
-                )
+            msg = self.message
 
-            except discord.NotFound:
+            if not msg:
+                if hasattr(self.ctx, "interaction"):
+                    try:
+                        msg = (
+                            self.ctx.interaction.message
+                            or await self.ctx.interaction.original_message()
+                        )
+                    except discord.NotFound:
+                        return
+                else:
+                    msg = self.ctx.message
+
+            if not msg:
                 return
 
             if not msg.components:
@@ -277,6 +284,9 @@ class DictButton(discord.ui.Button):
     def toggle_regular(self):
         self.style = self.regular
 
+    def toggle_eligible(self, value):
+        ...
+
     async def callback(self, interaction):
         if self.is_display_success is False:
             self.toggle_success()
@@ -315,16 +325,18 @@ class ViewFromDict(PageView):
         start_index = 0
         # Generating the buttons
         for i, name in enumerate(self.order):
-            button = self.button(label=name, row=self.row)
+            btn = self.button(label=name, row=self.row)
 
             if i == start_index:
                 self.page = name
-                button.toggle_success()
+                btn.toggle_success()
 
             else:
-                button.toggle_regular()
+                btn.toggle_regular()
 
-            self.add_item(button)
+            btn.toggle_eligible(self.the_dict[self.order[0]])
+
+            self.add_item(btn)
 
         embed = await self.create_page()
         await self.ctx.respond(embed=embed, view=self)

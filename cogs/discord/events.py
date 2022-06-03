@@ -59,6 +59,8 @@ class Events(commands.Cog):
         else:
             await ctx.respond(embed=embed, ephemeral=ephemeral, view=view)
 
+    # TODO: add error event for prefix commands
+
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
         if isinstance(error, (discord.errors.CheckFailure, commands.CheckFailure)):

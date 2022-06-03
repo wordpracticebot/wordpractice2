@@ -270,7 +270,7 @@ class CustomPrefixContext(bridge.BridgeExtContext, CustomContextItems):
         return self.other_author or self.message.author
 
 
-class WordPractice(commands.AutoShardedBot):
+class WordPractice(bridge.AutoShardedBot):
     def __init__(self, **kwargs):
 
         self.loop = asyncio.new_event_loop()

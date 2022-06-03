@@ -197,6 +197,8 @@ class Misc(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+        self.bot.remove_command("help")
+
     @bridge.bridge_command()
     async def ping(self, ctx):
         """View the bot's latency"""
@@ -208,7 +210,7 @@ class Misc(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-    @commands.slash_command()
+    @bridge.bridge_command()
     async def attribution(self, ctx):
         """View the bot's attribution"""
         embed = ctx.embed(
@@ -234,7 +236,7 @@ class Misc(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-    @commands.slash_command(name="help")
+    @bridge.bridge_command(name="help")
     async def _help(self, ctx):
         """Help with bot usage and list of commands"""
 
@@ -372,11 +374,7 @@ class Misc(commands.Cog):
         await ctx.respond(embed=embed, view=view)
 
         if not cmd_run_before(ctx, user):
-
             msg = "Voting is a great way to support wordPractice!"
-
-            if hasattr(ctx, "followup"):
-                return await ctx.followup.send(msg, ephemeral=True)
 
             await ctx.respond(msg)
 
