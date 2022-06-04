@@ -27,7 +27,7 @@ from constants import (
     REGULAR_SCORE_LIMIT,
 )
 from helpers.checks import cooldown, user_check
-from helpers.converters import opt_user, user_option
+from helpers.converters import user_option
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_pacer_display, get_theme_display, get_typing_average
 from helpers.utils import calculate_score_consistency, cmd_run_before, get_bar
@@ -196,18 +196,18 @@ class GraphView(ViewFromDict):
         lowest = min(scores, key=lambda x: x.wpm)
 
         embed.add_field(
-            name="Average",
+            name="`Average`",
             value=(
-                f">>> **Wpm:** {wpm}\n"
-                f">>> **Raw Wpm:** {raw}\n"
-                f">>> **Accuracy:** {acc}% ({cw} / {tw})"
+                f"**Wpm:** {wpm}\n"
+                f"**Raw Wpm:** {raw}\n"
+                f"**Accuracy:** {acc}% ({cw} / {tw})"
             ),
             inline=True,
         )
 
-        embed.add_field(name="Best", value=f"**Wpm:** {highest.wpm}", inline=True)
+        embed.add_field(name="`Best`", value=f"**Wpm:** {highest.wpm}", inline=True)
 
-        embed.add_field(name="Lowest", value=f"**Wpm:** {lowest.wpm}", inline=True)
+        embed.add_field(name="`Lowest`", value=f"**Wpm:** {lowest.wpm}", inline=True)
 
         url = get_graph_link(
             user=self.user, amt=amt, dimensions=(6, 4), current_time=self.current_time
@@ -875,7 +875,7 @@ class Bot(commands.Cog):
         if user_data is None:
             return
 
-        view = GraphView(ctx, user)
+        view = GraphView(ctx, user_data)
         await view.start()
 
     @cooldown(6, 2)
@@ -956,10 +956,9 @@ class Bot(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-        if not cmd_run_before(ctx, user):
-            await ctx.followup.send(
-                "Challenges restart at the same time every day!", ephemeral=True
-            )
+        await ctx.respond(
+            "Challenges restart at the same time every day!", ephemeral=True
+        )
 
     @cooldown(6, 2)
     @bridge.bridge_command()
@@ -997,7 +996,8 @@ class Bot(commands.Cog):
 
     @cooldown(5, 2)
     @bridge.bridge_command()
-    async def badges(self, ctx, user: opt_user()):
+    @user_option
+    async def badges(self, ctx, user: discord.User = None):
         """View a user's badges"""
         user_data = await user_check(ctx, user)
 

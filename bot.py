@@ -180,7 +180,7 @@ class WelcomeView(BaseView):
         embed.set_footer(
             text=f"You will be able to click accept in {accept_time} seconds"
         )
-        # TODO: Add a timer to the footer, replace current gif with a timer
+
         embed.set_thumbnail(url="https://i.imgur.com/2vUD4NF.png")
         self.accept.disabled = True
 
@@ -219,7 +219,11 @@ class CustomContextItems:
         self.other_author = None
 
         # Hint is chosen when defining context to ensure a consistent hint throughout each response
-        self.hint = random.choice(hints)
+        self._hint = random.choice(hints)
+
+    @property
+    def hint(self):
+        return self._hint.format(self.prefix)
 
     @property
     def theme(self):
@@ -253,6 +257,9 @@ class CustomAppContext(bridge.BridgeApplicationContext, CustomContextItems):
         bridge.BridgeApplicationContext.__init__(self, *args, **kwargs)
         CustomContextItems.__init__(self)
 
+        self.prefix = "/"
+        self.is_slash = True
+
     @discord.utils.cached_property
     def user(self):
         return self.other_author or self.interaction.user
@@ -264,6 +271,8 @@ class CustomPrefixContext(bridge.BridgeExtContext, CustomContextItems):
     def __init__(self, *args, **kwargs):
         bridge.BridgeExtContext.__init__(self, *args, **kwargs)
         CustomContextItems.__init__(self)
+
+        self.is_slash = False
 
     @discord.utils.cached_property
     def author(self):

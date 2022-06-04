@@ -1,8 +1,7 @@
 import math
 
 import discord
-from discord.commands import Option
-from discord.ext import commands
+from discord.ext import bridge, commands
 
 import icons
 from config import MODERATORS, SUPPORT_GUILD_ID
@@ -26,7 +25,7 @@ async def cog_check(ctx):
     return ctx.author.id in MODERATORS
 
 
-mod_command = commands.slash_command(
+mod_command = bridge.bridge_command(
     guild_ids=[SUPPORT_GUILD_ID],
     checks=[cog_check],
 )

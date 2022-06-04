@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import bridge, commands
 
 import icons
 from config import SUPPORT_GUILD_ID
@@ -21,7 +21,7 @@ class Server(commands.Cog):
         return discord.utils.get(roles, id=role_id)
 
     @cooldown(10, 3)
-    @commands.slash_command(guild_ids=[SUPPORT_GUILD_ID])
+    @bridge.bridge_command(guild_ids=[SUPPORT_GUILD_ID])
     async def roles(self, ctx):
         """Update your wordPractice roles on the server"""
 

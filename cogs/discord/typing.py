@@ -36,7 +36,7 @@ from constants import (
     TEST_ZONES,
 )
 from helpers.checks import cooldown
-from helpers.converters import quote_amt, word_amt
+from helpers.converters import quote_option, word_option
 from helpers.image import (
     get_base_img,
     get_highscore_captcha_img,
@@ -251,9 +251,11 @@ class HighScoreCaptchaView(BaseView):
 
         # Generating the loading embed
 
-        i_embed = embed = self.ctx.embed(
+        i_embed = self.ctx.embed(
             title=f"{self.ctx.author} | High Score Captcha"
         )
+
+        embed = copy(i_embed)
 
         i_embed.set_image(url=f"attachment://captcha.{STATIC_IMAGE_FORMAT}")
         i_embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
@@ -1005,7 +1007,8 @@ class Typing(commands.Cog):
 
     @cooldown(5, 1)
     @tt_group.command()
-    async def dictionary(self, ctx, length: word_amt()):
+    @word_option
+    async def dictionary(self, ctx, length: int):
         """Take a dictionary typing test"""
         quote_info = await self.handle_dictionary_input(ctx, length)
 
@@ -1013,7 +1016,8 @@ class Typing(commands.Cog):
 
     @cooldown(5, 1)
     @tt_group.command()
-    async def quote(self, ctx, length: quote_amt()):
+    @quote_option
+    async def quote(self, ctx, length: str):
         """Take a quote typing test"""
         quote_info = await self.handle_quote_input(length)
 
@@ -1021,7 +1025,8 @@ class Typing(commands.Cog):
 
     @cooldown(6, 2)
     @race_group.command()
-    async def dictionary(self, ctx, length: word_amt()):
+    @word_option
+    async def dictionary(self, ctx, length: int):
         """Take a multiplayer dictionary typing test"""
 
         quote_info = await self.handle_dictionary_input(ctx, length)
@@ -1030,7 +1035,8 @@ class Typing(commands.Cog):
 
     @cooldown(6, 2)
     @race_group.command()
-    async def quote(self, ctx, length: quote_amt()):
+    @quote_option
+    async def quote(self, ctx, length: str):
         """Take a multiplayer quote typing test"""
 
         quote_info = await self.handle_quote_input(length)

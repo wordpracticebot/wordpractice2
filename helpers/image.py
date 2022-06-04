@@ -114,7 +114,7 @@ async def get_raw_base_img(bot, raw_quote, wrap_width, theme):
 
 
 async def get_base_img(bot, raw_quote, wrap_width, theme):
-    return await get_raw_base_img(bot, raw_quote, wrap_width, theme)[0]
+    return (await get_raw_base_img(bot, raw_quote, wrap_width, theme))[0]
 
 
 def get_horizontal_pacer_rect(base, smooth, text_colour, i, y, _):

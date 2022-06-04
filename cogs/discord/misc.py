@@ -53,7 +53,7 @@ CREDITS = [
 ]
 
 
-def _add_commands(embed, cmds):
+def _add_commands(prefix, embed, cmds):
     """Formats commands fields and adds them to embeds"""
 
     wrapper = TextWrapper(width=55)
@@ -62,7 +62,7 @@ def _add_commands(embed, cmds):
         cmd_name = format_slash_command(cmd)
 
         embed.add_field(
-            name=f"/{cmd_name}",
+            name=f"{prefix}{cmd_name}",
             value="\n".join(wrapper.wrap(text=cmd.description))
             or "No command description",
             inline=False,
@@ -164,7 +164,7 @@ class HelpView(BaseView):
             description=cog.description or "No category description",
         )
 
-        embed = _add_commands(embed, cmds)
+        embed = _add_commands(self.ctx.prefix, embed, cmds)
 
         return embed
 

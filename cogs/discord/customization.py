@@ -8,7 +8,7 @@ import icons
 import word_list
 from constants import DEFAULT_WRAP, MIN_PACER_SPEED, PREMIUM_LINK, STATIC_IMAGE_FORMAT
 from helpers.checks import cooldown, premium_command, user_check
-from helpers.converters import opt_user, rgb_to_hex, rqd_colour
+from helpers.converters import colour_option, rgb_to_hex, user_option
 from helpers.errors import ImproperArgument
 from helpers.image import get_base_img, save_discord_static_img
 from helpers.ui import BaseView
@@ -156,7 +156,9 @@ class Customization(commands.Cog):
     @premium_command()
     @cooldown(8, 3)
     @theme_group.command()
-    async def custom(self, ctx, background: rqd_colour(), text: rqd_colour()):
+    @colour_option("background")
+    @colour_option("text")
+    async def custom(self, ctx, background, text):
         """Create a custom theme for your typing test"""
 
         distance = _get_colour_perceptual_distance(background, text)
@@ -339,7 +341,8 @@ class Customization(commands.Cog):
 
     @cooldown(5, 2)
     @bridge.bridge_command()
-    async def settings(self, ctx, user: opt_user()):
+    @user_option
+    async def settings(self, ctx, user: discord.User = None):
         """View user settings"""
         await self.handle_settings_cmd(ctx, user)
 
