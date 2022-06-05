@@ -17,7 +17,7 @@ from constants import (
 )
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
-from helpers.utils import can_run, cmd_run_before, format_slash_command
+from helpers.utils import can_run, cmd_run_before, format_command
 
 CREDITS = [
     [
@@ -59,7 +59,7 @@ def _add_commands(prefix, embed, cmds):
     wrapper = TextWrapper(width=55)
 
     for cmd in cmds:
-        cmd_name = format_slash_command(cmd)
+        cmd_name = format_command(cmd)
 
         embed.add_field(
             name=f"{prefix}{cmd_name}",
@@ -74,7 +74,12 @@ def _add_commands(prefix, embed, cmds):
 async def _filter_commands(ctx, cmds):
     ctx.testing = True  # skipping invoking the command
 
-    iterator = filter(lambda c: isinstance(c, (SlashCommand, SlashCommandGroup)), cmds)
+    if ctx.is_slash:
+        types = (SlashCommand, SlashCommandGroup)
+    else:
+        types = (commands.Command, commands.Group)
+
+    iterator = filter(lambda c: isinstance(c, types), cmds)
 
     ret = []
     for cmd in iterator:

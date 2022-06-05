@@ -5,7 +5,7 @@ from discord.ext import commands
 
 from constants import PREMIUM_LINK
 from helpers.ui import create_link_view
-from helpers.utils import format_slash_command
+from helpers.utils import get_command_name
 
 
 def premium_command():
@@ -35,7 +35,7 @@ def cooldown(regular: int, premium: int):
             return True
 
         # Cooldown key
-        c = (ctx.author.id, format_slash_command(ctx.command))
+        c = (ctx.author.id, get_command_name(ctx.command))
 
         # Checking if there is a cooldown
         cooldown = ctx.bot.cooldowns.get(c)

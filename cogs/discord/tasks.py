@@ -157,7 +157,7 @@ class Tasks(commands.Cog):
         )
 
         # Removing updated users from the cache
-        users_to_remove = set(last24_ids, daily_completion_ids)
+        users_to_remove = set(last24_ids + daily_completion_ids)
 
         if users_to_remove:
             await self.bot.redis.hdel("users", *users_to_remove)

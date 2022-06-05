@@ -15,8 +15,18 @@ from icons import h_progress_bar, overflow_bar, v_progress_bar
 BARS = (h_progress_bar, overflow_bar, v_progress_bar)
 
 
-def format_slash_command(command: SlashCommand):
-    return (f"{command.parent.name} " if command.parent else "") + command.name
+def get_command_name(command):
+    if isinstance(command, SlashCommand):
+        return (f"{command.parent.name} " if command.parent else "") + command.name
+
+    return command.qualified_name
+
+
+def format_command(command):
+    if isinstance(command, SlashCommand):
+        return get_command_name(command)
+
+    return f"{command} {command.signature}"
 
 
 async def can_run(ctx, cmd):
@@ -27,7 +37,7 @@ async def can_run(ctx, cmd):
 
 
 def cmd_run_before(ctx, user):
-    return format_slash_command(ctx.command) in get_user_cmds_run(ctx.bot, user)
+    return format_command(ctx.command) in get_user_cmds_run(ctx.bot, user)
 
 
 def weighted_lottery(seed, values, picks):

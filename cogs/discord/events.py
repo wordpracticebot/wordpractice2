@@ -16,7 +16,7 @@ from helpers.errors import ImproperArgument, OnGoingTest
 from helpers.image import save_discord_static_img
 from helpers.ui import create_link_view, get_log_embed
 from helpers.user import get_user_cmds_run
-from helpers.utils import format_slash_command
+from helpers.utils import format_command, get_command_name
 from static.assets import achievement_base, uni_sans_heavy
 
 
@@ -40,9 +40,11 @@ class Events(commands.Cog):
     async def log_interaction(self, ctx):
         # Logging the interaction
 
-        command = format_slash_command(ctx.command)
+        command = format_command(ctx.command)
 
-        embed = get_log_embed(ctx, title=None, additional=f"**Command:** {command}")
+        embed = get_log_embed(
+            ctx, title=None, additional=f"**Command:** {ctx.prefix}{command}"
+        )
 
         await self.bot.cmd_wh.send(embed=embed)
 
@@ -127,16 +129,22 @@ class Events(commands.Cog):
             severe=True,
         )
 
-        command = format_slash_command(ctx.command)
+        command = format_command(ctx.command)
 
         embed = get_log_embed(
             ctx,
             title="Unexpected Error",
-            additional=f"**Command:** {command}",
+            additional=f"**Command:** {ctx.prefix}{command}",
             error=True,
         )
 
         await self.bot.log_the_error(embed, error)
+
+    @commands.Cog.listener()
+    async def on_command(self, ctx):
+        print(ctx.command.qualified_name)
+        # Logging the command
+        await self.log_interaction(ctx)
 
     @commands.Cog.listener()
     async def on_application_command(self, ctx):
@@ -166,6 +174,13 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_completion(self, ctx):
+        await self.handle_command_completion(ctx)
+
+    @commands.Cog.listener()
+    async def on_command_completion(self, ctx):
+        await self.handle_command_completion(ctx)
+
+    async def handle_command_completion(self, ctx):
 
         if ctx.no_completion:
             return
@@ -254,7 +269,7 @@ class Events(commands.Cog):
 
         # Updating the user's executed commands
 
-        cmd_name = format_slash_command(ctx.command)
+        cmd_name = get_command_name(ctx.command)
 
         cmds = get_user_cmds_run(self.bot, new_user)
 
