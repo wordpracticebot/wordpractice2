@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from textwrap import TextWrapper
 
 import discord
-from discord.commands import SlashCommand, SlashCommandGroup
 from discord.ext import bridge, commands
 
 import icons
@@ -17,7 +16,7 @@ from constants import (
 )
 from helpers.checks import cooldown
 from helpers.ui import BaseView, create_link_view
-from helpers.utils import can_run, cmd_run_before, format_command
+from helpers.utils import cmd_run_before, filter_commands, format_command
 
 CREDITS = [
     [
@@ -63,31 +62,11 @@ def _add_commands(prefix, embed, cmds):
 
         embed.add_field(
             name=f"{prefix}{cmd_name}",
-            value="\n".join(wrapper.wrap(text=cmd.description))
-            or "No command description",
+            value="\n".join(wrapper.wrap(text=cmd.help)) or "No command description",
             inline=False,
         )
 
     return embed
-
-
-async def _filter_commands(ctx, cmds):
-    ctx.testing = True  # skipping invoking the command
-
-    if ctx.is_slash:
-        types = (SlashCommand, SlashCommandGroup)
-    else:
-        types = (commands.Command, commands.Group)
-
-    iterator = filter(lambda c: isinstance(c, types), cmds)
-
-    ret = []
-    for cmd in iterator:
-        valid = await can_run(ctx, cmd)
-        if valid:
-            ret.append(cmd)
-
-    return ret
 
 
 class CategorySelect(discord.ui.Select):
@@ -183,7 +162,7 @@ class HelpView(BaseView):
         cogs = {
             cog.qualified_name: [m, cog]
             for cog in self.ctx.bot.cogs.values()
-            if len(m := await _filter_commands(self.ctx, cog.walk_commands()))
+            if len(m := filter_commands(self.ctx, cog.walk_commands()))
         }
 
         selector = CategorySelect(cogs)

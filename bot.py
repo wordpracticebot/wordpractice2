@@ -210,8 +210,6 @@ class CustomContextItems:
     def __init__(self):
         self.initial_user = None
 
-        self.testing = False  # if set to true, cooldowns are avoided
-
         self.achievements_completed = []  # list of additional achievements completed
 
         self.no_completion = False

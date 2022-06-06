@@ -5,7 +5,7 @@ import math
 import random
 from datetime import datetime, timezone
 
-from discord import SlashCommand
+from discord import SlashCommand, SlashCommandGroup
 from discord.ext import commands
 
 from constants import TEST_ZONES
@@ -29,11 +29,17 @@ def format_command(command):
     return f"{command} {command.signature}"
 
 
-async def can_run(ctx, cmd):
-    try:
-        return await cmd.can_run(ctx)
-    except commands.CommandError:
-        return False
+def filter_commands(ctx, cmds):
+    if ctx.is_slash:
+        types = (SlashCommand, SlashCommandGroup)
+    else:
+        types = (commands.Command, commands.Group)
+
+    all_cmds = filter(
+        lambda c: isinstance(c, types) and not getattr(c.cog, "hidden", False), cmds
+    )
+
+    return list(all_cmds)
 
 
 def cmd_run_before(ctx, user):

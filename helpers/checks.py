@@ -10,9 +10,6 @@ from helpers.utils import get_command_name
 
 def premium_command():
     async def predicate(ctx):
-        if ctx.testing:
-            return True
-
         if ctx.initial_user.is_premium is False:
             view = create_link_view({"Support wordPractice by donating!": PREMIUM_LINK})
 
@@ -31,9 +28,6 @@ def premium_command():
 
 def cooldown(regular: int, premium: int):
     async def predicate(ctx):
-        if ctx.testing:
-            return True
-
         # Cooldown key
         c = (ctx.author.id, get_command_name(ctx.command))
 

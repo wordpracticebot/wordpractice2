@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import errors
 from PIL import ImageDraw
+from rapidfuzz import fuzz, process
 
 import icons
 from challenges.achievements import check_achievements, check_categories
@@ -16,7 +17,7 @@ from helpers.errors import ImproperArgument, OnGoingTest
 from helpers.image import save_discord_static_img
 from helpers.ui import create_link_view, get_log_embed
 from helpers.user import get_user_cmds_run
-from helpers.utils import format_command, get_command_name
+from helpers.utils import filter_commands, format_command, get_command_name
 from static.assets import achievement_base, uni_sans_heavy
 
 
@@ -56,20 +57,27 @@ class Events(commands.Cog):
 
         embed = ctx.error_embed(title=f"{added} {title}", description=desc)
 
-        if view is None:
+        if ctx.is_slash is False:
+            await ctx.respond(embed=embed)
+
+        elif view is None:
             await ctx.respond(embed=embed, ephemeral=ephemeral)
+
         else:
             await ctx.respond(embed=embed, ephemeral=ephemeral, view=view)
 
-    # TODO: add error event for prefix commands
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        await self.handle_error(ctx, error)
 
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx, error):
+        await self.handle_error(ctx, error)
+
+    async def handle_error(self, ctx, error):
         if isinstance(error, (discord.errors.CheckFailure, commands.CheckFailure)):
             if isinstance(error, errors.BotMissingPermissions):
-                await self.send_basic_error(
-                    ctx, title="Bot Missing Permissions", severe=True
-                )
+                return await self.handle_check_failure(ctx, error)
 
             return self.bot.active_end(ctx.author.id)
 
@@ -80,6 +88,10 @@ class Events(commands.Cog):
 
         if isinstance(error, errors.UserInputError):
             return await self.handle_user_input_error(ctx, error)
+
+        if ctx.is_slash is False:
+            if isinstance(error, errors.CommandNotFound):
+                return await self.handle_command_not_found(ctx)
 
         if hasattr(error, "original") and isinstance(
             error.original, discord.errors.Forbidden
@@ -96,6 +108,32 @@ class Events(commands.Cog):
             return
 
         await self.handle_unexpected_error(ctx, error)
+
+    async def handle_command_not_found(self, ctx):
+        cmds = filter_commands(ctx, ctx.bot.walk_commands())
+
+        cmd_names = [get_command_name(cmd) for cmd in cmds]
+
+        name, *_ = process.extractOne(
+            ctx.message.content, cmd_names, scorer=fuzz.WRatio
+        )
+
+        await self.send_basic_error(
+            ctx,
+            title="Command Not Found",
+            desc=(
+                f"Type `{ctx.prefix}help` for a full list of commands\n\n"
+                f"Did you mean `{ctx.prefix}{name}`?"
+            ),
+        )
+
+    async def handle_check_failure(self, ctx, error):
+        if isinstance(error, errors.BotMissingPermissions):
+            await self.send_basic_error(
+                ctx, title="Bot Missing Permissions", severe=True
+            )
+
+        return self.bot.active_end(ctx.author.id)
 
     async def handle_user_input_error(self, ctx, error):
         if isinstance(error, errors.BadArgument):
@@ -142,13 +180,10 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command(self, ctx):
-        print(ctx.command.qualified_name)
-        # Logging the command
         await self.log_interaction(ctx)
 
     @commands.Cog.listener()
     async def on_application_command(self, ctx):
-        # Logging the interaction
         await self.log_interaction(ctx)
 
     def get_files_from_earned(self, earned):
