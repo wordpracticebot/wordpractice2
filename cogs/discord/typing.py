@@ -124,7 +124,7 @@ async def _cheating_check(ctx, user, user_data, score):
             author=user,
         )
 
-        await ctx.bot.test_wh.send(embed=embed)
+        await ctx.bot.impt_wh.send(embed=embed)
 
         return user_data
 

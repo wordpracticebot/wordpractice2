@@ -298,7 +298,6 @@ class Mongo(commands.Cog):
         return mod, mod_id
 
     async def get_user_from_cache(self, user_id: int):
-        return None
         u = await self.bot.redis.hget("user", user_id)
 
         if u is not None:
