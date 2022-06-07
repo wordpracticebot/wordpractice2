@@ -9,6 +9,7 @@ from constants import SUPPORT_SERVER_INVITE
 from helpers.checks import user_check
 from helpers.converters import user_option
 from helpers.ui import BaseView, ScrollView, create_link_view
+from helpers.utils import message_banned_user
 
 INFRACTIONS_PER_PAGE = 3
 
@@ -158,20 +159,7 @@ class Moderator(commands.Cog):
         # Dming the user that they've been banned
         # Messaging is held off until the end because it is the least important
 
-        embed = ctx.error_embed(
-            title="You were banned",
-            description=(
-                f"Reason: {reason}\n\n"
-                "Join the support server and create a ticket to request a ban appeal"
-            ),
-        )
-
-        view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
-
-        try:
-            await user.send(embed=embed, view=view)
-        except Exception:
-            pass
+        await message_banned_user(ctx, user, reason)
 
         embed = ctx.error_embed(
             title="User Banned",

@@ -30,7 +30,7 @@ from helpers.checks import cooldown, user_check
 from helpers.converters import user_option
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_pacer_display, get_theme_display, get_typing_average
-from helpers.utils import calculate_score_consistency, cmd_run_before, get_bar
+from helpers.utils import calculate_score_consistency, get_bar
 from static.badges import get_badge_from_id
 
 THIN_SPACE = "\N{THIN SPACE}"

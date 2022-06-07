@@ -8,7 +8,8 @@ from datetime import datetime, timezone
 from discord import SlashCommand, SlashCommandGroup
 from discord.ext import commands
 
-from constants import TEST_ZONES
+from constants import SUPPORT_SERVER_INVITE, TEST_ZONES
+from helpers.ui import create_link_view
 from helpers.user import get_user_cmds_run
 from icons import h_progress_bar, overflow_bar, v_progress_bar
 
@@ -380,3 +381,20 @@ def run_in_executor(_func):
         return bot.loop.run_in_executor(executor=None, func=func)
 
     return wrapped
+
+
+async def message_banned_user(ctx, user, reason):
+    embed = ctx.error_embed(
+        title="You were banned",
+        description=(
+            f"Reason: {reason}\n\n"
+            "Join the support server and create a ticket to request a ban appeal"
+        ),
+    )
+
+    view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
+
+    try:
+        await user.send(embed=embed, view=view)
+    except Exception:
+        pass

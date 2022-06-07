@@ -359,7 +359,7 @@ class Misc(commands.Cog):
         if not cmd_run_before(ctx, user):
             msg = "Voting is a great way to support wordPractice!"
 
-            await ctx.respond(msg)
+            await ctx.respond(msg, ephemeral=True)
 
 
 def setup(bot):

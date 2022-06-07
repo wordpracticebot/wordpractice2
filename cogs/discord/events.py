@@ -57,10 +57,7 @@ class Events(commands.Cog):
 
         embed = ctx.error_embed(title=f"{added} {title}", description=desc)
 
-        if ctx.is_slash is False:
-            await ctx.respond(embed=embed)
-
-        elif view is None:
+        if view is None:
             await ctx.respond(embed=embed, ephemeral=ephemeral)
 
         else:
@@ -146,12 +143,23 @@ class Events(commands.Cog):
             return await self.send_basic_error(
                 ctx, title="Invalid Argument", desc=message
             )
+        elif isinstance(error, errors.MissingRequiredArgument):
+            cmd_signature = format_command(ctx.command)
+
+            return await self.send_basic_error(
+                ctx,
+                title="Invalid Input",
+                desc=(
+                    f"Missing required argument `{error.param.name}`\n\n"
+                    f"Correct Usage: `{ctx.prefix}{cmd_signature}`"
+                ),
+            )
 
         await self.send_basic_error(
             ctx,
             title="Invalid Input",
             desc=(
-                "Your input is malformed"
+                "Your input is malformed\n"
                 f"Type `{ctx.prefix}help` for a list of commands"
             ),
         )
@@ -371,7 +379,10 @@ class Events(commands.Cog):
                 if extra:
                     content += f"and {extra} more achievements..."
 
-                await ctx.respond(content=content, files=files, ephemeral=True)
+                if ctx.is_slash:
+                    await ctx.respond(content=content, files=files, ephemeral=True)
+                else:
+                    await ctx.respond(content=content, files=files)
 
             # Replacing the user data with the new state
             await self.bot.mongo.replace_user_data(new_user, ctx.author)

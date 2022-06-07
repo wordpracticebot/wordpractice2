@@ -55,6 +55,7 @@ from helpers.utils import (
     get_test_zone,
     get_test_zone_name,
     get_xp_earned,
+    message_banned_user,
 )
 
 THIN_SPACE = "\N{THIN SPACE}"
@@ -80,7 +81,10 @@ def _get_word_display(quote, raw_quote):
 
 def _invoke_completion(ctx):
     ctx.no_completion = False
-    ctx.bot.dispatch("application_command_completion", ctx)
+    if ctx.is_slash:
+        ctx.bot.dispatch("application_command_completion", ctx)
+    else:
+        ctx.bot.dispatch("command_completion", ctx)
 
 
 def _get_log_additional(wpm, raw, acc, word_display, xp_earned):
@@ -93,10 +97,38 @@ def _get_log_additional(wpm, raw, acc, word_display, xp_earned):
     )
 
 
-def _cheating_check(wpm):
-    # TODO: Outright banning users for typing at impossible speeds
-    if wpm >= IMPOSSIBLE_THRESHOLD:
-        ...
+async def _cheating_check(ctx, user, user_data, score):
+    if score.wpm >= IMPOSSIBLE_THRESHOLD:
+
+        reason = "Cheating on the typing test"
+
+        user_data = await ctx.bot.mongo.add_inf(
+            ctx, user, user_data, None, reason, True
+        )
+
+        await ctx.bot.mongo.wipe_user(user_data)
+
+        await message_banned_user(ctx, user, reason)
+
+        # TODO: log the word history
+
+        embed = get_log_embed(
+            ctx,
+            title="Another Cheater Busted!!!",
+            additional=(
+                f"**Wpm:** {score.wpm}\n"
+                f"**Raw:** {score.raw}\n"
+                f"**Accuracy:** {score.acc}"
+            ),
+            error=True,
+            author=user,
+        )
+
+        await ctx.bot.test_wh.send(embed=embed)
+
+        return user_data
+
+    return False
 
 
 def _get_test_warning(raw, acc, result):
@@ -176,9 +208,9 @@ class RetryView(BaseView):
         self.captcha_callback = captcha_callback
 
     async def on_timeout(self):
-        await super().on_timeout()
-
         _invoke_completion(self.ctx)
+
+        await super().on_timeout()
 
     @discord.ui.button(label="Retry", style=discord.ButtonStyle.success)
     async def retry_captcha(self, button, interaction):
@@ -197,9 +229,9 @@ class HighScoreCaptchaView(BaseView):
         self.attempts = 0
 
     async def on_timeout(self):
-        await super().on_timeout()
-
         _invoke_completion(self.ctx)
+
+        await super().on_timeout()
 
     @property
     def target(self):
@@ -216,7 +248,7 @@ class HighScoreCaptchaView(BaseView):
             self.ctx,
             title=f"High Score Captcha {completion_type}",
             additional=(
-                f"**Orignal Wpm:** {self.original_wpm}\n"
+                f"**Original Wpm:** {self.original_wpm}\n"
                 f"**Raw:** {raw} / {self.target}\n"
                 f"**Acc:** {acc} / {CAPTCHA_ACC_PERC}\n"
                 f"**Attempts:** {self.attempts} / {MAX_CAPTCHA_ATTEMPTS}"
@@ -771,6 +803,12 @@ class RaceJoinView(BaseView):
                         r.save_score = False
                         value += f"\n{LONG_SPACE} Warning: {warning}"
 
+                    else:
+                        result = await _cheating_check(self.ctx, r.user, r.data, score)
+
+                        if result:
+                            r.result = None
+
                 embed.add_field(
                     name=f"{place_display} {r.data.display_name}",
                     value=value,
@@ -1315,18 +1353,24 @@ class Typing(commands.Cog):
                 test_type_int=int(is_dict),
             )
 
-            user.add_score(score)
+            result = await _cheating_check(ctx, ctx.author, user, score)
 
-            score, show_hs_captcha = await cls.handle_highscore_captcha(
-                ctx=ctx,
-                send=ctx.respond,
-                user=user,
-                score=score,
-                zone=zone,
-                zone_range=zone_range,
-            )
+            if result:
+                user = result
 
-            is_hs = score.is_hs
+            else:
+                user.add_score(score)
+
+                score, show_hs_captcha = await cls.handle_highscore_captcha(
+                    ctx=ctx,
+                    send=ctx.respond,
+                    user=user,
+                    score=score,
+                    zone=zone,
+                    zone_range=zone_range,
+                )
+
+                is_hs = score.is_hs
 
         if show_hs_captcha is False:
             await ctx.bot.mongo.replace_user_data(user, ctx.author)

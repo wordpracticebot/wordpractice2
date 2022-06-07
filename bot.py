@@ -276,6 +276,11 @@ class CustomPrefixContext(bridge.BridgeExtContext, CustomContextItems):
     def author(self):
         return self.other_author or self.message.author
 
+    async def _respond(self, *args, **kwargs):
+        kwargs.pop("ephemeral", None)
+
+        return await super()._respond(*args, **kwargs)
+
 
 class WordPractice(bridge.AutoShardedBot):
     def __init__(self, **kwargs):
@@ -478,6 +483,23 @@ class WordPractice(bridge.AutoShardedBot):
 
         # Processing command
         await self.process_application_commands(interaction)
+
+    async def process_commands(self, message):
+        if message.author.bot:
+            return
+
+        ctx = await self.get_context(message)
+
+        if ctx.command is not None:
+
+            # Asking the user to accept the rules before using the bot
+            if ctx.initial_user is None:
+                return await self.handle_new_user(ctx)
+
+            if await self.handle_after_welcome_check(ctx):
+                return
+
+        await self.invoke(ctx)
 
     @discord.utils.cached_property
     def cmd_wh(self):
