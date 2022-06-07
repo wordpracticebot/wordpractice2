@@ -111,7 +111,7 @@ class UserBase(Document):
     discriminator = IntegerField(required=True)
     avatar = StringField(default=None)
     created_at = DateTimeField(required=True)
-    premium = BooleanField(default=False)
+    premium = DateTimeField(default=None)
 
     # list of commands that the user has run before (for context tutorials)
     # includes subcommands from groups
@@ -206,7 +206,15 @@ class User(UserBase):
 
     @property
     def is_premium(self):
-        return PREMIUM_LAUNCHED is False or self.premium
+        if PREMIUM_LAUNCHED is False:
+            return True
+
+        if self.premium is not None:
+            return True
+
+        # TODO: check if the membership has expired
+
+        return False
 
     @property
     def is_daily_complete(self):

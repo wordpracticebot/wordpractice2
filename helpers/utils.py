@@ -35,9 +35,13 @@ def filter_commands(ctx, cmds):
     else:
         types = (commands.Command, commands.Group)
 
-    all_cmds = filter(
-        lambda c: isinstance(c, types) and not getattr(c.cog, "hidden", False), cmds
+    filter_cmds = (
+        lambda c: isinstance(c, types)
+        and not getattr(c.cog, "hidden", False)
+        and not getattr(c, "hidden", False)
     )
+
+    all_cmds = filter(filter_cmds, cmds)
 
     return list(all_cmds)
 

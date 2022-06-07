@@ -224,9 +224,8 @@ class Misc(commands.Cog):
     async def _help(self, ctx):
         """Help with bot usage and list of commands"""
 
-        view = HelpView(
-            ctx, timeout=30
-        )  # longer timeout gives time for people to run the commands
+        # longer timeout gives time for people to run the commands
+        view = HelpView(ctx, timeout=30)
 
         await view.start()
 

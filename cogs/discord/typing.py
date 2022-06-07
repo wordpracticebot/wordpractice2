@@ -23,6 +23,7 @@ from constants import (
     CAPTCHA_STARTING_THRESHOLD,
     CAPTCHA_WPM_DEC,
     DEFAULT_WRAP,
+    IMPOSSIBLE_THRESHOLD,
     MAX_CAPTCHA_ATTEMPTS,
     MAX_RACE_JOIN,
     MIN_PACER_SPEED,
@@ -92,11 +93,16 @@ def _get_log_additional(wpm, raw, acc, word_display, xp_earned):
     )
 
 
-def _get_test_warning(raw, acc, result):
-    if raw > 300:
-        return "Please try not to spam the test."
+def _cheating_check(wpm):
+    # TODO: Outright banning users for typing at impossible speeds
+    if wpm >= IMPOSSIBLE_THRESHOLD:
+        ...
 
+
+def _get_test_warning(raw, acc, result):
     if acc < 75:
+        if raw > 300:
+            return "Please try not to spam the test."
         return "Tests below 75% accuracy are not saved."
 
     if result is None:
@@ -251,9 +257,7 @@ class HighScoreCaptchaView(BaseView):
 
         # Generating the loading embed
 
-        i_embed = self.ctx.embed(
-            title=f"{self.ctx.author} | High Score Captcha"
-        )
+        i_embed = self.ctx.embed(title=f"{self.ctx.author} | High Score Captcha")
 
         embed = copy(i_embed)
 
