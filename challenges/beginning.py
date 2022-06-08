@@ -33,7 +33,7 @@ class Competition(Achievement):
         )
 
     async def user_progress(self, ctx, user):
-        return int(len(user.scores) == 0 or not user.scores[-1].is_race), 1
+        return int(len(user.scores) > 0 and user.scores[-1].is_race), 1
 
 
 class OpenMinded(Achievement):

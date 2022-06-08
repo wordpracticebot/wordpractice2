@@ -9,7 +9,7 @@ from cache import AsyncTTL
 from discord.ext import commands
 from discord.utils import escape_markdown
 from motor.motor_asyncio import AsyncIOMotorClient
-from umongo import Document, EmbeddedDocument
+from umongo import Document, EmbeddedDocument, exceptions
 from umongo.fields import (
     BooleanField,
     DateTimeField,
@@ -456,6 +456,8 @@ class Mongo(commands.Cog):
             await new_user.commit()
         except pymongo.errors.DuplicateKeyError:
             pass
+        except exceptions.UpdateError:
+            await self.bot.redis.hdel("user", new_user.id)
         else:
             # Caching new user data
             await self.bot.redis.hset(

@@ -62,7 +62,8 @@ def _add_commands(prefix, embed, cmds):
 
         embed.add_field(
             name=f"{prefix}{cmd_name}",
-            value="\n".join(wrapper.wrap(text=cmd.help)) or "No command description",
+            value="\n".join(wrapper.wrap(text=cmd.description or cmd.help))
+            or "No command description",
             inline=False,
         )
 
