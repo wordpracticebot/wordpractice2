@@ -35,9 +35,7 @@ class VoteChallenge(Challenge):
 
 class AccuracyChallenge(Challenge):
     def __init__(self, amt):
-        super().__init__(
-            desc=f"Complete {amt} tests in a row with 100% accuracy", immutable=True
-        )
+        super().__init__(desc=f"Complete {amt} tests in a row with 100% accuracy")
 
         self.amt = amt
 
@@ -50,7 +48,7 @@ class AccuracyChallenge(Challenge):
 
 class QuoteChallenge(Challenge):
     def __init__(self, amt):
-        super().__init__(desc=f"Completed {amt} quote typing tests", immutable=True)
+        super().__init__(desc=f"Completed {amt} quote typing tests")
 
         self.amt = amt
 

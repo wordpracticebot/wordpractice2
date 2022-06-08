@@ -40,7 +40,6 @@ class Consistency(Achievement):
         super().__init__(
             name="Consistency",
             desc="Complete 30 typing tests in a row with an consistency of 90%+",
-            immutable=True,
         )
 
     async def user_progress(self, ctx, user):
@@ -58,7 +57,6 @@ class BeepBoop(Achievement):
         super().__init__(
             name="Beep Boop",
             desc=f"Complete {amt} tests in a row at exactly 60 wpm (give or take <1 wpm)",
-            immutable=True,
         )
 
         self.amt = amt

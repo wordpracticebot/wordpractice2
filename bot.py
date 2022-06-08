@@ -279,6 +279,8 @@ class CustomPrefixContext(bridge.BridgeExtContext, CustomContextItems):
     async def _respond(self, *args, **kwargs):
         kwargs.pop("ephemeral", None)
 
+        kwargs = kwargs | {"mention_author": False}
+
         return await super()._respond(*args, **kwargs)
 
 

@@ -289,7 +289,7 @@ class Events(commands.Cog):
         challenges, daily_reward = get_daily_challenges()
 
         new_user.daily_completion = [
-            (n and c.immutable) or await c.is_completed(ctx, new_user)
+            n or await c.is_completed(ctx, new_user)
             for n, c in zip(new_user.daily_completion, challenges)
         ]
 

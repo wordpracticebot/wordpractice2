@@ -9,11 +9,8 @@ from PIL import Image
 
 
 class Challenge:
-    def __init__(self, *, desc: str, immutable=False):
+    def __init__(self, *, desc: str):
         self.desc = desc
-
-        # once the challenge is completed, it defaults to to maximum value
-        self.immutable = immutable
 
     async def is_completed(self, ctx, user):
         a, b = await self.progress(ctx, user)
@@ -40,7 +37,7 @@ class Achievement(Challenge):
     async def progress(self, ctx, user):
         a, b = await self.user_progress(ctx, user)
 
-        if self.immutable and self.name in user.achievements:
+        if self.name in user.achievements:
             a = max(a, b)
 
         return a, b

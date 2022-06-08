@@ -19,9 +19,7 @@ class StartingOut(Achievement):
 
 class Quoi(Achievement):
     def __init__(self):
-        super().__init__(
-            name="Quoi?", desc="Change your language settings", immutable=True
-        )
+        super().__init__(name="Quoi?", desc="Change your language settings")
 
     async def user_progress(self, ctx, user):
         return int(user.language != "english"), 1
@@ -32,7 +30,6 @@ class Competition(Achievement):
         super().__init__(
             name="Competition",
             desc="Complete a race against another user",
-            immutable=True,
         )
 
     async def user_progress(self, ctx, user):
