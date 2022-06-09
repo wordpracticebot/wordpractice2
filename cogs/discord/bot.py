@@ -23,7 +23,6 @@ from constants import (
     LB_DISPLAY_AMT,
     LB_LENGTH,
     PREMIUM_LINK,
-    PREMIUM_SCORE_LIMIT,
     REGULAR_SCORE_LIMIT,
 )
 from helpers.checks import cooldown, user_check

@@ -4,6 +4,7 @@ import functools
 import math
 import random
 from datetime import datetime, timezone
+from typing import Callable
 
 from discord import SlashCommand, SlashCommandGroup
 from discord.ext import commands
@@ -398,3 +399,11 @@ async def message_banned_user(ctx, user, reason):
         await user.send(embed=embed, view=view)
     except Exception:
         pass
+
+
+def copy_doc(copy_func: Callable) -> Callable:
+    def wrapper(func: Callable) -> Callable:
+        func.__doc__ = copy_func.description or copy_func.help
+        return func
+
+    return wrapper

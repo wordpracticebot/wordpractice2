@@ -8,11 +8,12 @@ import icons
 import word_list
 from constants import DEFAULT_WRAP, MIN_PACER_SPEED, PREMIUM_LINK, STATIC_IMAGE_FORMAT
 from helpers.checks import cooldown, premium_command, user_check
-from helpers.converters import colour_option, rgb_to_hex, user_option
+from helpers.converters import HexOrRGB, colour_option, rgb_to_hex, user_option
 from helpers.errors import ImproperArgument
 from helpers.image import get_base_img, save_discord_static_img
 from helpers.ui import BaseView
 from helpers.user import get_pacer_display, get_theme_display
+from helpers.utils import copy_doc
 from static import themes
 
 
@@ -150,8 +151,21 @@ class Customization(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # Groups
     theme_group = SlashCommandGroup("theme", "Change the typing test theme")
     pacer_group = SlashCommandGroup("pacer", "Set a pacer for your typing test")
+
+    # Arguments
+    difficulty_option = discord.option(
+        "difficulty",
+        str,
+        autocomplete=discord.utils.basic_autocomplete(
+            lambda ctx: _get_difficulty_choices(ctx.options.get("name"))
+        ),
+    )
+    language_option = discord.option(
+        "name", str, desc="Choose a language", choices=word_list.languages.keys()
+    )
 
     @premium_command()
     @cooldown(8, 3)
@@ -160,7 +174,9 @@ class Customization(commands.Cog):
     @colour_option("text")
     async def custom(self, ctx, background, text):
         """Create a custom theme for your typing test"""
+        await self.handle_custom_theme(ctx, background, text)
 
+    async def handle_custom_theme(self, ctx, background, text):
         distance = _get_colour_perceptual_distance(background, text)
 
         colours = [rgb_to_hex(*background), rgb_to_hex(*text)]
@@ -198,24 +214,44 @@ class Customization(commands.Cog):
     @theme_group.command()
     async def premade(self, ctx):
         """Choose a premade theme for your typing test"""
+
+        await self.handle_premade_theme(ctx)
+
+    async def handle_premade_theme(self, ctx):
         view = BaseView(ctx)
         view.add_item(ThemeSelect(ctx))
 
         await ctx.respond(content="** **", view=view)
 
     @cooldown(8, 3)
+    @commands.group(hidden=True, invoke_without_command=True)
+    @copy_doc(premade)
+    async def theme(self, ctx):
+        await self.handle_premade_theme(ctx)
+
+    @premium_command()
+    @cooldown(8, 3)
+    @theme.command(name="custom")
+    @copy_doc(custom)
+    async def _custom(self, ctx, background, text):
+        converter = HexOrRGB()
+
+        background = await converter.convert(ctx, background)
+        text = await converter.convert(ctx, text)
+
+        await self.handle_custom_theme(ctx, background, text)
+
+    @cooldown(8, 3)
+    @theme.command(name="premade")
+    @copy_doc(premade)
+    async def _premade(self, ctx):
+        await self.handle_premade_theme(ctx)
+
+    @cooldown(8, 3)
     @bridge.bridge_command()
-    async def language(
-        self,
-        ctx,
-        name: Option(str, "Choose a language", choices=word_list.languages.keys()),
-        difficulty: Option(
-            str,
-            autocomplete=discord.utils.basic_autocomplete(
-                lambda ctx: _get_difficulty_choices(ctx.options.get("name"))
-            ),
-        ),
-    ):
+    @difficulty_option
+    @language_option
+    async def language(self, ctx, name: str, difficulty: str):
         """Choose a language for your typing test"""
 
         # Checking if difficulty is valid

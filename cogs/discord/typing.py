@@ -37,7 +37,6 @@ from constants import (
     TEST_ZONES,
 )
 from helpers.checks import cooldown
-from helpers.converters import quote_option, word_option
 from helpers.image import (
     get_base_img,
     get_highscore_captcha_img,
@@ -1036,13 +1035,29 @@ class Typing(commands.Cog):
     emoji = "\N{KEYBOARD}"
     order = 2
 
+    # Cache
+    interval_captcha_fails = {}  # user_id: amt_in_a_row
+
+    # Groups
     tt_group = SlashCommandGroup("tt", "Take a typing test")
     race_group = SlashCommandGroup(
         "race",
         f"Take a multiplayer typing test. Up to {MAX_RACE_JOIN-1} other users can join your race.",
     )
 
-    interval_captcha_fails = {}  # user_id: amt_in_a_row
+    # Arguments
+    word_option = discord.option(
+        name="length",
+        type=int,
+        desc=f"Choose a word amount from {TEST_RANGE[0]}-{TEST_RANGE[1]}",
+    )
+
+    quote_option = discord.option(
+        name="length",
+        type=str,
+        desc="Choose a quote length",
+        choices=TEST_ZONES.keys(),
+    )
 
     def __init__(self, bot):
         self.bot = bot

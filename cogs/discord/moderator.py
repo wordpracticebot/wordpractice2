@@ -5,7 +5,6 @@ from discord.ext import bridge, commands
 
 import icons
 from config import MODERATORS, SUPPORT_GUILD_ID
-from constants import SUPPORT_SERVER_INVITE
 from helpers.checks import user_check
 from helpers.converters import user_option
 from helpers.ui import BaseView, ScrollView, create_link_view
