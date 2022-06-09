@@ -14,6 +14,12 @@ categories = {
 }
 
 
+def user_has_complete(all_names, i, name, user):
+    a_count = all_names[: i + 1].count(name)
+
+    return a_count <= len(user.achievements.get(name, []))
+
+
 async def check_achievements(ctx, user: dict):
     for iii, cv in enumerate(categories.values()):
         for ii, c in enumerate(cv.challenges):
@@ -22,10 +28,9 @@ async def check_achievements(ctx, user: dict):
             all_names = [b.name for b in a]
 
             for i, n in enumerate(a):
-                a_count = all_names[: i + 1].count(n.name)
 
                 # checking if the user has already completed the achievement
-                if a_count <= len(user.achievements.get(n.name, [])):
+                if user_has_complete(all_names, i, n.name, user):
                     continue
 
                 if (
@@ -68,27 +73,34 @@ async def get_achievement_display(ctx, user, a):
         amt = len(a[0])
 
         all_names = [m.name for m in all_a]
+
+        total = len(all_names) - 1
+
         names = set(all_names)
 
-        tier = get_achievement_tier(user, len(all_names), names)
+        tier = get_achievement_tier(user, total, names)
 
         display = f" `[{tier + 1}/{amt}]`"
 
         a = all_a[tier]
 
+    else:
+        total = 0
+        all_names = [a.name]
+
+    is_already_complete = user_has_complete(
+        all_names, tier + 1 if display else 1, a.name, user
+    )
+
     p = await a.progress(ctx, user)
 
-    # fmt: off
-    is_completed = (
-        await a.is_completed(ctx, user)
-        or (display and tier + 1 > amt)
-    )
-    # fmt: on
+    current_complete = await a.is_completed(ctx, user) or is_already_complete
+    past_tier = display and tier + 1 > amt
 
-    bar = get_bar(p[0] / p[1], variant=int(bool(is_completed and display)))
+    bar = get_bar(p[0] / p[1], variant=int(bool(past_tier)))
 
     bar_display = f"{bar} `{p[0]}/{p[1]}`"
 
-    emoji = icons.success if is_completed else icons.danger
+    emoji = icons.success if current_complete or past_tier else icons.danger
 
     return a, emoji, display, bar_display

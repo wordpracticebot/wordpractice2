@@ -12,7 +12,7 @@ class Badges(Achievement):
 
         self.amt = amt
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         return len(user.badges), self.amt
 
 
@@ -20,7 +20,7 @@ class Collector(Achievement):
     def __init__(self):
         super().__init__(name="Collector", desc="Earn every badge in a season")
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         season_info = await ctx.bot.mongo.get_season_info()
 
         badges = season_info["badges"]

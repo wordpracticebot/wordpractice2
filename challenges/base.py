@@ -14,14 +14,10 @@ class Challenge:
 
     async def is_completed(self, ctx, user):
         a, b = await self.progress(ctx, user)
+
         return a >= b
 
-    async def progress(self, ctx, user):
-        a, b = await self.user_progress(ctx, user)
-
-        return a, b
-
-    async def user_progress(ctx, user):
+    async def progress(ctx, user):
         ...
 
 
@@ -35,14 +31,6 @@ class Achievement(Challenge):
         return self.name in user.achievements
 
     async def progress(self, ctx, user):
-        a, b = await self.user_progress(ctx, user)
-
-        if self.name in user.achievements:
-            a = max(a, b)
-
-        return a, b
-
-    async def user_progress(self, ctx, user):
         return int(self.in_achievements(user)), 1
 
 

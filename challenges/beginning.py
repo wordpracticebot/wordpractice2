@@ -13,7 +13,7 @@ class StartingOut(Achievement):
             name="Starting out", desc="Use wordPractice for the first time"
         )
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         return int(bool(user)), 1
 
 
@@ -21,7 +21,7 @@ class Quoi(Achievement):
     def __init__(self):
         super().__init__(name="Quoi?", desc="Change your language settings")
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         return int(user.language != "english"), 1
 
 
@@ -32,7 +32,7 @@ class Competition(Achievement):
             desc="Complete a race against another user",
         )
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         return int(len(user.scores) > 0 and user.scores[-1].is_race), 1
 
 
@@ -40,7 +40,7 @@ class OpenMinded(Achievement):
     def __init__(self):
         super().__init__(name="Open-minded", desc="Run every single command")
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         slash_cmds = filter(
             lambda c: isinstance(c, SlashCommand)
             and not getattr(c.cog, "hidden", False),

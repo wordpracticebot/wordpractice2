@@ -19,7 +19,7 @@ class WordChallenge(Challenge):
 
         self.word_amt = word_amt
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         return get_daily_stat(user.last24[0]), self.word_amt
 
 
@@ -27,7 +27,7 @@ class VoteChallenge(Challenge):
     def __init__(self):
         super().__init__(desc="Vote for wordPractice")
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         votes_today = any(is_today(v) for v in user.last_voted.values())
 
         return int(votes_today), 1
@@ -39,7 +39,7 @@ class AccuracyChallenge(Challenge):
 
         self.amt = amt
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         return (
             get_in_row(user.scores, lambda s: s.acc == 100 and is_today(s.timestamp)),
             self.amt,
@@ -52,7 +52,7 @@ class QuoteChallenge(Challenge):
 
         self.amt = amt
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         return int(len(user.scores) == 0 or not user.scores[-1].test_type_int == 0), 1
 
 

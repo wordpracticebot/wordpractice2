@@ -10,7 +10,7 @@ class Speed(Achievement):
 
         self.wpm = wpm
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         return user.highest_speed, self.wpm
 
 
@@ -31,7 +31,7 @@ class Perfectionist(Achievement):
 
         self.amt = amt
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         return get_in_row(user.scores, lambda s: s.acc == 100), self.amt
 
 
@@ -42,7 +42,7 @@ class Consistency(Achievement):
             desc="Complete 30 typing tests in a row with an consistency of 90%+",
         )
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         result = (
             0
             if len(user.scores) < 30
@@ -61,7 +61,7 @@ class BeepBoop(Achievement):
 
         self.amt = amt
 
-    async def user_progress(self, ctx, user):
+    async def progress(self, ctx, user):
         return get_in_row(user.scores, lambda s: int(s.wpm) == 60), self.amt
 
 
