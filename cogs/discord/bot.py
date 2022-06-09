@@ -197,9 +197,7 @@ class GraphView(ViewFromDict):
         embed.add_field(
             name="`Average`",
             value=(
-                f"**Wpm:** {wpm}\n"
-                f"**Raw Wpm:** {raw}\n"
-                f"**Accuracy:** {acc}% ({cw} / {tw})"
+                f"**Wpm:** {wpm}\n" f"**Raw:** {raw}\n" f"**Acc:** {acc}% ({cw} / {tw})"
             ),
             inline=True,
         )
