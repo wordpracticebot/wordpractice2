@@ -92,14 +92,17 @@ async def get_achievement_display(ctx, user, a):
         all_names, tier + 1 if display else 1, a.name, user
     )
 
-    p = await a.progress(ctx, user)
-
     current_complete = await a.is_completed(ctx, user) or is_already_complete
     past_tier = display and tier + 1 > amt
 
-    bar = get_bar(p[0] / p[1], variant=int(bool(past_tier)))
+    p1, p2 = await a.progress(ctx, user)
 
-    bar_display = f"{bar} `{p[0]}/{p[1]}`"
+    if current_complete:
+        p1 = max(p1, p2)
+
+    bar = get_bar(p1 / p2, variant=int(bool(past_tier)))
+
+    bar_display = f"{bar} `{p1}/{p2}`"
 
     emoji = icons.success if current_complete or past_tier else icons.danger
 
