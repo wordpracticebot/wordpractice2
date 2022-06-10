@@ -31,6 +31,15 @@ def format_command(command):
     return f"{command} {command.signature}"
 
 
+def get_slash_cmd_names(bot):
+    slash_cmds = filter(
+        lambda c: isinstance(c, SlashCommand) and not getattr(c.cog, "hidden", False),
+        bot.walk_application_commands(),
+    )
+
+    return [get_command_name(cmd) for cmd in slash_cmds]
+
+
 def filter_commands(ctx, cmds):
     if ctx.is_slash:
         types = (SlashCommand, SlashCommandGroup)
@@ -360,7 +369,7 @@ def get_test_zone(cw: int):
         if cw in r:
             return n, r
 
-    return
+    return None
 
 
 def get_test_zone_name(cw: int):

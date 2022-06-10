@@ -55,6 +55,7 @@ SIDE_BORDER = 10
 SPACING = 5
 DEFAULT_WRAP = 45
 MIN_PACER_SPEED = 50
+PACER_PLANES = ["horizontal", "vertical"]
 
 # Voting
 VOTING_SITES = {

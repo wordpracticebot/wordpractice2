@@ -17,7 +17,12 @@ from helpers.errors import ImproperArgument, OnGoingTest
 from helpers.image import save_discord_static_img
 from helpers.ui import create_link_view, get_log_embed
 from helpers.user import get_user_cmds_run
-from helpers.utils import filter_commands, format_command, get_command_name
+from helpers.utils import (
+    filter_commands,
+    format_command,
+    get_command_name,
+    get_slash_cmd_names,
+)
 from static.assets import achievement_base, uni_sans_heavy
 
 
@@ -312,19 +317,26 @@ class Events(commands.Cog):
 
         # Updating the user's executed commands
 
+        all_slash_cmds = get_slash_cmd_names(self.bot)
+
         cmd_name = get_command_name(ctx.command)
 
-        cmds = get_user_cmds_run(self.bot, new_user)
+        # Adding command only if it matches a slash command
+        if cmd_name in all_slash_cmds:
 
-        if cmd_name not in cmds:
-            new_cache_cmds = self.bot.cmds_run.get(ctx.author.id, set()) | {cmd_name}
+            cmds = get_user_cmds_run(self.bot, new_user)
 
-            # Updating in database if the user document was going to be updated anyways or there are 3 or more commands not saved in database
-            if user.to_mongo() != new_user.to_mongo() or len(new_cache_cmds) >= 3:
-                new_user.cmds_run = list(set(new_user.cmds_run) | new_cache_cmds)
+            if cmd_name not in cmds:
+                new_cache_cmds = self.bot.cmds_run.get(ctx.author.id, set()) | {
+                    cmd_name
+                }
 
-            else:
-                self.bot.cmds_run[ctx.author.id] = new_cache_cmds
+                # Updating in database if the user document was going to be updated anyways or there are 3 or more commands not saved in database
+                if user.to_mongo() != new_user.to_mongo() or len(new_cache_cmds) >= 3:
+                    new_user.cmds_run = list(set(new_user.cmds_run) | new_cache_cmds)
+
+                else:
+                    self.bot.cmds_run[ctx.author.id] = new_cache_cmds
 
         if user.to_mongo() != new_user.to_mongo():
             embeds = []

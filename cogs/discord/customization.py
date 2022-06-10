@@ -6,7 +6,13 @@ from discord.ext import bridge, commands
 
 import icons
 import word_list
-from constants import DEFAULT_WRAP, MIN_PACER_SPEED, PREMIUM_LINK, STATIC_IMAGE_FORMAT
+from constants import (
+    DEFAULT_WRAP,
+    MIN_PACER_SPEED,
+    PACER_PLANES,
+    PREMIUM_LINK,
+    STATIC_IMAGE_FORMAT,
+)
 from helpers.checks import cooldown, premium_command, user_check
 from helpers.converters import HexOrRGB, colour_option, rgb_to_hex, user_option
 from helpers.errors import ImproperArgument
@@ -23,6 +29,12 @@ async def _get_theme_preview_file(bot, theme):
     base_img = await get_base_img(bot, raw_quote, DEFAULT_WRAP, theme)
 
     return save_discord_static_img(base_img, "preview")
+
+
+async def invoke_slash_command(cmd, cog, ctx, *args):
+    kwargs = {n._parameter_name: arg for n, arg in zip(cmd.options, args)}
+
+    await cmd.callback(cog, ctx, **kwargs)
 
 
 # Formula from: https://gist.github.com/ryancat/9972419b2a78f329ce3aebb7f1a09152
@@ -167,16 +179,16 @@ class Customization(commands.Cog):
         "name", str, desc="Choose a language", choices=word_list.languages.keys()
     )
 
+    formatted_pacer_planes = [p.capitalize() for p in PACER_PLANES]
+
     @premium_command()
     @cooldown(8, 3)
-    @theme_group.command()
+    @theme_group.command(name="custom")
     @colour_option("background")
     @colour_option("text")
-    async def custom(self, ctx, background, text):
+    async def theme_custom(self, ctx, background, text):
         """Create a custom theme for your typing test"""
-        await self.handle_custom_theme(ctx, background, text)
 
-    async def handle_custom_theme(self, ctx, background, text):
         distance = _get_colour_perceptual_distance(background, text)
 
         colours = [rgb_to_hex(*background), rgb_to_hex(*text)]
@@ -184,7 +196,7 @@ class Customization(commands.Cog):
         embed_clr = int(colours[1].replace("#", "0x"), 16)
 
         # Warning if the perceptual distance is too low
-        if distance < 45:
+        if distance < 40:
             embed = ctx.custom_embed(
                 title=f"{icons.caution} Custom Theme Applied",
                 description="Low colour contrast detected!",
@@ -227,25 +239,25 @@ class Customization(commands.Cog):
     @commands.group(hidden=True, invoke_without_command=True)
     @copy_doc(premade)
     async def theme(self, ctx):
-        await self.handle_premade_theme(ctx)
+        await invoke_slash_command(self.premade, self, ctx)
 
     @premium_command()
     @cooldown(8, 3)
     @theme.command(name="custom")
-    @copy_doc(custom)
-    async def _custom(self, ctx, background, text):
+    @copy_doc(theme_custom)
+    async def _theme_custom(self, ctx, background, text):
         converter = HexOrRGB()
 
         background = await converter.convert(ctx, background)
         text = await converter.convert(ctx, text)
 
-        await self.handle_custom_theme(ctx, background, text)
+        await invoke_slash_command(self.theme_custom, self, ctx, background, text)
 
     @cooldown(8, 3)
     @theme.command(name="premade")
     @copy_doc(premade)
     async def _premade(self, ctx):
-        await self.handle_premade_theme(ctx)
+        await invoke_slash_command(self.premade, self, ctx)
 
     @cooldown(8, 3)
     @bridge.bridge_command()
@@ -294,15 +306,15 @@ class Customization(commands.Cog):
         plane: Option(
             str,
             "Pick a style for your pacer",
-            choices=["Horizontal", "Vertical"],
+            choices=formatted_pacer_planes,
             required=True,
         ),
     ):
         """Change the style of your pacer"""
-        update = int(plane == "Vertical")
+        index = PACER_PLANES.index(plane.lower())
 
         embed = ctx.embed(
-            title=f"{icons.success} Updated pacer style to {plane}",
+            title=f"{icons.success} Updated pacer style to {self.formatted_pacer_planes[index]}",
             add_footer=False,
         )
 
@@ -310,7 +322,7 @@ class Customization(commands.Cog):
 
         user = ctx.initial_user
 
-        user.pacer_type = update
+        user.pacer_type = index
 
         await self.bot.mongo.replace_user_data(user, ctx.author)
 
@@ -333,8 +345,8 @@ class Customization(commands.Cog):
         await self.handle_update_pacer_speed(ctx, "Off", "")
 
     @cooldown(8, 3)
-    @pacer_group.command()
-    async def custom(
+    @pacer_group.command(name="custom")
+    async def pacer_custom(
         self,
         ctx,
         speed: Option(
@@ -350,6 +362,41 @@ class Customization(commands.Cog):
             )
 
         await self.handle_update_pacer_speed(ctx, f"{speed} wpm", str(speed))
+
+    @commands.group(hidden=True, case_insensitive=True, invoke_without_command=True)
+    async def pacer(self, ctx, speed: int):
+        await invoke_slash_command(self.pacer_custom, self, ctx, speed)
+
+    @pacer.command(name="custom")
+    @copy_doc(pacer_custom)
+    async def _pacer_custom(self, ctx, speed: int):
+        await invoke_slash_command(self.pacer_custom, self, ctx, speed)
+
+    @pacer.command(name="style")
+    @copy_doc(style)
+    async def _style(self, ctx, plane: str):
+
+        if plane.lower() not in PACER_PLANES:
+            raise commands.BadArgument(
+                "Pacer plane must be: " + ", ".join(self.formatted_pacer_planes)
+            )
+
+        await invoke_slash_command(self.style, self, ctx, plane)
+
+    @pacer.command(name="pb")
+    @copy_doc(pb)
+    async def _pb(self, ctx):
+        await invoke_slash_command(self.pb, self, ctx)
+
+    @pacer.command(name="average")
+    @copy_doc(average)
+    async def _average(self, ctx):
+        await invoke_slash_command(self.average, self, ctx)
+
+    @pacer.command(name="off")
+    @copy_doc(off)
+    async def _off(self, ctx):
+        await invoke_slash_command(self.off, self, ctx)
 
     @cooldown(8, 3)
     @bridge.bridge_command()

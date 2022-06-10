@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 
-from constants import MIN_PACER_SPEED, UPDATE_24_HOUR_INTERVAL
+from constants import MIN_PACER_SPEED, PACER_PLANES, UPDATE_24_HOUR_INTERVAL
 from static.themes import default
 
 
@@ -30,15 +30,8 @@ def get_pacer_name(pacer: str):
     return pacer + " wpm"
 
 
-def get_pacer_type_name(pacer_type: int):
-    if not pacer_type:
-        return "Horizontal"
-
-    return "Vertical"
-
-
 def get_pacer_display(pacer_type, pacer_speed):
-    pacer_type_name = get_pacer_type_name(pacer_type)
+    pacer_type_name = PACER_PLANES[pacer_type]
 
     pacer_name = get_pacer_name(pacer_speed)
 

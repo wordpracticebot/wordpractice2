@@ -182,8 +182,6 @@ class Misc(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.bot.remove_command("help")
-
     @bridge.bridge_command()
     async def ping(self, ctx):
         """View the bot's latency"""

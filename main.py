@@ -16,8 +16,10 @@ def main():
     # Creating an instance of the bot client
     bot = WordPractice(
         command_prefix="&",
+        case_insensitive=True,
         allowed_mentions=allowed_mentions,
         chunk_guilds_at_startup=False,
+        help_command=None,
         debug_guild=DEBUG_GUILD_ID,
         intents=intents,
     )
