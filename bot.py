@@ -258,7 +258,7 @@ class CustomAppContext(bridge.BridgeApplicationContext, CustomContextItems):
         self.prefix = "/"
         self.is_slash = True
 
-    @discord.utils.cached_property
+    @property
     def user(self):
         return self.other_author or self.interaction.user
 
@@ -272,7 +272,7 @@ class CustomPrefixContext(bridge.BridgeExtContext, CustomContextItems):
 
         self.is_slash = False
 
-    @discord.utils.cached_property
+    @property
     def author(self):
         return self.other_author or self.message.author
 

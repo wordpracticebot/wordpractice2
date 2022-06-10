@@ -875,6 +875,9 @@ class RaceJoinView(BaseView):
                 if show_hs_captcha is False:
                     await self.ctx.bot.mongo.replace_user_data(user, r.user)
 
+                # Invoking comnmand completion for the user
+                _invoke_completion(special_ctx)
+
                 await Typing.log_typing_test(
                     special_ctx, "Race", score.wpm, additional, score.is_hs, r.user
                 )
