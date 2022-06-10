@@ -49,7 +49,7 @@ class CustomEmbed(discord.Embed):
         if add_footer:
             self._footer = {}
 
-            self._footer["text"] = f"Hint: {hint}"
+            self._footer["text"] = hint
             if bot.user.display_avatar:
                 self._footer["icon_url"] = bot.user.display_avatar.url
 

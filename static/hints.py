@@ -17,3 +17,15 @@ hints = [
     "Add a pacer to your test with {}pacer",
     "View your daily challenge progress with {}challenge",
 ]
+
+date_hints = [
+    [[4, 1], ["ƨlooᖷ liɿqA", "417072696C20466F6F6C73"]],  # April Fools
+    [[1, 1], ["Happy New Years!"]],  # New Years
+    [[10, 31], ["Happy Halloween!", "\N{JACK-O-LANTERN}"]],  # Halloween
+    [[8, 12], ["This bot was created on this date!"]],  # wordPractice Birthday
+    [[12, 25], ["Merry Christmas!"]],  # Christmas
+]
+
+random_hints = [
+    "Thomas was here",
+]

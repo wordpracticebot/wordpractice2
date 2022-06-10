@@ -75,8 +75,8 @@ VOTING_SITES = {
 PREMIUM_LAUNCHED = False
 PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
 
-PREMIUM_SCORE_LIMIT = 250
-REGULAR_SCORE_LIMIT = 50
+PREMIUM_SCORE_LIMIT = 1000
+REGULAR_SCORE_LIMIT = 100
 
 # Daily challenges
 CHALLENGE_AMT = 2

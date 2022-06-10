@@ -56,7 +56,7 @@ class BeepBoop(Achievement):
     def __init__(self, amt):
         super().__init__(
             name="Beep Boop",
-            desc=f"Complete {amt} tests in a row at exactly 60 wpm (give or take <1 wpm)",
+            desc=f"Complete {amt} tests in a row at exactly 60 wpm (±1 wpm)",
         )
 
         self.amt = amt
@@ -84,11 +84,11 @@ typing = Category(
             ],
         ],
         [
-            [Perfectionist(amt) for amt in [10, 25, 50, 100, 250, 500]],
+            [Perfectionist(amt) for amt in [10, 25, 50, 100]],
         ],
         Consistency(),
         [
-            [BeepBoop(amt) for amt in [3, 7, 13, 20]],
+            [BeepBoop(amt) for amt in [3, 5, 10, 15]],
         ],
     ],
     icon=speed_icon,

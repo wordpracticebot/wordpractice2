@@ -13,6 +13,7 @@ from constants import SUPPORT_SERVER_INVITE, TEST_ZONES
 from helpers.ui import create_link_view
 from helpers.user import get_user_cmds_run
 from icons import h_progress_bar, overflow_bar, v_progress_bar
+from static.hints import date_hints, hints, random_hints
 
 BARS = (h_progress_bar, overflow_bar, v_progress_bar)
 
@@ -413,3 +414,25 @@ async def invoke_slash_command(cmd, cog, ctx, *args):
     kwargs = {n._parameter_name: arg for n, arg in zip(cmd.options, args)}
 
     await cmd.callback(cog, ctx, **kwargs)
+
+
+def get_hint():
+    # 1 in 100 chance of an alternative footer
+    if random.randint(0, 100) == 0:
+        p = []
+
+        # Date based footers
+        now = datetime.utcnow()
+
+        for d, h in zip(date_hints):
+            if [now.month, now.day] == d:
+                p += h
+
+        # VERY RARE
+        if random.randint(0, 25) == 0:
+            p += random_hints
+
+        if p != []:
+            return random.choice(p)
+
+    return "Hint: " + random.choice(hints)

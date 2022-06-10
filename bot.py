@@ -2,7 +2,6 @@ import asyncio
 import importlib
 import inspect
 import pkgutil
-import random
 import time
 import traceback
 from io import BytesIO
@@ -28,7 +27,7 @@ from constants import (
 )
 from helpers.errors import OnGoingTest
 from helpers.ui import BaseView, CustomEmbed, create_link_view
-from static.hints import hints
+from helpers.utils import get_hint
 
 THIN_SPACE = "\N{THIN SPACE}"
 
@@ -217,7 +216,7 @@ class CustomContextItems:
         self.other_author = None
 
         # Hint is chosen when defining context to ensure a consistent hint throughout each response
-        self._hint = random.choice(hints)
+        self._hint = get_hint()
 
     @property
     def hint(self):
