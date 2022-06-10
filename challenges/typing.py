@@ -39,7 +39,7 @@ class Consistency(Achievement):
     def __init__(self):
         super().__init__(
             name="Consistency",
-            desc="Complete 30 typing tests in a row with an consistency of 90%+",
+            desc="Complete 30 typing tests in a row with an average consistency of 90%+",
         )
 
     async def progress(self, ctx, user):

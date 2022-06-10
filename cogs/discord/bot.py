@@ -384,7 +384,7 @@ class LeaderboardView(ScrollView):
         )
 
         for i, u in enumerate(c.data[self.page * 10 : (self.page + 1) * 10]):
-            p = self.page * 10 + i
+            p = self.page * 10 + i + 1
 
             extra = ""
 
@@ -397,7 +397,7 @@ class LeaderboardView(ScrollView):
             username = f"{u['name']}#{u['discriminator']} {badge_icon}"
 
             embed.add_field(
-                name=f"`{p + 1}.` {extra}{username} - {u['count']} {c.unit}{extra}",
+                name=f"`{p}.` {extra}{username} - {u['count']} {c.unit}{extra}",
                 value="** **",
                 inline=False,
             )
@@ -411,7 +411,7 @@ class LeaderboardView(ScrollView):
             count = c.get_stat(self.user)
 
         else:
-            place_display = self.placing[0] + 1
+            place_display = self.placing[0]
             count = self.placing[1]["count"]
 
         embed.add_field(

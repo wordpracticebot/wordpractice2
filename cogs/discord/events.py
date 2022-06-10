@@ -53,15 +53,19 @@ class Events(commands.Cog):
     async def send_basic_error(
         ctx, *, title, desc=None, severe=False, ephemeral=False, view=None
     ):
-        added = f"{icons.danger} `ERROR!`" if severe else icons.caution
+        try:
+            added = f"{icons.danger} `ERROR!`" if severe else icons.caution
 
-        embed = ctx.error_embed(title=f"{added} {title}", description=desc)
+            embed = ctx.error_embed(title=f"{added} {title}", description=desc)
 
-        if view is None:
-            await ctx.respond(embed=embed, ephemeral=ephemeral)
+            if view is None:
+                await ctx.respond(embed=embed, ephemeral=ephemeral)
 
-        else:
-            await ctx.respond(embed=embed, ephemeral=ephemeral, view=view)
+            else:
+                await ctx.respond(embed=embed, ephemeral=ephemeral, view=view)
+
+        except discord.errors.Forbidden:
+            pass
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
