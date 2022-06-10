@@ -58,10 +58,7 @@ def _encrypt_data(data: dict):
     return encrypted_data.decode()
 
 
-def get_graph_link(*, user, amt: int, dimensions: tuple, current_time=None):
-    if current_time is None:
-        current_time = time.time()
-
+def get_graph_link(*, user, amt: int, dimensions: tuple):
     values = [[], [], []]
 
     for s in user.scores[-amt:]:
@@ -75,7 +72,7 @@ def get_graph_link(*, user, amt: int, dimensions: tuple, current_time=None):
 
     payload = {
         "fig_size": dimensions,
-        "until": current_time + GRAPH_EXPIRE_TIME,
+        "until": time.time() + GRAPH_EXPIRE_TIME,
         "y_values": y_values,
         "colours": user.theme + ["#ffffff"],
     }
@@ -176,7 +173,7 @@ class GraphView(ViewFromDict):
 
         self.user = user
 
-        self.current_time = time.time()
+        self.link_cache = {}  # amt: link
 
     def button(self, **kwargs):
         return GraphButton(self.user.is_premium, **kwargs)
@@ -206,9 +203,19 @@ class GraphView(ViewFromDict):
 
         embed.add_field(name="`Lowest`", value=f"**Wpm:** {lowest.wpm}", inline=True)
 
-        url = get_graph_link(
-            user=self.user, amt=amt, dimensions=(6, 4), current_time=self.current_time
-        )
+        total = len(scores)
+
+        if total in self.link_cache:
+            url = self.link_cache[total]
+
+        else:
+            url = get_graph_link(
+                user=self.user,
+                amt=amt,
+                dimensions=(6, 4),
+            )
+
+            self.link_cache[total] = url
 
         if self.user.is_premium is False:
             embed.set_footer(text="Donators can save up to 250 tests")
