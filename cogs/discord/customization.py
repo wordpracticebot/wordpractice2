@@ -19,7 +19,7 @@ from helpers.errors import ImproperArgument
 from helpers.image import get_base_img, save_discord_static_img
 from helpers.ui import BaseView
 from helpers.user import get_pacer_display, get_theme_display
-from helpers.utils import copy_doc
+from helpers.utils import copy_doc, invoke_slash_command
 from static import themes
 
 
@@ -29,12 +29,6 @@ async def _get_theme_preview_file(bot, theme):
     base_img = await get_base_img(bot, raw_quote, DEFAULT_WRAP, theme)
 
     return save_discord_static_img(base_img, "preview")
-
-
-async def invoke_slash_command(cmd, cog, ctx, *args):
-    kwargs = {n._parameter_name: arg for n, arg in zip(cmd.options, args)}
-
-    await cmd.callback(cog, ctx, **kwargs)
 
 
 # Formula from: https://gist.github.com/ryancat/9972419b2a78f329ce3aebb7f1a09152
@@ -363,15 +357,18 @@ class Customization(commands.Cog):
 
         await self.handle_update_pacer_speed(ctx, f"{speed} wpm", str(speed))
 
+    @cooldown(8, 3)
     @commands.group(hidden=True, case_insensitive=True, invoke_without_command=True)
     async def pacer(self, ctx, speed: int):
         await invoke_slash_command(self.pacer_custom, self, ctx, speed)
 
+    @cooldown(8, 3)
     @pacer.command(name="custom")
     @copy_doc(pacer_custom)
     async def _pacer_custom(self, ctx, speed: int):
         await invoke_slash_command(self.pacer_custom, self, ctx, speed)
 
+    @cooldown(8, 3)
     @pacer.command(name="style")
     @copy_doc(style)
     async def _style(self, ctx, plane: str):
@@ -383,16 +380,19 @@ class Customization(commands.Cog):
 
         await invoke_slash_command(self.style, self, ctx, plane)
 
+    @cooldown(8, 3)
     @pacer.command(name="pb")
     @copy_doc(pb)
     async def _pb(self, ctx):
         await invoke_slash_command(self.pb, self, ctx)
 
+    @cooldown(8, 3)
     @pacer.command(name="average")
     @copy_doc(average)
     async def _average(self, ctx):
         await invoke_slash_command(self.average, self, ctx)
 
+    @cooldown(8, 3)
     @pacer.command(name="off")
     @copy_doc(off)
     async def _off(self, ctx):

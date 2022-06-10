@@ -1,5 +1,7 @@
+from discord import SlashCommand
+
 from helpers.user import get_user_cmds_run
-from helpers.utils import get_slash_cmd_names
+from helpers.utils import get_command_name
 from static.assets import beginning_icon
 
 from .base import Achievement, Category
@@ -39,7 +41,13 @@ class OpenMinded(Achievement):
         super().__init__(name="Open-minded", desc="Run every single command")
 
     async def progress(self, ctx, user):
-        all_cmds = get_slash_cmd_names(ctx.bot)
+        slash_cmds = filter(
+            lambda c: isinstance(c, SlashCommand)
+            and not getattr(c.cog, "hidden", False),
+            ctx.bot.walk_application_commands(),
+        )
+
+        all_cmds = [get_command_name(cmd) for cmd in slash_cmds]
 
         return len(set(all_cmds) & set(get_user_cmds_run(ctx.bot, user))), len(all_cmds)
 

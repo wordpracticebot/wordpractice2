@@ -49,11 +49,13 @@ from helpers.ui import BaseView, create_link_view, get_log_embed
 from helpers.user import get_pacer_display, get_pacer_speed
 from helpers.utils import (
     cmd_run_before,
+    copy_doc,
     get_test_stats,
     get_test_type,
     get_test_zone,
     get_test_zone_name,
     get_xp_earned,
+    invoke_slash_command,
     message_banned_user,
 )
 
@@ -80,6 +82,7 @@ def _get_word_display(quote, raw_quote):
 
 def _invoke_completion(ctx):
     ctx.no_completion = False
+
     if ctx.is_slash:
         ctx.bot.dispatch("application_command_completion", ctx)
     else:
@@ -164,8 +167,6 @@ def _add_test_stats_to_embed(
     word_display,
     xp_earned=None,
 ):
-    space = " "
-
     embed.add_field(name=f"{icons.wpm} Wpm", value=wpm)
     embed.add_field(name=f"{icons.raw} Raw Wpm", value=raw)
     embed.add_field(name=f"{icons.acc} Accuracy", value=f"{acc}%")
@@ -179,11 +180,13 @@ def _add_test_stats_to_embed(
 
     escape = "\U0000001b"
 
+    colour_num = random.randint(31, 36)
+
     embed.add_field(
         name="** **",
         value=(
             f"**Word History**\n> {word_history}\n\n"
-            f"```ansi\n{escape}[2;36mTest Settings{escape}[0m```\n** **"
+            f"```ansi\n{escape}[1;2m{escape}[1;{colour_num}mTest Settings```\n** **"
         ),
         inline=False,
     )
@@ -1063,27 +1066,39 @@ class Typing(commands.Cog):
         self.bot = bot
 
     @cooldown(5, 1)
-    @tt_group.command()
+    @tt_group.command(name="dictionary")
     @word_option
-    async def dictionary(self, ctx, length: int):
+    async def tt_dictionary(self, ctx, length: int):
         """Take a dictionary typing test"""
         quote_info = await self.handle_dictionary_input(ctx, length)
 
         await self.do_typing_test(ctx, True, quote_info, length, ctx.respond)
 
     @cooldown(5, 1)
-    @tt_group.command()
+    @tt_group.command(name="quote")
     @quote_option
-    async def quote(self, ctx, length: str):
+    async def tt_quote(self, ctx, length: str):
         """Take a quote typing test"""
         quote_info = await self.handle_quote_input(length)
 
         await self.do_typing_test(ctx, False, quote_info, length, ctx.respond)
 
+    @cooldown(5, 1)
+    @commands.group(invoke_without_command=True)
+    @copy_doc(tt_dictionary)
+    async def tt(self, ctx, length: int):
+        await invoke_slash_command(self.tt_dictionary, self, ctx, length)
+
+    @cooldown(5, 1)
+    @tt.command(name="quote")
+    @copy_doc(tt_quote)
+    async def _tt_quote(self, ctx, length: str):
+        await invoke_slash_command(self.tt_quote, self, ctx, length)
+
     @cooldown(6, 2)
-    @race_group.command()
+    @race_group.command(name="dictionary")
     @word_option
-    async def dictionary(self, ctx, length: int):
+    async def race_dictionary(self, ctx, length: int):
         """Take a multiplayer dictionary typing test"""
 
         quote_info = await self.handle_dictionary_input(ctx, length)
@@ -1091,14 +1106,26 @@ class Typing(commands.Cog):
         await self.show_race_start(ctx, True, quote_info)
 
     @cooldown(6, 2)
-    @race_group.command()
+    @race_group.command(name="quote")
     @quote_option
-    async def quote(self, ctx, length: str):
+    async def race_quote(self, ctx, length: str):
         """Take a multiplayer quote typing test"""
 
         quote_info = await self.handle_quote_input(length)
 
         await self.show_race_start(ctx, False, quote_info)
+
+    @cooldown(6, 2)
+    @commands.group(invoke_without_command=True)
+    @copy_doc(race_dictionary)
+    async def race(self, ctx, length: int):
+        await invoke_slash_command(self.race_dictionary, self, ctx, length)
+
+    @cooldown(6, 2)
+    @race.command(name="quote")
+    @copy_doc(race_quote)
+    async def _race_quote(self, ctx, length: str):
+        await invoke_slash_command(self.race_quote, self, ctx, length)
 
     @staticmethod
     async def handle_dictionary_input(ctx, length: int):
@@ -1115,10 +1142,17 @@ class Typing(commands.Cog):
 
     @staticmethod
     async def handle_quote_input(length: str):
+        lower_options = {t.lower(): v for t, v in TEST_ZONES.items()}
+
+        if length.lower() not in lower_options:
+            raise commands.BadArgument(
+                "Quote length must be in: " + ", ".join(TEST_ZONES.keys())
+            )
+
         quotes, wrap = _load_test_file("quotes.json")
 
         # Getting the maximum amount of words for that test zone
-        max_words = TEST_ZONES[length][-1]
+        max_words = TEST_ZONES[length.lower()][-1]
 
         # Selecting consecutive items from list of sentences within max word amount
         start = random.randint(0, len(quotes))

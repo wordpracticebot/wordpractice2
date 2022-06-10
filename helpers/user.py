@@ -31,7 +31,7 @@ def get_pacer_name(pacer: str):
 
 
 def get_pacer_display(pacer_type, pacer_speed):
-    pacer_type_name = PACER_PLANES[pacer_type]
+    pacer_type_name = PACER_PLANES[pacer_type].capitalize()
 
     pacer_name = get_pacer_name(pacer_speed)
 

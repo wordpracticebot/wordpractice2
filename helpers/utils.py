@@ -31,15 +31,6 @@ def format_command(command):
     return f"{command} {command.signature}"
 
 
-def get_slash_cmd_names(bot):
-    slash_cmds = filter(
-        lambda c: isinstance(c, SlashCommand) and not getattr(c.cog, "hidden", False),
-        bot.walk_application_commands(),
-    )
-
-    return [get_command_name(cmd) for cmd in slash_cmds]
-
-
 def filter_commands(ctx, cmds):
     if ctx.is_slash:
         types = (SlashCommand, SlashCommandGroup)
@@ -58,7 +49,7 @@ def filter_commands(ctx, cmds):
 
 
 def cmd_run_before(ctx, user):
-    return format_command(ctx.command) in get_user_cmds_run(ctx.bot, user)
+    return get_command_name(ctx.command) in get_user_cmds_run(ctx.bot, user)
 
 
 def weighted_lottery(seed, values, picks):
@@ -416,3 +407,9 @@ def copy_doc(copy_func: Callable) -> Callable:
         return func
 
     return wrapper
+
+
+async def invoke_slash_command(cmd, cog, ctx, *args):
+    kwargs = {n._parameter_name: arg for n, arg in zip(cmd.options, args)}
+
+    await cmd.callback(cog, ctx, **kwargs)
