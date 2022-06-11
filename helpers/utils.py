@@ -94,6 +94,8 @@ def get_test_input_stats(u_input: list, quote: list):
     Evaluates test from input and quote
     """
 
+    original_quote = quote.copy()
+
     # Ignoring word case
     quote = [q.lower() for q in quote]
     u_input = [u.lower() for u in u_input]
@@ -113,6 +115,9 @@ def get_test_input_stats(u_input: list, quote: list):
     extra_cc = 0
 
     u = 0
+
+    # Wrong words
+    wrong = []
 
     def _eval_one_iteration(shift=0):
         mu_index = u_index + shift
@@ -165,7 +170,6 @@ def get_test_input_stats(u_input: list, quote: list):
         if result is not None:
             if result == 0:
                 word_history.append(u_input[u_index])
-
                 cc += len(quote[w_index])
                 cw += 1
 
@@ -173,6 +177,8 @@ def get_test_input_stats(u_input: list, quote: list):
                 word_history.append(f"__{quote[w_index]}__")
                 cc += len(quote[w_index]) - 1
                 u_shift += 1
+
+                wrong.append(original_quote[w_index])
 
             elif result == 2:
                 word_history.append(f"~~{u_input[u_index]}~~")
@@ -188,11 +194,20 @@ def get_test_input_stats(u_input: list, quote: list):
                 w_shift += 1
                 u_shift += 1
 
+                wrong.append(
+                    original_quote[w_index + 1]
+                    if (a := original_quote[w_index]) in u_input[u_index]
+                    else a
+                )
+
             elif result == 4:
-                word_history.append(f"{quote[w_index]} __  __ {quote[w_index + 1]}")
+                word_history.append(f"{quote[w_index]} _____ {quote[w_index + 1]}")
+
                 cc += len(u_input[u_index])
                 w_shift += 1
                 extra_cc += 1
+
+                wrong.append(original_quote[w_index])
 
             continue
 
@@ -240,10 +255,12 @@ def get_test_input_stats(u_input: list, quote: list):
 
         word_history.append(f"~~{u_input[u_index]}~~ **({quote[w_index]})**")
 
+        wrong.append(original_quote[w_index])
+
         if (extra := len(quote[w_index]) - len(u_input[u_index])) > 0:
             extra_cc += extra
 
-    return cc, word_history, extra_cc, cw
+    return cc, extra_cc, cw, word_history, wrong
 
 
 def datetime_to_unix(date):
@@ -277,7 +294,7 @@ def calculate_score_consistency(scores):
 
 
 def get_test_stats(u_input, quote, end_time):
-    cc, rws, extra_cc, cw = get_test_input_stats(u_input, quote)
+    cc, extra_cc, cw, rws, wrong = get_test_input_stats(u_input, quote)
 
     # total characters
     tc = len(" ".join(u_input))
@@ -300,7 +317,7 @@ def get_test_stats(u_input, quote, end_time):
     if len(adjusted_history) < len(rws):
         word_history += "..."
 
-    return wpm, raw, acc, cc, cw, word_history
+    return wpm, raw, acc, cc, cw, word_history, wrong
 
 
 def get_bar(progress: float, *, size: int = 10, variant: int = 0, split: bool = False):
@@ -424,7 +441,7 @@ def get_hint():
         # Date based footers
         now = datetime.utcnow()
 
-        for d, h in zip(date_hints):
+        for d, h in date_hints:
             if [now.month, now.day] == d:
                 p += h
 

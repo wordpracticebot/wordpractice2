@@ -86,6 +86,8 @@ class Score(EmbeddedDocument):
     is_race = BooleanField(default=False)
     is_hs = BooleanField(default=False)
 
+    wrong = ListField(StringField, default=[])
+
     test_type_int = IntegerField(default=0)
 
     @property

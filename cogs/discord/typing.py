@@ -151,8 +151,7 @@ def _add_test_stats_to_embed(
     raw,
     acc,
     end_time,
-    tw,
-    cw,
+    mistakes,
     word_history,
     language,
     pacer_name,
@@ -168,7 +167,10 @@ def _add_test_stats_to_embed(
     if xp_earned is not None:
         embed.add_field(name=f"{icons.xp} Experience", value=xp_earned)
 
-    embed.add_field(name=f"{icons.mistake} Mistakes", value=tw - cw)
+    embed.add_field(name=f"{icons.mistake} Mistakes", value=mistakes)
+
+    if xp_earned is None:
+        embed.add_field(name="** **", value="** **")
 
     escape = "\U0000001b"
 
@@ -342,7 +344,7 @@ class HighScoreCaptchaView(BaseView):
 
             u_input = get_user_input(message)
 
-            _, raw, _, cc, _, word_history = get_test_stats(u_input, quote, end_time)
+            _, raw, _, cc, _, word_history, _ = get_test_stats(u_input, quote, end_time)
 
             ratio = cc / len(" ".join(quote))
 
@@ -429,7 +431,7 @@ class HighScoreCaptchaView(BaseView):
 
 
 class TestResultView(BaseView):
-    def __init__(self, ctx, user, is_dict, quote, wrap_width, length):
+    def __init__(self, ctx, user, is_dict, length, wrong, quote, wrap_width):
         super().__init__(ctx)
 
         # Adding link buttons because they can't be added with a decorator
@@ -443,6 +445,8 @@ class TestResultView(BaseView):
         # Settings of the test completed
         self.length = length
         self.is_dict = is_dict
+        self.wrong = wrong
+
         self.quote = quote
         self.wrap_width = wrap_width
 
@@ -471,13 +475,28 @@ class TestResultView(BaseView):
         )
         invoke_completion(self.ctx)
 
-    @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Practice Difficult", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
         self.ctx.bot.active_start(self.ctx.author.id)
 
+        if self.wrong == []:
+            quote = self.quote
+
+        else:
+            words = set(self.wrong)
+
+            minimum = 3
+
+            if (a := len(words)) < minimum:
+                add_words = set(self.quote) ^ words
+
+                words |= random.sample(add_words, minimum - a)
+
+            quote = random.choices(list(words), k=len(self.quote))
+
         await self.disable_btn(button)
 
-        test_info = (self.quote, self.wrap_width)
+        test_info = (quote, self.wrap_width)
 
         result = await Typing.personal_test_input(
             self.user, self.ctx, 2, test_info, interaction.response.send_message
@@ -491,14 +510,12 @@ class TestResultView(BaseView):
 
         u_input = message.content.split()
 
-        wpm, raw, acc, _, cw, word_history = get_test_stats(
-            u_input, self.quote, end_time
-        )
+        wpm, raw, acc, _, cw, word_history, _ = get_test_stats(u_input, quote, end_time)
 
         # Sending the results
         # Spacing in title keeps same spacing if word history is short
         embed = self.ctx.embed(
-            title=f"Practice Test Results (Repeat){THIN_SPACE*75}\n\n`Statistics`",
+            title=f"Practice Test Results (Not Saved){THIN_SPACE*75}\n\n`Statistics`",
         )
 
         embed.set_author(
@@ -506,7 +523,7 @@ class TestResultView(BaseView):
             icon_url=self.ctx.author.display_avatar.url,
         )
 
-        word_display = _get_word_display(self.quote, raw_quote)
+        word_display = _get_word_display(quote, raw_quote)
 
         embed = _add_test_stats_to_embed(
             embed,
@@ -514,8 +531,7 @@ class TestResultView(BaseView):
             raw,
             acc,
             end_time,
-            len(u_input),
-            cw,
+            len(u_input) - cw,
             word_history,
             self.user.language,
             pacer_name,
@@ -662,7 +678,7 @@ class RaceJoinView(BaseView):
 
         u_input = get_user_input(m)
 
-        wpm, raw, _, cc, cw, _ = get_test_stats(u_input, self.quote, end_time)
+        wpm, raw, _, cc, cw, _, wrong = get_test_stats(u_input, self.quote, end_time)
 
         ratio = cc / len(" ".join(self.quote))
 
@@ -682,6 +698,7 @@ class RaceJoinView(BaseView):
             timestamp=datetime.utcnow(),
             is_race=True,
             test_type_int=int(self.is_dict),
+            wrong=wrong,
         )
 
         embed = self.get_race_embed()
@@ -1322,7 +1339,9 @@ class Typing(commands.Cog):
         # Evaluating the input of the user
         u_input = message.content.split()
 
-        wpm, raw, acc, cc, cw, word_history = get_test_stats(u_input, quote, end_time)
+        wpm, raw, acc, cc, cw, word_history, wrong = get_test_stats(
+            u_input, quote, end_time
+        )
 
         xp_earned = get_xp_earned(cc)
 
@@ -1347,8 +1366,7 @@ class Typing(commands.Cog):
             raw,
             acc,
             end_time,
-            len(u_input),
-            cw,
+            len(u_input) - cw,
             word_history,
             user.language,
             pacer_name,
@@ -1356,7 +1374,7 @@ class Typing(commands.Cog):
             xp_earned,
         )
 
-        view = TestResultView(ctx, user, is_dict, *quote_info, length)
+        view = TestResultView(ctx, user, is_dict, length, wrong, *quote_info)
 
         view.message = await message.reply(embed=embed, view=view, mention_author=False)
 
@@ -1395,6 +1413,7 @@ class Typing(commands.Cog):
                 timestamp=datetime.utcnow(),
                 is_race=False,
                 test_type_int=int(is_dict),
+                wrong=wrong,
             )
 
             result = await _cheating_check(ctx, ctx.author, user, score)
