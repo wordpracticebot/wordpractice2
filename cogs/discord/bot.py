@@ -2,7 +2,7 @@ import csv
 import json
 import math
 import time
-from base64 import b64encode
+import zlib
 from datetime import datetime, timezone
 from io import BytesIO, StringIO
 
@@ -51,7 +51,7 @@ EMOJIS_PER_TIER = 4
 
 
 def _encrypt_data(data: dict):
-    encoded_data = b64encode(json.dumps(data).encode())
+    encoded_data = zlib.compress(json.dumps(data).encode())
 
     encrypted_data = Fernet(GRAPH_CDN_SECRET.encode()).encrypt(encoded_data)
 

@@ -6,7 +6,7 @@ import random
 from datetime import datetime, timezone
 from typing import Callable
 
-from discord import SlashCommand, SlashCommandGroup
+from discord import SlashCommand, SlashCommandGroup, UserCommand
 from discord.ext import commands
 
 from constants import SUPPORT_SERVER_INVITE, TEST_ZONES
@@ -19,14 +19,14 @@ BARS = (h_progress_bar, overflow_bar, v_progress_bar)
 
 
 def get_command_name(command):
-    if isinstance(command, SlashCommand):
+    if isinstance(command, (SlashCommand, UserCommand)):
         return (f"{command.parent.name} " if command.parent else "") + command.name
 
     return command.qualified_name
 
 
 def format_command(command):
-    if isinstance(command, SlashCommand):
+    if isinstance(command, (SlashCommand, UserCommand)):
         return get_command_name(command)
 
     return f"{command} {command.signature}"
