@@ -23,13 +23,14 @@ from constants import (
     LB_DISPLAY_AMT,
     LB_LENGTH,
     PREMIUM_LINK,
+    PREMIUM_SCORE_LIMIT,
     REGULAR_SCORE_LIMIT,
 )
 from helpers.checks import cooldown, user_check
 from helpers.converters import user_option
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_pacer_display, get_theme_display, get_typing_average
-from helpers.utils import calculate_score_consistency, get_bar
+from helpers.utils import calculate_score_consistency, cmd_run_before, get_bar
 from static.badges import get_badge_from_id
 
 THIN_SPACE = "\N{THIN SPACE}"
@@ -99,9 +100,9 @@ class SeasonView(ViewFromDict):
         embed = self.ctx.embed(title="Season Information")
 
         info = {
-            "What are seasons?": "Seasons are a month-long competition open to all wordPractice users. Users compete to earn the most XP before the end of the season to earn exclusive prizes.",
+            "What are seasons?": "Seasons are a month-long competition open to all wordPractice users. Users compete to earn the most XP before the end of the season - medals are awarded to the top 10 users.",
             "How do I earn XP?": f"XP {icons.xp} can be earned through completing typing tests, daily challenges, voting and much more.",
-            "What are season rewards?": "By completing seasonal challenges, users can win exclusive badges.",
+            "What are season rewards?": "By completing seasonal challenges, users can win exclusive badges. View your progress by clicking the `Rewards` button below.",
             "How do I view the season leaderboads?": "The season leaderboard can be viewed with `/leaderboard` under the season category.",
         }
 
@@ -290,7 +291,7 @@ class ScoreView(ScrollView):
             title=f"{self.user.display_name} | Recent Scores ({start_page + 1} - {end_page} of {total_scores})",
             description=" "
             if self.user.is_premium
-            else f"**[Donators]({PREMIUM_LINK})** can download test scores",
+            else f"**[Donators]({PREMIUM_LINK})** can download and save up to {PREMIUM_SCORE_LIMIT} test scores!",
         )
 
         for i, s in enumerate(self.user.scores[::-1][start_page:end_page]):
@@ -401,7 +402,10 @@ class LeaderboardView(ScrollView):
 
             badge_icon = get_badge_from_id(u["status"])
 
-            username = f"{u['name']}#{u['discriminator']} {badge_icon}"
+            username = f"{u['name']}#{u['discriminator']}"
+
+            if badge_icon is not None:
+                username += f" {badge_icon}"
 
             embed.add_field(
                 name=f"`{p}.` {extra}{username} - {u['count']} {c.unit}{extra}",
@@ -960,9 +964,10 @@ class Bot(commands.Cog):
 
         await ctx.respond(embed=embed)
 
-        await ctx.respond(
-            "Challenges restart at the same time every day!", ephemeral=True
-        )
+        if not cmd_run_before(ctx, user):
+            await ctx.respond(
+                "Challenges restart at the same time every day!", ephemeral=True
+            )
 
     @cooldown(6, 2)
     @bridge.bridge_command()
