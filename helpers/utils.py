@@ -436,3 +436,12 @@ def get_hint():
             return random.choice(p)
 
     return "Hint: " + random.choice(hints)
+
+
+def invoke_completion(ctx):
+    ctx.no_completion = False
+
+    if ctx.is_slash:
+        ctx.bot.dispatch("application_command_completion", ctx)
+    else:
+        ctx.bot.dispatch("command_completion", ctx)

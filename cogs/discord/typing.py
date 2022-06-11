@@ -55,6 +55,7 @@ from helpers.utils import (
     get_test_zone,
     get_test_zone_name,
     get_xp_earned,
+    invoke_completion,
     invoke_slash_command,
     message_banned_user,
 )
@@ -78,15 +79,6 @@ def _author_is_user(ctx):
 
 def _get_word_display(quote, raw_quote):
     return f"{len(quote)} ({len(raw_quote)} chars)"
-
-
-def _invoke_completion(ctx):
-    ctx.no_completion = False
-
-    if ctx.is_slash:
-        ctx.bot.dispatch("application_command_completion", ctx)
-    else:
-        ctx.bot.dispatch("command_completion", ctx)
 
 
 def _get_log_additional(wpm, raw, acc, word_display, xp_earned):
@@ -210,7 +202,7 @@ class RetryView(BaseView):
         self.captcha_callback = captcha_callback
 
     async def on_timeout(self):
-        _invoke_completion(self.ctx)
+        invoke_completion(self.ctx)
 
         await super().on_timeout()
 
@@ -231,7 +223,7 @@ class HighScoreCaptchaView(BaseView):
         self.attempts = 0
 
     async def on_timeout(self):
-        _invoke_completion(self.ctx)
+        invoke_completion(self.ctx)
 
         await super().on_timeout()
 
@@ -374,7 +366,7 @@ class HighScoreCaptchaView(BaseView):
 
                 await self.ctx.bot.mongo.replace_user_data(self.user, self.ctx.author)
 
-                _invoke_completion(self.ctx)
+                invoke_completion(self.ctx)
 
                 # Logging the pass of the high score captcha
                 return await self.log_captcha_completion(raw, acc, False)
@@ -393,7 +385,7 @@ class HighScoreCaptchaView(BaseView):
 
             await self.ctx.respond(embed=embed)
 
-            _invoke_completion(self.ctx)
+            invoke_completion(self.ctx)
 
             return await self.log_captcha_completion(raw, acc, True)
 
@@ -477,7 +469,7 @@ class TestResultView(BaseView):
             self.length,
             interaction.response.send_message,
         )
-        _invoke_completion(self.ctx)
+        invoke_completion(self.ctx)
 
     @discord.ui.button(label="Practice Test", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
@@ -876,7 +868,7 @@ class RaceJoinView(BaseView):
                     await self.ctx.bot.mongo.replace_user_data(user, r.user)
 
                 # Invoking comnmand completion for the user
-                _invoke_completion(special_ctx)
+                invoke_completion(special_ctx)
 
                 await Typing.log_typing_test(
                     special_ctx, "Race", score.wpm, additional, score.is_hs, r.user

@@ -19,7 +19,7 @@ from helpers.errors import ImproperArgument
 from helpers.image import get_base_img, save_discord_static_img
 from helpers.ui import BaseView
 from helpers.user import get_pacer_display, get_theme_display
-from helpers.utils import copy_doc, invoke_slash_command
+from helpers.utils import copy_doc, invoke_completion, invoke_slash_command
 from static import themes
 
 
@@ -146,6 +146,8 @@ class ThemeSelect(discord.ui.Select):
         user.theme = theme_value
 
         await self.ctx.bot.mongo.replace_user_data(user, self.ctx.author)
+
+        invoke_completion(self.ctx)
 
 
 class Customization(commands.Cog):

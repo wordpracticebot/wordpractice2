@@ -1,5 +1,6 @@
 from discord import SlashCommand
 
+from constants import DEFAULT_THEME
 from helpers.user import get_user_cmds_run
 from helpers.utils import get_command_name
 from static.assets import beginning_icon
@@ -36,6 +37,17 @@ class Competition(Achievement):
         return int(len(user.scores) > 0 and user.scores[-1].is_race), 1
 
 
+class Colours(Achievement):
+    def __init__(self):
+        super().__init__(
+            name="Colours!",
+            desc="Change your typing test theme",
+        )
+
+    async def progress(self, ctx, user):
+        return int(bool(user.theme != DEFAULT_THEME)), 1
+
+
 class OpenMinded(Achievement):
     def __init__(self):
         super().__init__(name="Open-minded", desc="Run every single command")
@@ -54,6 +66,6 @@ class OpenMinded(Achievement):
 
 beginning = Category(
     desc="Simple and basic achievements",
-    challenges=[StartingOut(), Quoi(), Competition(), OpenMinded()],
+    challenges=[StartingOut(), Quoi(), Colours(), Competition(), OpenMinded()],
     icon=beginning_icon,
 )
