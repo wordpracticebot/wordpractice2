@@ -1215,7 +1215,7 @@ class Typing(commands.Cog):
         title = f"{user.display_name} | {test_type} Test ({word_count} words)"
 
         # WOW THIS IS SUCH GREAT CODING :IOJ:FOWIJEFOW 10/10
-        name = pacer_name.replace("\n", " ")
+        name = None if pacer_name is None else pacer_name.replace("\n", " ")
 
         desc = f"**Pacer:** {name}"
 
