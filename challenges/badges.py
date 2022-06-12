@@ -23,9 +23,14 @@ class Collector(Achievement):
     async def progress(self, ctx, user):
         season_info = await ctx.bot.mongo.get_season_info()
 
-        badges = season_info["badges"]
+        if season_info["enabled"] and len(season_info["badges"]) > 0:
+            badges = season_info["badges"]
+            progress = len(set(badges) & set(user.badges))
 
-        return len(set(badges) & set(user.badges)), len(badges)
+        else:
+            progress = 0
+
+        return progress, len(badges)
 
 
 badges = Category(

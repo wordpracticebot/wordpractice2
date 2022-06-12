@@ -49,7 +49,7 @@ class Consistency(Achievement):
             else calculate_score_consistency(user.scores[-30:])
         )
 
-        return result, 30
+        return result, 90
 
 
 class BeepBoop(Achievement):

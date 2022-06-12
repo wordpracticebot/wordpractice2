@@ -83,10 +83,10 @@ class Score(EmbeddedDocument):
     xp = IntegerField(default=0)
     timestamp = DateTimeField(default=datetime.min)
 
+    wrong = ListField(StringField, default=[])
+
     is_race = BooleanField(default=False)
     is_hs = BooleanField(default=False)
-
-    wrong = ListField(StringField, default=[])
 
     test_type_int = IntegerField(default=0)
 
