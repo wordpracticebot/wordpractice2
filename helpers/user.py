@@ -17,26 +17,34 @@ def get_theme_display(clrs):
     return "Custom", ""
 
 
-def get_pacer_name(pacer: str):
+def get_pacer_name(pacer: str, wpm: int = None):
     if pacer == "":
         return
 
     if pacer == "avg":
-        return "Average"
+        name = "Average"
 
-    if pacer == "pb":
-        return "Personal Best"
+    elif pacer == "pb":
+        name = "PB"
 
-    return pacer + " wpm"
+    else:
+        return pacer + " wpm"
+
+    if wpm is None:
+        return name
+
+    return f"{name} - {wpm} wpm"
 
 
-def get_pacer_display(pacer_type, pacer_speed):
+def get_pacer_display(pacer_type, pacer_speed, wpm: int = None):
     pacer_type_name = PACER_PLANES[pacer_type].capitalize()
 
-    pacer_name = get_pacer_name(pacer_speed)
+    pacer_name = get_pacer_name(pacer_speed, wpm)
 
     if pacer_name is not None:
-        pacer_name += f" ({pacer_type_name})"
+        spacing = " " if wpm is None else "\n"
+
+        pacer_name += f"{spacing}({pacer_type_name})"
 
     return pacer_name
 
@@ -100,15 +108,15 @@ def get_expanded_24_hour_stat(stat: list[int]):
     return stat[:i_len] + [0] * (i_len - len(stat))
 
 
-def get_pacer_speed(user, zone: int):
+def get_pacer_speed(user, zone: str):
     if user.pacer_speed == "":
         return
 
     if user.pacer_speed == "avg":
-        pacer, *_ = get_typing_average(user)
+        pacer = int(get_typing_average(user)[0])
 
     elif user.pacer_speed == "pb":
-        pacer = user.highspeed[zone].wpm
+        pacer = int(user.highspeed[zone].wpm)
 
     else:
         pacer = int(user.pacer_speed)

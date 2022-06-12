@@ -187,7 +187,7 @@ def _add_test_stats_to_embed(
 
     # Settings
     embed.add_field(name=f"{icons.language} Language", value=language.capitalize())
-    embed.add_field(name=f"{icons.pacer}: Pacer", value=pacer_name)
+    embed.add_field(name=f"{icons.pacer} Pacer", value=pacer_name)
     embed.add_field(name=f"{icons.words} Words", value=word_display)
 
     embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
@@ -1205,16 +1205,19 @@ class Typing(commands.Cog):
 
         test_type = get_test_type(test_type_int, word_count)
 
-        pacer = get_pacer_speed(user, get_test_zone(word_count))
+        pacer = get_pacer_speed(user, get_test_zone(word_count)[0])
 
         if pacer is False:
             pacer_name = f"N/A (Pacer below minium of {MIN_PACER_SPEED} wpm)"
         else:
-            pacer_name = get_pacer_display(user.pacer_type, user.pacer_speed)
+            pacer_name = get_pacer_display(user.pacer_type, user.pacer_speed, pacer)
 
         title = f"{user.display_name} | {test_type} Test ({word_count} words)"
 
-        desc = f"**Pacer:** {pacer_name}"
+        # WOW THIS IS SUCH GREAT CODING :IOJ:FOWIJEFOW 10/10
+        name = pacer_name.replace("\n", " ")
+
+        desc = f"**Pacer:** {name}"
 
         embed = ctx.embed(
             title=title,
