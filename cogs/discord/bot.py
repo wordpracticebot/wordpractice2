@@ -731,7 +731,7 @@ class ProfileView(BaseView):
             ),
         )
 
-        embed.add_field(name="Recent Typing Scores", value="** **", inline=False)
+        embed.add_field(name="Last 10 Typing Scores", value="** **", inline=False)
 
         url = get_graph_link(user=self.user, amt=10, dimensions=(8, 4))
 
