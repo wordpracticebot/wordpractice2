@@ -62,7 +62,7 @@ class BeepBoop(Achievement):
         self.amt = amt
 
     async def progress(self, ctx, user):
-        return get_in_row(user.scores, lambda s: int(s.wpm) == 60), self.amt
+        return get_in_row(user.scores, lambda s: abs(s.wpm - 60) <= 1), self.amt
 
 
 typing = Category(
