@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 
-from constants import MIN_PACER_SPEED, PACER_PLANES, UPDATE_24_HOUR_INTERVAL
+from constants import AVG_AMT, MIN_PACER_SPEED, PACER_PLANES, UPDATE_24_HOUR_INTERVAL
 from static.themes import default
 
 
@@ -49,7 +49,7 @@ def get_pacer_display(pacer_type, pacer_speed, wpm: int = None):
     return pacer_name
 
 
-def get_typing_average(user, amount: int = 10):
+def get_typing_average(user, amount: int = AVG_AMT):
     """
     user: user data
     amount: how many scores to get the statistics of

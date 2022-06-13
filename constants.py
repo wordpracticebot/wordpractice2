@@ -22,6 +22,8 @@ DEFAULT_VIEW_TIMEOUT = 30  # seconds
 DEFAULT_THEME = default["Material"]["colours"]
 AUTO_MODERATOR_NAME = "Thomas Worker 99"  # :)
 
+AVG_AMT = 10
+
 # Leaderboards
 LB_LENGTH = 1000
 LB_DISPLAY_AMT = 100

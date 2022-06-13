@@ -6,7 +6,7 @@ import numpy as np
 from discord.ext import commands, tasks
 
 from config import DBL_TOKEN, TESTING
-from constants import CHALLENGE_AMT, COMPILE_INTERVAL, UPDATE_24_HOUR_INTERVAL
+from constants import AVG_AMT, CHALLENGE_AMT, COMPILE_INTERVAL, UPDATE_24_HOUR_INTERVAL
 
 
 class Tasks(commands.Cog):
@@ -85,15 +85,26 @@ class Tasks(commands.Cog):
                 {
                     "$project": {
                         "_id": 0,
-                        "wpm": {"$sum": {"$slice": ["$scores.wpm", 10]}},
-                        "raw": {"$sum": {"$slice": ["$scores.raw", 10]}},
-                        "acc": {"$sum": {"$slice": ["$scores.acc", 10]}},
+                        "wpm": {"$sum": {"$slice": ["$scores.wpm", AVG_AMT]}},
+                        "raw": {"$sum": {"$slice": ["$scores.raw", AVG_AMT]}},
+                        "acc": {"$sum": {"$slice": ["$scores.acc", AVG_AMT]}},
+                        "amt": {"$size": "$scores"},
                     }
                 }
             ]
         )
 
-        total = zip(*[(m["wpm"], m["raw"], m["acc"]) async for m in a])
+        total = zip(
+            *[
+                (
+                    m["wpm"] / (score_amt := min(m["amt"], AVG_AMT)),
+                    m["raw"] / score_amt,
+                    m["acc"] / score_amt,
+                )
+                async for m in a
+                if m["amt"] != 0
+            ]
+        )
 
         new_perc = []
 

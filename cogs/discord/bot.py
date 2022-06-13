@@ -17,6 +17,7 @@ from challenges.daily import get_daily_challenges
 from challenges.season import get_season_tiers
 from config import GRAPH_CDN_SECRET
 from constants import (
+    AVG_AMT,
     COMPILE_INTERVAL,
     GRAPH_CDN_BASE_URL,
     GRAPH_EXPIRE_TIME,
@@ -544,10 +545,10 @@ class ProfileView(BaseView):
     def get_perc_sign(self, value: int, percs: tuple[int, int]):
         first, second = percs
 
-        if value in range(0, int(first)):
+        if value < int(first):
             return "-"
 
-        if value in range(int(first), int(second)):
+        if value < int(second):
             return "/"
 
         return "+"
@@ -713,15 +714,15 @@ class ProfileView(BaseView):
 
         # Average
 
-        wpm_perc = self.get_perc_sign(wpm * len(scores), self.ctx.bot.avg_perc[0])
-        raw_perc = self.get_perc_sign(raw * len(scores), self.ctx.bot.avg_perc[1])
-        acc_perc = self.get_perc_sign(acc * len(scores), self.ctx.bot.avg_perc[2])
+        wpm_perc = self.get_perc_sign(wpm, self.ctx.bot.avg_perc[0])
+        raw_perc = self.get_perc_sign(raw, self.ctx.bot.avg_perc[1])
+        acc_perc = self.get_perc_sign(acc, self.ctx.bot.avg_perc[2])
 
         # Consistency percentile is based on arbitrary values
         con_perc = "+" if con >= 70 else "/" if con >= 40 else "-"
 
         embed.add_field(
-            name="Average (Last 10 Tests)",
+            name=f"Average (Last {AVG_AMT} Tests)",
             value=(
                 "```diff\n"
                 f"{wpm_perc} Wpm: {wpm}\n"
