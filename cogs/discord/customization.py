@@ -72,11 +72,13 @@ class EquipSelect(discord.ui.Select):
             max_values=1,
             options=[
                 discord.SelectOption(
-                    label=name.capitalize(),
-                    emoji=None if icon is None else discord.PartialEmoji.from_str(icon),
-                    value=name,
+                    label=b.get_name(b.badge_id),
+                    emoji=None
+                    if b.raw is None
+                    else discord.PartialEmoji.from_str(b.raw),
+                    value=b.badge_id,
                 )
-                for name, icon in zip(user.badges, user.badge_emojis)
+                for b in user.badge_objs
             ]
             + [none_option],
             row=1,
@@ -87,7 +89,7 @@ class EquipSelect(discord.ui.Select):
         option = self.values[0]
         self.disabled = True
 
-        option_name = option.capitalize()
+        option_name = next((s.label for s in self.options if s.value == option), None)
 
         embed = self.ctx.embed(
             title=f"{icons.success} {option_name} Badge Equipped",

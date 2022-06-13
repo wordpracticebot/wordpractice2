@@ -3,6 +3,7 @@ from datetime import datetime
 from static.assets import endurance_icon
 
 from .base import Achievement, Category
+from .rewards import BadgeReward
 
 
 class SingleStatEndurance(Achievement):
@@ -61,4 +62,5 @@ endurance = Category(
         ],
     ],
     icon=endurance_icon,
+    reward=BadgeReward("thomas"),
 )

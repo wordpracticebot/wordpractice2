@@ -2,6 +2,7 @@ from helpers.utils import calculate_score_consistency
 from static.assets import speed_icon
 
 from .base import Achievement, Category, get_in_row
+from .rewards import BadgeReward
 
 
 class Speed(Achievement):
@@ -92,4 +93,5 @@ typing = Category(
         ],
     ],
     icon=speed_icon,
+    reward=BadgeReward("gold_keyboard"),
 )

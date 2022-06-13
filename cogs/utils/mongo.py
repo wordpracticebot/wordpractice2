@@ -22,6 +22,7 @@ from umongo.fields import (
 )
 from umongo.frameworks import MotorAsyncIOInstance
 
+from challenges.rewards import BadgeReward
 from config import DATABASE_NAME, DATABASE_URI
 from constants import (
     AUTO_MODERATOR_NAME,
@@ -191,8 +192,8 @@ class User(UserBase):
         return get_badge_from_id(self.status) or ""
 
     @property
-    def badge_emojis(self):
-        return get_badges_from_ids(self.badges)
+    def badge_objs(self):
+        return [BadgeReward(b) for b in self.badges]
 
     @property
     def avatar_url(self):

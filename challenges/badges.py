@@ -1,6 +1,7 @@
 from static.assets import badge_icon
 
 from .base import Achievement, Category
+from .rewards import BadgeReward
 
 
 class Badges(Achievement):
@@ -51,5 +52,5 @@ badges = Category(
         Collector(),
     ],
     icon=badge_icon,
-    reward=None,
+    reward=BadgeReward("gold_badge"),
 )

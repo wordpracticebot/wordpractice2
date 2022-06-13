@@ -6,6 +6,7 @@ from helpers.utils import get_command_name
 from static.assets import beginning_icon
 
 from .base import Achievement, Category
+from .rewards import BadgeReward
 
 
 class StartingOut(Achievement):
@@ -68,4 +69,5 @@ beginning = Category(
     desc="Simple and basic achievements",
     challenges=[StartingOut(), Quoi(), Colours(), Competition(), OpenMinded()],
     icon=beginning_icon,
+    reward=BadgeReward("gold_plant"),
 )

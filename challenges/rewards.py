@@ -33,10 +33,16 @@ class BadgeReward(Reward):
     def raw(self):
         return get_badge_from_id(self.badge_id)
 
-    @staticmethod
-    def get_badge_format(badge_id):
+    @classmethod
+    def get_name(cls, badge_id):
+        return badge_id.replace("_", " ").capitalize()
+
+    @classmethod
+    def get_badge_format(cls, badge_id):
         emoji = get_badge_from_id(badge_id)
-        return f"{badge_id.capitalize()} {emoji}"
+        name = cls.get_name(badge_id)
+
+        return f"{name} {emoji}"
 
     def badge_format(self):
         return self.get_badge_format(self.badge_id)

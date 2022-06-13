@@ -72,6 +72,10 @@ default = {
     "ornament": "<:ornament:965651030459154452>",
     "shovel": "<:shovel:965651030593404969>",
     "rainbow": "<:rainbow:965651030819893308>",
+    "gold_keyboard": "<:gold_keyboard:986006270068817920>",
+    "gold_plant": "<:gold_plant:986006269020233749>",
+    "gold_badge": "<:gold_badge:986006271348064256>",
+    "thomas": "<:thomas:986006272472141865>",
 }
 # fmt: on
 

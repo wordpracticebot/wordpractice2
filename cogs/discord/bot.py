@@ -613,7 +613,7 @@ class ProfileView(BaseView):
         if self.user.badges == []:
             badges = "User has no badges..."
         else:
-            badges = " ".join(self.user.badge_emojis)
+            badges = " ".join(b.raw for b in self.user.badge_objs)
 
         embed.description = (
             f"**Words:** {fr_words}**XP:** {fr_xp}**XP:** {fr_24_words}\n\n"
@@ -1017,7 +1017,7 @@ class Bot(commands.Cog):
             )
 
         else:
-            badges = " ".join(user_data.badge_emojis)
+            badges = " ".join(b.raw for b in user_data.badge_objs)
 
             embed = ctx.embed(
                 title=f"{user_data.display_name} | Badges", description=badges
