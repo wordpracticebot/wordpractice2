@@ -94,7 +94,7 @@ def get_test_input_stats(u_input: list, quote: list):
     Evaluates test from input and quote
     """
 
-    original_quote = quote.copy()
+    o_quote = quote.copy()
 
     # Ignoring word case
     quote = [q.lower() for q in quote]
@@ -169,16 +169,16 @@ def get_test_input_stats(u_input: list, quote: list):
 
         if result is not None:
             if result == 0:
-                word_history.append(u_input[u_index])
+                word_history.append(o_quote[w_index])
                 cc += len(quote[w_index])
                 cw += 1
 
             elif result == 1:
-                word_history.append(f"__{quote[w_index]}__")
+                word_history.append(f"__{o_quote[w_index]}__")
                 cc += len(quote[w_index]) - 1
                 u_shift += 1
 
-                wrong.append(original_quote[w_index])
+                wrong.append(o_quote[w_index])
 
             elif result == 2:
                 word_history.append(f"~~{u_input[u_index]}~~")
@@ -195,19 +195,19 @@ def get_test_input_stats(u_input: list, quote: list):
                 u_shift += 1
 
                 wrong.append(
-                    original_quote[w_index + 1]
-                    if (a := original_quote[w_index]) in u_input[u_index]
+                    o_quote[w_index + 1]
+                    if (a := o_quote[w_index]) in u_input[u_index]
                     else a
                 )
 
             elif result == 4:
-                word_history.append(f"{quote[w_index]} _____ {quote[w_index + 1]}")
+                word_history.append(f"{o_quote[w_index]} _____ {o_quote[w_index + 1]}")
 
                 cc += len(u_input[u_index])
                 w_shift += 1
                 extra_cc += 1
 
-                wrong.append(original_quote[w_index])
+                wrong.append(o_quote[w_index])
 
             continue
 
@@ -230,7 +230,8 @@ def get_test_input_stats(u_input: list, quote: list):
                     w_shift += skip_index - 1
                     u_shift -= 1
 
-                    for w in search[:skip_index]:
+                    # Can't use search because search is all lowercase
+                    for w in o_quote[w_index:][:skip_index]:
                         # Punishing for skipping words
                         extra_cc += 1
 
@@ -253,9 +254,9 @@ def get_test_input_stats(u_input: list, quote: list):
 
         cc += max(longest - wc, 0)
 
-        word_history.append(f"~~{u_input[u_index]}~~ **({quote[w_index]})**")
+        word_history.append(f"~~{u_input[u_index]}~~ **({o_quote[w_index]})**")
 
-        wrong.append(original_quote[w_index])
+        wrong.append(o_quote[w_index])
 
         if (extra := len(quote[w_index]) - len(u_input[u_index])) > 0:
             extra_cc += extra

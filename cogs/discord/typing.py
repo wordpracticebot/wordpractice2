@@ -1098,7 +1098,7 @@ class Typing(commands.Cog):
     @cooldown(5, 1)
     @commands.group(invoke_without_command=True)
     @copy_doc(tt_dictionary)
-    async def tt(self, ctx, length: int):
+    async def tt(self, ctx, length: int = 35):
         await invoke_slash_command(self.tt_dictionary, self, ctx, length)
 
     @cooldown(5, 1)
@@ -1205,7 +1205,12 @@ class Typing(commands.Cog):
 
         test_type = get_test_type(test_type_int, word_count)
 
-        pacer = get_pacer_speed(user, get_test_zone(word_count)[0])
+        test_zone = get_test_zone(word_count)
+
+        if test_zone is not None:
+            test_zone, _ = test_zone
+
+        pacer = get_pacer_speed(user, test_zone)
 
         if pacer is False:
             pacer_name = f"N/A (Pacer below minium of {MIN_PACER_SPEED} wpm)"
