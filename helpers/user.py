@@ -116,6 +116,9 @@ def get_pacer_speed(user, zone: str):
         pacer = int(get_typing_average(user)[0])
 
     elif user.pacer_speed == "pb":
+        if zone is None:
+            return
+
         pacer = int(user.highspeed[zone].wpm)
 
     else:
