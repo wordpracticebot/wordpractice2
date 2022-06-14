@@ -12,7 +12,11 @@ from cryptography.fernet import Fernet
 from discord.ext import bridge, commands
 
 import icons
-from challenges.achievements import categories, get_achievement_display
+from challenges.achievements import (
+    categories,
+    get_achievement_display,
+    is_category_complete,
+)
 from challenges.daily import get_daily_challenges
 from challenges.season import get_season_tiers
 from config import GRAPH_CDN_SECRET
@@ -787,7 +791,7 @@ class AchievementsButton(DictButton):
 
         self.style = (
             discord.ButtonStyle.success
-            if categories[self.label].is_done(user)
+            if is_category_complete(categories[self.label], user)
             else discord.ButtonStyle.danger
         )
 

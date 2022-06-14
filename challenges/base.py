@@ -50,12 +50,6 @@ class Category:
 
         return self.reward.changer
 
-    def is_done(self, user):
-        return all(
-            (e if not isinstance(e, list) else e[0][-1]).in_achievements(user)
-            for e in self.challenges
-        )
-
 
 def get_in_row(scores, condition):
     if scores == []:

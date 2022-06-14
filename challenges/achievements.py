@@ -43,10 +43,38 @@ async def check_achievements(ctx, user: dict):
                 continue
 
 
+def is_a_done(a, user):
+    if isinstance(a, list):
+        all_a = sum(a, [])
+
+        all_names = [m.name for m in all_a]
+
+        tier = get_achievement_tier(user, len(all_names), set(all_names))
+
+        total = len(a[0])
+
+        return tier + 1 >= total, tier, total, all_a[tier]
+
+    else:
+        is_done = a.name in user.achievements
+
+        return is_done, None, 1, a
+
+
+def is_category_complete(c, user):
+    for a in c.challenges:
+        is_done, *_ = is_a_done(a, user)
+
+        if is_done is False:
+            return False
+
+    return True
+
+
 def check_categories(user: dict, user_old: dict):
     for n, c in categories.items():
 
-        if c.is_done(user) and c.is_done(user_old) is False:
+        if is_category_complete(c, user) and is_category_complete(c, user_old) is False:
             yield n, c
 
         continue
@@ -63,46 +91,25 @@ def get_achievement_tier(user, total: int, names: set):
     return min(tier, total - 1)
 
 
-async def get_achievement_display(ctx, user, a):
-    display = ""
+async def get_achievement_display(ctx, user, e):
+    is_done, tier, total, a = is_a_done(e, user)
 
-    # Tiers
-    if isinstance(a, list):
-        all_a = sum(a, [])
-
-        amt = len(a[0])
-
-        all_names = [m.name for m in all_a]
-
-        total = len(all_names)
-
-        names = set(all_names)
-
-        tier = get_achievement_tier(user, total, names)
-
-        display = f" `[{tier + 1}/{amt}]`"
-
-        a = all_a[tier]
-
+    if tier is not None:
+        display = f" `[{tier + 1}/{total}]`"
+        variant = int(tier > total)
     else:
-        all_names = [a.name]
-
-    is_already_complete = user_has_complete(
-        all_names, tier + 1 if display else 1, a.name, user
-    )
-
-    current_complete = await a.is_completed(ctx, user) or is_already_complete
-    past_tier = display and tier + 1 > amt
+        display = ""
+        variant = 0
 
     p1, p2 = await a.progress(ctx, user)
 
-    if current_complete:
+    if await a.is_completed(ctx, user):
         p1 = max(p1, p2)
 
-    bar = get_bar(p1 / p2, variant=int(bool(past_tier)))
+    bar = get_bar(p1 / p2, variant=variant)
 
     bar_display = f"{bar} `{p1}/{p2}`"
 
-    emoji = icons.success if current_complete or past_tier else icons.danger
+    emoji = icons.success if is_done else icons.danger
 
     return a, emoji, display, bar_display
