@@ -27,11 +27,10 @@ class Collector(Achievement):
         if season_info["enabled"] and len(season_info["badges"]) > 0:
             badges = season_info["badges"]
             progress = len(set(badges) & set(user.badges))
+            return progress, len(badges)
 
         else:
-            progress = 0
-
-        return progress, len(badges)
+            return 0, 1
 
 
 badges = Category(

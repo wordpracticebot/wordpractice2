@@ -66,7 +66,7 @@ class Tasks(commands.Cog):
         all_ids.update(user_ids)
 
         if all_ids:
-            await self.bot.redis.hdel("users", *all_ids)
+            await self.bot.redis.hdel("user", *all_ids)
 
     @tasks.loop(minutes=COMPILE_INTERVAL)
     async def update_leaderboards(self):
@@ -171,7 +171,7 @@ class Tasks(commands.Cog):
         users_to_remove = set(last24_ids + daily_completion_ids)
 
         if users_to_remove:
-            await self.bot.redis.hdel("users", *users_to_remove)
+            await self.bot.redis.hdel("user", *users_to_remove)
 
     # Clearing cache
     @tasks.loop(minutes=10)

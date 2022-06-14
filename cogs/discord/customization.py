@@ -17,7 +17,7 @@ from helpers.checks import cooldown, premium_command, user_check
 from helpers.converters import HexOrRGB, colour_option, rgb_to_hex, user_option
 from helpers.errors import ImproperArgument
 from helpers.image import get_base_img, save_discord_static_img
-from helpers.ui import BaseView
+from helpers.ui import BaseView, ScrollView
 from helpers.user import get_pacer_display, get_theme_display
 from helpers.utils import copy_doc, invoke_completion, invoke_slash_command
 from static import themes
@@ -63,7 +63,7 @@ def _get_difficulty_choices(name):
 
 
 class EquipSelect(discord.ui.Select):
-    def __init__(self, ctx, user):
+    def __init__(self, ctx, badges):
         none_option = discord.SelectOption(label="None", value="no")
 
         super().__init__(
@@ -78,7 +78,7 @@ class EquipSelect(discord.ui.Select):
                     else discord.PartialEmoji.from_str(b.raw),
                     value=b.badge_id,
                 )
-                for b in user.badge_objs
+                for b in badges
             ]
             + [none_option],
             row=1,
@@ -106,6 +106,39 @@ class EquipSelect(discord.ui.Select):
             user.status = option
 
         await self.ctx.bot.mongo.replace_user_data(user, self.ctx.author)
+
+
+class EquipView(ScrollView):
+    def __init__(self, ctx, user):
+
+        self.total_badges = len(user.badges)
+
+        page_amt = math.ceil(self.total_badges / 24)
+
+        super().__init__(ctx, page_amt, row=2)
+
+        self.user = user
+
+        self.select_view = None
+
+    async def update_buttons(self):
+        self.update_select_view()
+        return await super().update_buttons()
+
+    async def create_page(self):
+        ...
+
+    def update_select_view(self):
+        if self.select_view is not None:
+            self.remove_item(self.select_view)
+
+        start_page = self.page * 24
+        end_page = min((self.page + 1) * 24, self.total_badges)
+
+        self.select_view = EquipSelect(
+            self.ctx, self.user.badge_objs[start_page:end_page]
+        )
+        self.add_item(self.select_view)
 
 
 class ThemeSelect(discord.ui.Select):
@@ -415,11 +448,9 @@ class Customization(commands.Cog):
             )
             return await ctx.respond(embed=embed)
 
-        view = BaseView(ctx)
+        view = EquipView(ctx, user)
 
-        view.add_item(EquipSelect(ctx, user))
-
-        await ctx.respond(content="** **", view=view)
+        await view.start()
 
     @cooldown(5, 2)
     @commands.user_command(name="Typing Settings")
