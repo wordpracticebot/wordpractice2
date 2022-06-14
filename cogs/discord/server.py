@@ -3,7 +3,9 @@ from discord.ext import bridge, commands
 
 import icons
 from config import SUPPORT_GUILD_ID
+from constants import SUPPORT_SERVER_INVITE
 from helpers.checks import cooldown
+from helpers.ui import create_link_view
 from helpers.user import get_typing_average
 from roles import SERVER_ROLES
 
@@ -29,6 +31,16 @@ class Server(commands.Cog):
             embed = ctx.error_embed(title=f"{icons.caution} Roles have been disabled")
 
             return await ctx.respond(embed=embed)
+
+        if ctx.guild.id != SUPPORT_GUILD_ID:
+            embed = ctx.error_embed(
+                title="Oops",
+                description=f"This command is only for the [community server]({SUPPORT_SERVER_INVITE})",
+            )
+
+            view = create_link_view({"Community Server": SUPPORT_SERVER_INVITE})
+
+            return await ctx.respond(embed=embed, view=view)
 
         user = ctx.initial_user
 
