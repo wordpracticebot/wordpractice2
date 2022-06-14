@@ -43,10 +43,10 @@ async def check_achievements(ctx, user: dict):
                 continue
 
 
-def check_categories(user: dict):
+def check_categories(user: dict, user_old: dict):
     for n, c in categories.items():
 
-        if c.is_done(user):
+        if c.is_done(user) and c.is_done(user_old) is False:
             yield n, c
 
         continue
@@ -74,7 +74,7 @@ async def get_achievement_display(ctx, user, a):
 
         all_names = [m.name for m in all_a]
 
-        total = len(all_names) - 1
+        total = len(all_names)
 
         names = set(all_names)
 
@@ -85,7 +85,6 @@ async def get_achievement_display(ctx, user, a):
         a = all_a[tier]
 
     else:
-        total = 0
         all_names = [a.name]
 
     is_already_complete = user_has_complete(

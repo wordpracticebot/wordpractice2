@@ -278,7 +278,7 @@ class Events(commands.Cog):
                 new_user.achievements[a.name] = current
 
             # Looping through the finished categories
-            for n, c in check_categories(new_user):
+            for n, c in check_categories(new_user, user):
                 c_completed[n] = c.reward
 
                 if c.changer is not None:

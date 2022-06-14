@@ -490,7 +490,7 @@ class TestResultView(BaseView):
             if (a := len(words)) < minimum:
                 add_words = set(self.quote) ^ words
 
-                words |= random.sample(add_words, minimum - a)
+                words |= set(random.sample(add_words, minimum - a))
 
             quote = random.choices(list(words), k=len(self.quote))
 
@@ -885,6 +885,7 @@ class RaceJoinView(BaseView):
                     await self.ctx.bot.mongo.replace_user_data(user, r.user)
 
                 # Invoking comnmand completion for the user
+                special_ctx.is_slash = False
                 invoke_completion(special_ctx)
 
                 await Typing.log_typing_test(
