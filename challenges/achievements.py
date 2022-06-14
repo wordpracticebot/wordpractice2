@@ -53,7 +53,7 @@ def is_a_done(a, user):
 
         total = len(a[0])
 
-        return tier + 1 >= total, tier, total, all_a[tier]
+        return tier + 1 > total, tier, total, all_a[tier]
 
     else:
         is_done = a.name in user.achievements
