@@ -1215,6 +1215,7 @@ class Typing(commands.Cog):
 
         if pacer is False:
             pacer_name = f"N/A (Pacer below minium of {MIN_PACER_SPEED} wpm)"
+
         else:
             pacer_name = get_pacer_display(user.pacer_type, user.pacer_speed, pacer)
 

@@ -18,7 +18,7 @@ def get_theme_display(clrs):
 
 
 def get_pacer_name(pacer: str, wpm: int = None):
-    if pacer == "":
+    if not pacer:
         return
 
     if pacer == "avg":
