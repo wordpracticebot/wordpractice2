@@ -49,11 +49,13 @@ def is_a_done(a, user):
 
         all_names = [m.name for m in all_a]
 
-        tier = get_achievement_tier(user, len(all_names), set(all_names))
+        raw_tier = get_achievement_tier(user, set(all_names))
+
+        tier = min(raw_tier, len(all_names) - 1)
 
         total = len(a[0])
 
-        return tier + 1 > total, tier, total, all_a[tier]
+        return raw_tier + 1 > total, tier, total, all_a[tier]
 
     else:
         is_done = a.name in user.achievements
@@ -80,15 +82,13 @@ def check_categories(user: dict, user_old: dict):
         continue
 
 
-def get_achievement_tier(user, total: int, names: set):
+def get_achievement_tier(user, names: set):
     user_a = set(user.achievements)
 
     # getting the amount of achievements that the user has in that tier
     unique = names & user_a
 
-    tier = sum([len(user.achievements[x]) for x in unique])
-
-    return min(tier, total - 1)
+    return sum([len(user.achievements[x]) for x in unique])
 
 
 async def get_achievement_display(ctx, user, e):
@@ -103,7 +103,7 @@ async def get_achievement_display(ctx, user, e):
 
     p1, p2 = await a.progress(ctx, user)
 
-    if await a.is_completed(ctx, user):
+    if is_done:
         p1 = max(p1, p2)
 
     bar = get_bar(p1 / p2, variant=variant)
