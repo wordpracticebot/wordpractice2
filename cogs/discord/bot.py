@@ -401,8 +401,10 @@ class LeaderboardView(ScrollView):
 
             extra = ""
 
-            if self.placing is None and u["_id"] == self.user.id:
-                self.placing = p, u
+            if u["_id"] == self.user.id:
+                if self.placing is None:
+                    self.placing = p, u
+
                 extra = "__"
 
             badge_icon = get_badge_from_id(u["status"])
