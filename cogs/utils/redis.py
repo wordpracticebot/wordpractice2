@@ -17,10 +17,6 @@ class Redis(commands.Cog):
     async def wait_until_ready(self):
         await self._connect_task
 
-    async def close(self):
-        self.pool.close()
-        await self.pool.wait_closed()
-
 
 def setup(bot):
     bot.add_cog(Redis(bot))

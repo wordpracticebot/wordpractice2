@@ -523,7 +523,9 @@ class WordPractice(bridge.AutoShardedBot):
 
     async def close(self):
         await super().close()
+
         await self.session.close()
+        await self.redis.close()
 
     def run(self):
         super().run(config.BOT_TOKEN, reconnect=True)
