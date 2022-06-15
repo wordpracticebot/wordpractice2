@@ -44,6 +44,8 @@ async def check_achievements(ctx, user: dict):
 
 
 def is_a_done(a, user):
+    # is_done, is_fully_done, tier, total, a
+
     if isinstance(a, list):
         all_a = sum(a, [])
 
@@ -55,12 +57,12 @@ def is_a_done(a, user):
 
         total = len(a[0])
 
-        return raw_tier + 1 > total, tier, total, all_a[tier]
+        return raw_tier >= total, raw_tier >= len(all_a), tier, total, all_a[tier]
 
     else:
         is_done = a.name in user.achievements
 
-        return is_done, None, 1, a
+        return is_done, is_done, None, 1, a
 
 
 def is_category_complete(c, user):
@@ -92,18 +94,18 @@ def get_achievement_tier(user, names: set):
 
 
 async def get_achievement_display(ctx, user, e):
-    is_done, tier, total, a = is_a_done(e, user)
+    is_done, is_fully_done, tier, total, a = is_a_done(e, user)
 
     if tier is not None:
         display = f" `[{tier + 1}/{total}]`"
-        variant = int(tier > total)
+        variant = int(tier >= total)
     else:
         display = ""
         variant = 0
 
     p1, p2 = await a.progress(ctx, user)
 
-    if is_done and (tier is None or variant == 1) and p2 > p1:
+    if is_fully_done and p2 > p1:
         p1 = max(p1, p2)
 
     bar = get_bar(p1 / p2, variant=variant)
