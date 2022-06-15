@@ -119,22 +119,23 @@ class Tasks(commands.Cog):
 
         self.bot.avg_perc = new_perc
 
-    @tasks.loop(minutes=30)
+    @tasks.loop(minutes=5)
     async def post_guild_count(self):
-        if TESTING or DBL_TOKEN is None:
-            return
+        if self.post_guild_count.current_loop != 0:
+            if TESTING or DBL_TOKEN is None:
+                return
 
-        payload = {
-            "server_count": len(self.bot.guilds),
-            "shard_count": len(self.bot.shards),
-        }
+            payload = {
+                "server_count": len(self.bot.guilds),
+                "shard_count": len(self.bot.shards),
+            }
 
-        url = f"https://top.gg/api/bots/{self.bot.user.id}/stats"
+            url = f"https://top.gg/api/bots/{self.bot.user.id}/stats"
 
-        async with self.bot.session.request(
-            "POST", url, headers=self.headers, data=payload
-        ) as resp:
-            assert resp.status == 200
+            async with self.bot.session.request(
+                "POST", url, headers=self.headers, data=payload
+            ) as resp:
+                assert resp.status == 200
 
     @post_guild_count.before_loop
     async def before_post_dbl(self):
