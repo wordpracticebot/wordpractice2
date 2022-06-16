@@ -120,7 +120,7 @@ class Moderator(commands.Cog):
 
         await self.bot.mongo.wipe_user(user_data, ctx.author)
 
-        embed = ctx.default_embed(title="User Wiped")
+        embed = ctx.default_embed(title=f"{user_data.username} was wiped!")
 
         await ctx.respond(embed=embed)
 
@@ -161,7 +161,7 @@ class Moderator(commands.Cog):
         await message_banned_user(ctx, user, reason)
 
         embed = ctx.error_embed(
-            title="User Banned",
+            title=f"{user_data.username} was banned!",
             description=f"Reason: {reason}",
         )
 
@@ -184,7 +184,7 @@ class Moderator(commands.Cog):
 
         await self.bot.mongo.replace_user_data(user_data)
 
-        embed = ctx.default_embed(title="User Unbanned")
+        embed = ctx.default_embed(title=f"{user_data.username} was unbanned!")
 
         await ctx.respond(embed=embed)
 
