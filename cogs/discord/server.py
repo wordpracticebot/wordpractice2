@@ -66,23 +66,42 @@ class Server(commands.Cog):
 
         # Wpm roles
         if wpm_roles is not None:
-            # Getting the roles that need to be added
-            role_id = next(
-                (n for n, r in reversed(wpm_roles.items()) if r[0] <= avg_wpm <= r[1]),
-                None,
-            )
-
-            if role_id is not None and role_id not in current_roles:
-                role_obj = self.get_role_from_id(guild_roles, role_id)
-
-                roles_added.append(role_obj)
-
-            # Getting the roles that need to be removed
-            roles_removed += [
-                current_roles[r]
-                for r in wpm_roles.keys()
-                if r != role_id and r in current_roles
+            # Checking if the user has a higher role already
+            higher_roles = [
+                (r, r_wpm)
+                for r in current_roles
+                if r in wpm_roles and (r_wpm := wpm_roles[r][1]) >= avg_wpm
             ]
+
+            if higher_roles:
+                highest = max(higher_roles, lambda x: x[1])
+
+                higher_roles.remove(highest)
+
+                roles_removed += higher_roles
+
+            else:
+                # Getting the role that needs to be added
+                role_id = next(
+                    (
+                        n
+                        for n, r in reversed(wpm_roles.items())
+                        if r[0] <= avg_wpm <= r[1]
+                    ),
+                    None,
+                )
+
+                if role_id is not None and role_id not in current_roles:
+                    role_obj = self.get_role_from_id(guild_roles, role_id)
+
+                    roles_added.append(role_obj)
+
+                # Getting the roles that need to be removed
+                roles_removed += [
+                    current_roles[r]
+                    for r in wpm_roles.keys()
+                    if r in current_roles and r != role_id
+                ]
 
         # Word roles
         if word_roles is not None:
