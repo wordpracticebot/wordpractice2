@@ -74,7 +74,7 @@ class Server(commands.Cog):
             ]
 
             if higher_roles:
-                highest = max(higher_roles, lambda x: x[1])
+                highest = max(higher_roles, key=lambda x: x[1])
 
                 higher_roles.remove(highest)
 
