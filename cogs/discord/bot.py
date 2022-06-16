@@ -239,10 +239,14 @@ class ScoreView(ScrollView):
 
         self.user = user
 
+    @property
+    def user_scores(self):
+        return self.user.scores[::-1]
+
     def get_formatted_data(self):
         data = {n: [] for n in SCORE_DATA_LABELS.keys()}
 
-        for s in self.user.scores:
+        for s in self.user_scores:
             for n, v in SCORE_DATA_LABELS.items():
                 data[n].append(getattr(s, v))
 
@@ -285,7 +289,7 @@ class ScoreView(ScrollView):
         await self.send_as_file(buffer, "json", button, interaction)
 
     async def create_page(self):
-        total_scores = len(self.user.scores)
+        total_scores = len(self.user_scores)
 
         start_page = self.page * SCORES_PER_PAGE
         end_page = min((self.page + 1) * SCORES_PER_PAGE, total_scores)
@@ -297,7 +301,7 @@ class ScoreView(ScrollView):
             else f"**[Donators]({PREMIUM_LINK})** can download and save up to {PREMIUM_SCORE_LIMIT} test scores!",
         )
 
-        for i, s in enumerate(self.user.scores[::-1][start_page:end_page]):
+        for i, s in enumerate(self.user_scores[start_page:end_page]):
             timestamp = s.unix_timestamp
 
             embed.add_field(
