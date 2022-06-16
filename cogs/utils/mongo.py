@@ -29,8 +29,7 @@ from constants import (
     CHALLENGE_AMT,
     DEFAULT_THEME,
     PREMIUM_LAUNCHED,
-    PREMIUM_SCORE_LIMIT,
-    REGULAR_SCORE_LIMIT,
+    SCORE_SAVE_AMT,
     TEST_ZONES,
     VOTING_SITES,
 )
@@ -246,10 +245,8 @@ class User(UserBase):
             self.last24[1] = current
 
     def add_score(self, score: Score):
-        limit = PREMIUM_SCORE_LIMIT if self.is_premium else REGULAR_SCORE_LIMIT
-
-        if len(self.scores) >= limit:
-            del self.scores[: len(self.scores) - limit + 1]
+        if len(self.scores) >= SCORE_SAVE_AMT:
+            del self.scores[: len(self.scores) - SCORE_SAVE_AMT + 1]
 
         self.scores.append(score)
 

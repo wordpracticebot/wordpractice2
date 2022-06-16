@@ -28,8 +28,8 @@ from constants import (
     LB_DISPLAY_AMT,
     LB_LENGTH,
     PREMIUM_LINK,
-    PREMIUM_SCORE_LIMIT,
     REGULAR_SCORE_LIMIT,
+    SCORE_SAVE_AMT,
 )
 from helpers.checks import cooldown, user_check
 from helpers.converters import user_option
@@ -241,7 +241,7 @@ class ScoreView(ScrollView):
 
     @property
     def user_scores(self):
-        return self.user.scores[::-1]
+        return self.user.scores[::-1][:REGULAR_SCORE_LIMIT]
 
     def get_formatted_data(self):
         data = {n: [] for n in SCORE_DATA_LABELS.keys()}
@@ -298,7 +298,7 @@ class ScoreView(ScrollView):
             title=f"{self.user.display_name} | Recent Scores ({start_page + 1} - {end_page} of {total_scores})",
             description=" "
             if self.user.is_premium
-            else f"**[Donators]({PREMIUM_LINK})** can download and save up to {PREMIUM_SCORE_LIMIT} test scores!",
+            else f"**[Donators]({PREMIUM_LINK})** can download and save up to {SCORE_SAVE_AMT} test scores!",
         )
 
         for i, s in enumerate(self.user_scores[start_page:end_page]):
