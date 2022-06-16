@@ -949,18 +949,23 @@ class Bot(commands.Cog):
         content = ""
 
         for i, c in enumerate(challenges):
+            is_complete = user.daily_completion[i]
+
             # Getting the user's progress on the challenge
-            p = await c.progress(ctx, user)
+            p1, p2 = await c.progress(ctx, user)
+
+            if is_complete:
+                p1 = max(p1, p2)
 
             # Generating the progress bar
-            bar = get_bar(p[0] / p[1])
+            bar = get_bar(p1 / p2)
 
-            emoji = icons.success if user.daily_completion[i] else icons.danger
+            emoji = icons.success if is_complete else icons.danger
 
             content += (
                 f"**{emoji} Challenge {i+1}**\n"
                 f"> {c.desc}\n"
-                f"> {bar} `{p[0]}/{p[1]}`\n\n"
+                f"> {bar} `{p1}/{p2}`\n\n"
             )
 
         embed.add_field(

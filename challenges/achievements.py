@@ -105,7 +105,7 @@ async def get_achievement_display(ctx, user, e):
 
     p1, p2 = await a.progress(ctx, user)
 
-    if is_fully_done and p2 > p1:
+    if is_fully_done:
         p1 = max(p1, p2)
 
     bar = get_bar(p1 / p2, variant=variant)
