@@ -7,11 +7,13 @@ from discord.ext import bridge, commands
 
 import icons
 from challenges.achievements import categories, get_achievement_display
+from config import SUPPORT_GUILD_ID
 from constants import (
     INFO_VIDEO,
     PRIVACY_POLICY_LINK,
     RULES_LINK,
     SUPPORT_SERVER_INVITE,
+    SUPPORT_SERVER_VOTE_LINK,
     VOTING_SITES,
 )
 from helpers.checks import cooldown
@@ -359,6 +361,15 @@ class Misc(commands.Cog):
             msg = "Voting is a great way to support wordPractice!"
 
             await ctx.respond(msg, ephemeral=True)
+
+        if ctx.guild.id == SUPPORT_GUILD_ID:
+            view = create_link_view({"Server Voting Link": SUPPORT_SERVER_VOTE_LINK})
+
+            await ctx.respond(
+                "Get the `Voter` role by voting for the server!",
+                view=view,
+                ephemeral=True,
+            )
 
 
 def setup(bot):

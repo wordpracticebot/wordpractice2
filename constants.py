@@ -72,6 +72,7 @@ VOTING_SITES = {
         "link": "https://discordbotlist.com/bots/wordpractice/upvote",
     },
 }
+SUPPORT_SERVER_VOTE_LINK = "https://top.gg/servers/742960643312713738/vote"
 
 # Premium
 PREMIUM_LAUNCHED = False
