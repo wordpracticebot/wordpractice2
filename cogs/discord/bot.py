@@ -255,9 +255,7 @@ class ScoreView(ScrollView):
 
         button.disabled = True
 
-        msg = await self.ctx.interaction.original_message()
-
-        await msg.edit(view=self)
+        await interaction.message.edit(view=self)
 
     @discord.ui.button(label="Download as CSV", style=discord.ButtonStyle.grey, row=1)
     async def csv_download(self, button, interaction):
@@ -415,7 +413,7 @@ class LeaderboardView(ScrollView):
                 username += f" {badge_icon}"
 
             embed.add_field(
-                name=f"`{p}.` {extra}{username} - {u['count']} {c.unit}{extra}",
+                name=f"`{p}.` {extra}{username} - {u['count']:,} {c.unit}{extra}",
                 value="** **",
                 inline=False,
             )
@@ -433,7 +431,7 @@ class LeaderboardView(ScrollView):
             count = self.placing[1]["count"]
 
         embed.add_field(
-            name=f"{LINE_SPACE * 13}\n`{place_display}.` {self.user.display_name} - {count} {c.unit}",
+            name=f"{LINE_SPACE * 13}\n`{place_display}.` {self.user.display_name} - {count:,} {c.unit}",
             value="** **",
             inline=False,
         )

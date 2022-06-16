@@ -83,7 +83,7 @@ class BaseView(discord.ui.View):
             msg = self.message
 
             if not msg:
-                if hasattr(self.ctx, "interaction"):
+                if self.ctx.is_slash:
                     try:
                         msg = (
                             self.ctx.interaction.message
@@ -91,6 +91,7 @@ class BaseView(discord.ui.View):
                         )
                     except discord.NotFound:
                         return
+
                 else:
                     msg = self.ctx.message
 
