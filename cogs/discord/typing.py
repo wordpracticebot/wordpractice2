@@ -1548,7 +1548,10 @@ class Typing(commands.Cog):
         flag_embed = None
 
         # Evaluating the success of the captcha
-        if message.content is not None and message.content.lower() == captcha_word:
+        if (
+            message.content is not None
+            and message.content.lower() == captcha_word.lower()
+        ):
             embed = ctx.embed(
                 title=f"{icons.success} Captcha Completed", add_footer=False
             )
