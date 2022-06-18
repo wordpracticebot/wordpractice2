@@ -101,7 +101,7 @@ class BaseView(discord.ui.View):
 
     async def interaction_check(self, interaction):
         if self.personal is False or (
-            interaction.user and interaction.user.id == self.author_id
+            interaction.user and interaction.user.id == self.author.id
         ):
             return True
 
