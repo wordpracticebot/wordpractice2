@@ -197,9 +197,7 @@ def _add_test_stats_to_embed(
 
 class RetryView(BaseView):
     def __init__(self, ctx, captcha_callback):
-        super().__init__(
-            ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT, author_id=ctx.author.id
-        )
+        super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT)
 
         self.captcha_callback = captcha_callback
 
@@ -215,9 +213,7 @@ class RetryView(BaseView):
 
 class HighScoreCaptchaView(BaseView):
     def __init__(self, ctx, user, original_wpm):
-        super().__init__(
-            ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT, author_id=ctx.author.id
-        )
+        super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT)
 
         self.user = user
 
@@ -1285,9 +1281,7 @@ class Typing(commands.Cog):
 
         start_lag = time.time()
 
-        # Currently only showing timer for non-pacer because of delayed loading time
-        if not pacer:
-            desc += f"\n**Started:** <t:{int(start_lag)}:R>"
+        desc += f"\n**Started:** <t:{int(start_lag)}:R>"
 
         embed.description = desc
 

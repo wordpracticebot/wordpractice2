@@ -48,13 +48,20 @@ class AccuracyChallenge(Challenge):
 
 class QuoteChallenge(Challenge):
     def __init__(self, amt):
-        super().__init__(desc=f"Completed {amt} quote typing tests")
+        super().__init__(desc=f"Completed {amt} quote typing tests in a row")
 
         self.amt = amt
 
     async def progress(self, ctx, user):
+        if len(user.scores) == 0:
+            progress = 0
+        else:
+            progress = get_in_row(
+                user.scores, lambda s: s.test_type_int == 0 and is_today(s.timestamp)
+            )
+
         return (
-            int(len(user.scores) != 0 and user.scores[-1].test_type_int == 0),
+            progress,
             self.amt,
         )
 

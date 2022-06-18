@@ -63,7 +63,6 @@ class BaseView(discord.ui.View):
         timeout=DEFAULT_VIEW_TIMEOUT,
         message=None,
         personal=True,
-        author_id=None,
     ):
         super().__init__(timeout=timeout)
 
@@ -72,11 +71,6 @@ class BaseView(discord.ui.View):
 
         # Allows regular messages to work with on_timeout
         self.message = message
-
-        if author_id is None:
-            author_id = self.ctx.author.id
-
-        self.author_id = author_id
 
     async def on_timeout(self):
         if self.children:
