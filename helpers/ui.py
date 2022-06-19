@@ -103,7 +103,7 @@ class BaseView(discord.ui.View):
         if self.personal is False or (
             interaction.user and interaction.user.id == self.ctx.author.id
         ):
-            if self.ctx.initial_user.banned:
+            if self.ctx.initial_user is not None and self.ctx.initial_user.banned:
                 await interaction.response.send_message(
                     "You are banned!", ephemeral=True
                 )
