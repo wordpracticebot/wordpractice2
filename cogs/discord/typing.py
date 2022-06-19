@@ -446,7 +446,7 @@ class TestResultView(BaseView):
         self.quote = quote
         self.wrap_width = wrap_width
 
-        self.user = user
+        self.user = self.ctx.initial_user = user
 
     async def disable_btn(self, button):
         button.disabled = True
@@ -758,8 +758,8 @@ class RaceJoinView(BaseView):
         await self.send_race_results()
 
     async def wait_for_inputs(self):
-        for _ in range(len(self.racers)):
-            # Waiting for the input from all the users
+        # Handles the racer input for a single user
+        async def handle_input():
             message = await self.ctx.bot.wait_for(
                 "message",
                 check=lambda m: (r := self.racers.get(m.author.id, None)) is not None
@@ -768,10 +768,15 @@ class RaceJoinView(BaseView):
 
             try:
                 await message.delete()
-            except discord.errors.Forbidden:
+            except (discord.errors.Forbidden, discord.errors.NotFound):
                 pass
 
             await self.handle_racer_finish(message)
+
+        coros = [handle_input() for _ in range(len(self.racers))]
+
+        # Preventing input handling from blocking another
+        await asyncio.gather(*coros)
 
     async def send_race_results(self):
         embed = self.ctx.embed(
@@ -910,7 +915,10 @@ class RaceJoinView(BaseView):
         user = interaction.user
         is_author = user.id == self.ctx.author.id
 
-        user_data = await self.ctx.bot.mongo.fetch_user(user)
+        if is_author:
+            user_data = self.user
+        else:
+            user_data = await self.ctx.bot.mongo.fetch_user(user)
 
         if user_data is None:
             ctx = await self.ctx.bot.get_application_context(interaction)
@@ -920,7 +928,7 @@ class RaceJoinView(BaseView):
 
         if user_data.banned:
             return await interaction.response.send_message(
-                "You are banned", ephemeral=True
+                "You are banned!", ephemeral=True
             )
 
         if is_author is False and user.id in self.racers:

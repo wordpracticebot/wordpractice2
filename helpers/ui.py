@@ -101,8 +101,14 @@ class BaseView(discord.ui.View):
 
     async def interaction_check(self, interaction):
         if self.personal is False or (
-            interaction.user and interaction.user.id == self.author.id
+            interaction.user and interaction.user.id == self.ctx.author.id
         ):
+            if self.ctx.initial_user.banned:
+                await interaction.response.send_message(
+                    "You are banned!", ephemeral=True
+                )
+                return False
+
             return True
 
         await interaction.response.send_message(

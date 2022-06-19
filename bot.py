@@ -74,11 +74,14 @@ class LBCategory:
 class Leaderboard:
     def __init__(
         self,
+        *,
         title: str,
         desc: str,
         emoji: str,
         default: int,
         stats: list[LBCategory],
+        check=None,
+        priority=0,
     ):
         # Meta data
         self.title = title
@@ -92,6 +95,16 @@ class Leaderboard:
 
         # Default stat index
         self.default = default
+
+        self._check = check
+
+        self.priority = priority
+
+    async def check(self, ctx):
+        if self._check is None:
+            return True
+
+        return await self._check(ctx)
 
     async def update_all(self):
         for stat in self.stats:
@@ -321,6 +334,11 @@ class WordPractice(bridge.AutoShardedBot):
         def get_hs(s):
             return lambda u: u.highspeed[s].wpm
 
+        async def season_check(ctx):
+            season_data = await ctx.bot.mongo.get_season_info()
+
+            return season_data is not None and season_data["enabled"]
+
         # fmt: off
         self.lbs = [
             Leaderboard(
@@ -329,6 +347,7 @@ class WordPractice(bridge.AutoShardedBot):
                 emoji="\N{EARTH GLOBE AMERICAS}",
                 stats=[LBCategory(self, "Words Typed", "words", "$words", lambda u: u.words)],
                 default=0,
+                priority=1
             ),
             Leaderboard(
                 title="Monthly Season",
@@ -336,6 +355,8 @@ class WordPractice(bridge.AutoShardedBot):
                 emoji="\N{SPORTS MEDAL}",
                 stats=[LBCategory(self, "Experience", "xp", "$xp", lambda u: u.xp)],
                 default=0,
+                check=season_check,
+                priority=2
             ),
             Leaderboard(
                 title="24 Hour",

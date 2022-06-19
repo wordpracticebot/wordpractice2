@@ -228,7 +228,6 @@ class Events(commands.Cog):
         await self.handle_command_completion(ctx)
 
     async def handle_command_completion(self, ctx):
-
         if ctx.no_completion:
             return
 
@@ -383,10 +382,18 @@ class Events(commands.Cog):
                 if extra:
                     content += f"and {extra} more achievements..."
 
-                if ctx.is_slash:
-                    await ctx.respond(content=content, files=files, ephemeral=True)
-                else:
-                    await ctx.respond(content=content, files=files)
+                await ctx.respond(content=content, files=files, ephemeral=True)
+
+            # Daily streak
+            if user.streak != new_user.streak:
+                emoji = icons.success if new_user.streak > user.streak else icons.danger
+
+                embed = ctx.embed(
+                    title=f"{emoji} Your daily streak is now `{new_user.streak} days`",
+                    add_footer=False,
+                )
+
+                await ctx.respond(embed=embed)
 
             # Replacing the user data with the new state
             await self.bot.mongo.replace_user_data(new_user, ctx.author)

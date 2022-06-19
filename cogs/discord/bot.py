@@ -97,6 +97,8 @@ class SeasonView(ViewFromDict):
 
         super().__init__(ctx, categories)
 
+        self.season_info = None
+
     @property
     def user(self):
         return self.ctx.initial_user
@@ -326,7 +328,7 @@ class ScoreView(ScrollView):
 
 
 class LeaderboardSelect(discord.ui.Select):
-    def __init__(self, ctx):
+    def __init__(self, lbs):
         super().__init__(
             placeholder="Select a category...",
             min_values=1,
@@ -338,7 +340,7 @@ class LeaderboardSelect(discord.ui.Select):
                     description=lb.desc,
                     value=str(i),
                 )
-                for i, lb in enumerate(ctx.bot.lbs)
+                for i, lb in enumerate(lbs)
             ],
             row=0,
         )
@@ -373,10 +375,6 @@ class LeaderboardView(ScrollView):
 
         self.user = user
 
-        self.category = 1  # Starting on season category
-
-        self.stat = self.lb.default
-
         # For storing placing across same page
         self.placing = None
 
@@ -384,7 +382,7 @@ class LeaderboardView(ScrollView):
 
     @property
     def lb(self):
-        return self.ctx.bot.lbs[self.category]
+        return self.lbs[self.category]
 
     async def create_page(self):
         c = self.lb.stats[self.stat]
@@ -518,7 +516,15 @@ class LeaderboardView(ScrollView):
 
         self.add_item(btn)
 
-        select = LeaderboardSelect(self.ctx)
+        # Getting all the elligible leaderboards
+        self.lbs = [lb for lb in self.ctx.bot.lbs if await lb.check(self.ctx)]
+
+        # Getting the starting category based on priority
+        self.category, _ = max(enumerate(self.lbs), key=lambda x: x[1].priority)
+
+        self.stat = self.lb.default
+
+        select = LeaderboardSelect(self.lbs)
         self.add_item(select)
 
         await super().start()
