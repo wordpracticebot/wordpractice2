@@ -899,7 +899,7 @@ class RaceJoinView(BaseView):
                     additional=additional + race_size_display,
                 )
 
-            embeds.append(embed)
+                embeds.append(embed)
 
         for i in range(0, len(embeds), 10):
             show_embeds = embeds[i : i + 10]
