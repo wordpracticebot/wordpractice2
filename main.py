@@ -13,7 +13,6 @@ def main():
     intents.messages = True
     intents.guilds = True
     intents.guild_messages = True
-    intents.guild_reactions = True
 
     allowed_mentions = discord.AllowedMentions(everyone=False, roles=False)
 
