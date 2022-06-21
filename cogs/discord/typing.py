@@ -480,15 +480,16 @@ class TestResultView(BaseView):
 
         else:
             words = set(self.wrong)
+            quote_words = set(self.quote)
 
-            minimum = 4
+            minimum = min(4, len(quote_words))
 
             if (a := len(words)) < minimum:
-                add_words = set(self.quote) - words
+                add_words = quote_words - words
 
                 words |= set(random.sample(add_words, minimum - a))
 
-            quote = random.choices(list(words), k=len(self.quote))
+            quote = random.choices(list(words), k=max(len(self.quote), 10))
 
         await self.disable_btn(button)
 

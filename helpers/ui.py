@@ -95,7 +95,14 @@ class BaseView(discord.ui.View):
             if not msg.components:
                 return
 
-            self.disable_all_items()
+            # Not disabling any link buttons
+            exclusions = [
+                c
+                for c in self.children
+                if isinstance(c, discord.ui.Button) and c.url is not None
+            ]
+
+            self.disable_all_items(exclusions=exclusions)
 
             await msg.edit(view=self)
 
