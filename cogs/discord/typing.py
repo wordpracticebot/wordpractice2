@@ -761,14 +761,11 @@ class RaceJoinView(BaseView):
     async def wait_for_inputs(self):
         # Handles the racer input for a single user
         async def handle_input():
-            print("waiting for")
             message = await self.ctx.bot.wait_for(
                 "message",
                 check=lambda m: (r := self.racers.get(m.author.id, None)) is not None
                 and r.result is None,
             )
-
-            print("found", message)
 
             try:
                 await message.delete()
