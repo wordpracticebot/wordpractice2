@@ -18,10 +18,12 @@ class Tasks(commands.Cog):
             "Authorization": DBL_TOKEN,
         }
 
+        if TESTING is False and DBL_TOKEN is not None:
+            self.post_guild_count.start()
+
         for u in [
             self.update_leaderboards,
             self.update_24_hour,
-            self.post_guild_count,
             self.daily_restart,
             self.clear_cooldowns,
             self.update_percentiles,
@@ -119,27 +121,21 @@ class Tasks(commands.Cog):
 
         self.bot.avg_perc = new_perc
 
-    @tasks.loop(minutes=5)
+    @tasks.loop(minutes=10)
     async def post_guild_count(self):
-        if self.post_guild_count.current_loop != 0:
-            if TESTING or DBL_TOKEN is None:
-                return
-
-            payload = {
-                "server_count": len(self.bot.guilds),
-                "shard_count": len(self.bot.shards),
-            }
-
-            url = f"https://top.gg/api/bots/{self.bot.user.id}/stats"
-
-            async with self.bot.session.request(
-                "POST", url, headers=self.headers, data=payload
-            ) as resp:
-                assert resp.status == 200
-
-    @post_guild_count.before_loop
-    async def before_post_dbl(self):
         await self.bot.wait_until_ready()
+
+        payload = {
+            "server_count": len(self.bot.guilds),
+            "shard_count": len(self.bot.shards),
+        }
+
+        url = f"https://top.gg/api/bots/{self.bot.user.id}/stats"
+
+        async with self.bot.session.request(
+            "POST", url, headers=self.headers, data=payload
+        ) as resp:
+            assert resp.status == 200
 
     @tasks.loop(hours=24)
     async def daily_restart(self):

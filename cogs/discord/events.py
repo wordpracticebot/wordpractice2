@@ -388,8 +388,10 @@ class Events(commands.Cog):
             if user.streak != new_user.streak:
                 emoji = icons.success if new_user.streak > user.streak else icons.danger
 
+                plural = "s" if new_user.streak > 1 else ""
+
                 embed = ctx.embed(
-                    title=f"{emoji} Your daily streak is now `{new_user.streak} days`",
+                    title=f"{emoji} Your daily streak is now `{new_user.streak} day{plural}`",
                     add_footer=False,
                 )
 

@@ -5,11 +5,15 @@ from config import DEBUG_GUILD_ID
 
 
 def main():
-    intents = discord.Intents.default()
+    intents = discord.Intents.none()
 
     # Privileged intents
-    intents.members = True
     intents.message_content = True
+    intents.members = True
+    intents.messages = True
+    intents.guilds = True
+    intents.guild_messages = True
+    intents.guild_reactions = True
 
     allowed_mentions = discord.AllowedMentions(everyone=False, roles=False)
 

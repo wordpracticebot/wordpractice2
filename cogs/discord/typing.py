@@ -481,10 +481,10 @@ class TestResultView(BaseView):
         else:
             words = set(self.wrong)
 
-            minimum = 3
+            minimum = 4
 
             if (a := len(words)) < minimum:
-                add_words = set(self.quote) ^ words
+                add_words = set(self.quote) - words
 
                 words |= set(random.sample(add_words, minimum - a))
 
@@ -760,11 +760,14 @@ class RaceJoinView(BaseView):
     async def wait_for_inputs(self):
         # Handles the racer input for a single user
         async def handle_input():
+            print("waiting for")
             message = await self.ctx.bot.wait_for(
                 "message",
                 check=lambda m: (r := self.racers.get(m.author.id, None)) is not None
                 and r.result is None,
             )
+
+            print("found", message)
 
             try:
                 await message.delete()
@@ -1115,7 +1118,7 @@ class Typing(commands.Cog):
     @cooldown(6, 2)
     @race_group.command(name="dictionary")
     @word_option
-    async def race_dictionary(self, ctx, length: int):
+    async def race_dictionary(self, ctx, length: int = 35):
         """Take a multiplayer dictionary typing test"""
 
         quote_info = await self.handle_dictionary_input(ctx, length)
