@@ -760,11 +760,9 @@ class RaceJoinView(BaseView):
 
     async def wait_for_inputs(self):
         # Handles the racer input for a single user
-        async def handle_input():
+        async def handle_input(r):
             message = await self.ctx.bot.wait_for(
-                "message",
-                check=lambda m: (r := self.racers.get(m.author.id, None)) is not None
-                and r.result is None,
+                "message", check=lambda m: m.author.id == r
             )
 
             try:
@@ -774,7 +772,7 @@ class RaceJoinView(BaseView):
 
             await self.handle_racer_finish(message)
 
-        coros = [handle_input() for _ in range(len(self.racers))]
+        coros = [handle_input(r) for r in self.racers]
 
         # Preventing input handling from blocking another
         await asyncio.gather(*coros)

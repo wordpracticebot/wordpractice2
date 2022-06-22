@@ -315,9 +315,10 @@ class WordPractice(bridge.AutoShardedBot):
             ).predicate
         )
 
-        self.activity = discord.Activity(
-            type=discord.ActivityType.watching, name=f" your wpm \N{EYES}{THIN_SPACE}"
-        )
+        # name = f" your wpm \N{EYES}{THIN_SPACE}"
+        name = "for %help"
+
+        self.activity = discord.Activity(type=discord.ActivityType.watching, name=name)
         self.session = aiohttp.ClientSession(loop=self.loop)
 
         self.cooldowns = {}

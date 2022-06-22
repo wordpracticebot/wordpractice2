@@ -125,17 +125,18 @@ class Tasks(commands.Cog):
     async def post_guild_count(self):
         await self.bot.wait_until_ready()
 
-        payload = {
-            "server_count": len(self.bot.guilds),
-            "shard_count": len(self.bot.shards),
-        }
+        if self.post_guild_count.current_loop != 0:
+            payload = {
+                "server_count": len(self.bot.guilds),
+                "shard_count": len(self.bot.shards),
+            }
 
-        url = f"https://top.gg/api/bots/{self.bot.user.id}/stats"
+            url = f"https://top.gg/api/bots/{self.bot.user.id}/stats"
 
-        async with self.bot.session.request(
-            "POST", url, headers=self.headers, data=payload
-        ) as resp:
-            assert resp.status == 200
+            async with self.bot.session.request(
+                "POST", url, headers=self.headers, data=payload
+            ) as resp:
+                assert resp.status == 200
 
     @tasks.loop(hours=24)
     async def daily_restart(self):
