@@ -77,7 +77,6 @@ class BaseView(discord.ui.View):
             msg = self.message
 
             if not msg:
-                print("not message")
                 if self.ctx.is_slash:
                     try:
                         msg = (
@@ -88,20 +87,10 @@ class BaseView(discord.ui.View):
                         print("return")
                         return
 
-                    print("slash")
-                    print(msg)
-
                 else:
-                    print("prefix")
-                    msg = self.ctx.message
-                    print(msg)
+                    msg = self.ctx
 
             if not msg:
-                print("not message")
-                return
-
-            if not msg.components:
-                print("no components")
                 return
 
             for c in self.children:
