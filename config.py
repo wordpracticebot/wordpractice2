@@ -12,6 +12,7 @@ COMMAND_LOG = config("COMMAND_LOG")
 TEST_LOG = config("TEST_LOG")
 IMPORTANT_LOG = config("IMPORTANT_LOG")
 ERROR_LOG = config("ERROR_LOG")
+GUILD_LOG = config("GUILD_LOG")
 
 SUPPORT_GUILD_ID = config("SUPPORT_GUILD_ID", cast=int)
 DEBUG_GUILD_ID = config("DEBUG_GUILD_ID", cast=int)

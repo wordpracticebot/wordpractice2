@@ -49,6 +49,28 @@ class Events(commands.Cog):
 
         await self.bot.cmd_wh.send(embed=embed)
 
+    async def get_guild_log_format(self, guild):
+        if guild.name is None:
+            guild = await self.bot.fetch_guild(guild.id)
+
+        return f"**Guild Name:** {guild.name}\n**Guild ID:** {guild.id}"
+
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild):
+        embed = self.bot.default_embed(
+            title="Added to Guild",
+            description=await self.get_guild_log_format(guild),
+        )
+        await self.bot.guild_wh.send(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild):
+        embed = self.bot.error_embed(
+            title="Removed from Guild",
+            description=await self.get_guild_log_format(guild),
+        )
+        await self.bot.guild_wh.send(embed=embed)
+
     @staticmethod
     async def send_basic_error(
         ctx, *, title, desc=None, severe=False, ephemeral=False, view=None

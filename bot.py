@@ -135,9 +135,6 @@ class WelcomeView(BaseView):
     def __init__(self, ctx):
         super().__init__(ctx, timeout=120)
 
-    async def on_timeout(self):
-        pass
-
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.primary)
     async def accept(self, button, interaction):
         user = await self.ctx.bot.mongo.fetch_user(interaction.user, create=True)
@@ -539,6 +536,10 @@ class WordPractice(bridge.AutoShardedBot):
     @discord.utils.cached_property
     def error_wh(self):
         return discord.Webhook.from_url(config.ERROR_LOG, session=self.session)
+
+    @discord.utils.cached_property
+    def guild_wh(self):
+        return discord.Webhook.from_url(config.GUILD_LOG, session=self.session)
 
     async def on_ready(self):
         self.log.info("The bot is ready!")

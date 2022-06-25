@@ -77,6 +77,7 @@ class BaseView(discord.ui.View):
             msg = self.message
 
             if not msg:
+                print("not message")
                 if self.ctx.is_slash:
                     try:
                         msg = (
@@ -84,16 +85,28 @@ class BaseView(discord.ui.View):
                             or await self.ctx.interaction.original_message()
                         )
                     except discord.NotFound:
+                        print("return")
                         return
 
+                    print("slash")
+                    print(msg)
+
                 else:
+                    print("prefix")
                     msg = self.ctx.message
+                    print(msg)
 
             if not msg:
+                print("not message")
                 return
 
             if not msg.components:
+                print("no components")
                 return
+
+            for c in self.children:
+                if isinstance(c, discord.ui.Button):
+                    print(c.url)
 
             # Not disabling any link buttons
             exclusions = [
