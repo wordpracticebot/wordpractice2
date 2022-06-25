@@ -84,7 +84,6 @@ class BaseView(discord.ui.View):
                             or await self.ctx.interaction.original_message()
                         )
                     except discord.NotFound:
-                        print("return")
                         return
 
                 else:
@@ -92,10 +91,6 @@ class BaseView(discord.ui.View):
 
             if not msg:
                 return
-
-            for c in self.children:
-                if isinstance(c, discord.ui.Button):
-                    print(c.url)
 
             # Not disabling any link buttons
             exclusions = [

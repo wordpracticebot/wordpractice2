@@ -132,8 +132,10 @@ def get_exts():
 
 
 class WelcomeView(BaseView):
-    def __init__(self, ctx):
+    def __init__(self, ctx, callback=None):
         super().__init__(ctx, timeout=120)
+
+        self.callback = callback
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.primary)
     async def accept(self, button, interaction):
@@ -168,9 +170,12 @@ class WelcomeView(BaseView):
 
         self.ctx.initial_user = user
 
-        await interaction.response.edit_message(embed=embed, view=view)
+        await self.ctx.edit(embed=embed, view=view)
 
         await self.ctx.bot.handle_after_welcome_check(self.ctx)
+
+        if self.callback is not None:
+            await self.callback(interaction)
 
     async def start(self):
         embed = self.ctx.default_embed(
@@ -184,7 +189,7 @@ class WelcomeView(BaseView):
             ),
         )
 
-        accept_time = 5
+        accept_time = 3
 
         embed.set_footer(
             text=f"You will be able to click accept in {accept_time} seconds"
@@ -485,8 +490,8 @@ class WordPractice(bridge.AutoShardedBot):
 
         self.log.warning(msg)
 
-    async def handle_new_user(self, ctx):
-        view = WelcomeView(ctx)
+    async def handle_new_user(self, ctx, callback=None):
+        view = WelcomeView(ctx, callback)
         await view.start()
 
     async def on_interaction(self, interaction):

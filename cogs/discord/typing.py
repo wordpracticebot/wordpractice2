@@ -543,15 +543,12 @@ class TestResultView(BaseView):
 
 
 class RaceMember:
-    def __init__(self, user, data, send):
+    def __init__(self, user, data):
         # user object
         self.user = user
 
         # User's database document
         self.data = data
-
-        # Function for sending ephemeral messages to user
-        self.send = send
 
         # The test score (mongo.Score)
         self.result = None
@@ -603,7 +600,7 @@ class RaceJoinView(BaseView):
     def add_author_to_race(self):
         author = self.ctx.author
 
-        race_member = RaceMember(author, self.user, self.ctx.respond)
+        race_member = RaceMember(author, self.user)
         self.racers[author.id] = race_member
 
     def end_all_racers(self):
@@ -919,17 +916,20 @@ class RaceJoinView(BaseView):
         else:
             user_data = await self.ctx.bot.mongo.fetch_user(user)
 
+        # New users
         if user_data is None:
             ctx = await self.ctx.bot.get_application_context(interaction)
 
-            await self.ctx.bot.handle_new_user(ctx)
+            await self.ctx.bot.handle_new_user(ctx, callback=self.add_racer)
             return
 
+        # Banner users
         if user_data.banned:
             return await interaction.response.send_message(
                 "You are banned!", ephemeral=True
             )
 
+        # Users that are already in the race
         if is_author is False and user.id in self.racers:
             return await interaction.response.send_message(
                 "You are already in this race!", ephemeral=True
@@ -962,11 +962,11 @@ class RaceJoinView(BaseView):
 
             self.ctx.bot.active_start(user.id)
 
-            self.racers[user.id] = RaceMember(user, user_data, interaction.response)
+            self.racers[user.id] = RaceMember(user, user_data)
 
         embed = self.get_race_join_embed(is_author)
 
-        await interaction.message.edit(embed=embed, view=self)
+        await self.ctx.edit(embed=embed, view=self)
 
         if is_author:
             self.stop()
@@ -1008,10 +1008,10 @@ class RaceJoinView(BaseView):
 
         embed = self.ctx.error_embed(
             title=f"{icons.caution} Race Expired",
-            description=f"> The race was not started within {timespan}",
+            description=f"The race was not started within {timespan}",
         )
 
-        await self.ctx.interaction.edit_original_message(embed=embed, view=None)
+        await self.ctx.edit(embed=embed, view=None)
 
     def get_race_join_embed(self, started=False):
         embed = self.ctx.embed(title="Typing Test Race", description="** **")
