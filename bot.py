@@ -132,10 +132,11 @@ def get_exts():
 
 
 class WelcomeView(BaseView):
-    def __init__(self, ctx, callback=None):
-        super().__init__(ctx, timeout=120)
+    def __init__(self, ctx, callback, response):
+        super().__init__(ctx, timeout=12)
 
         self.callback = callback
+        self.response = response
 
     @discord.ui.button(label="Accept", style=discord.ButtonStyle.primary)
     async def accept(self, button, interaction):
@@ -170,12 +171,20 @@ class WelcomeView(BaseView):
 
         self.ctx.initial_user = user
 
-        await self.ctx.edit(embed=embed, view=view)
+        if self.response:
+            await interaction.response.edit_message(embed=embed, view=view)
+        else:
+            await self.ctx.edit(embed=embed, view=view)
 
         await self.ctx.bot.handle_after_welcome_check(self.ctx)
 
         if self.callback is not None:
-            await self.callback(interaction)
+            if self.response:
+                await self.callback()
+            else:
+                await self.callback(interaction)
+
+        self.stop()
 
     async def start(self):
         embed = self.ctx.default_embed(
@@ -189,17 +198,9 @@ class WelcomeView(BaseView):
             ),
         )
 
-        accept_time = 3
-
-        embed.set_footer(
-            text=f"You will be able to click accept in {accept_time} seconds"
-        )
-
         embed.set_thumbnail(url="https://i.imgur.com/2vUD4NF.png")
-        self.accept.disabled = True
 
         # Adding the links
-
         item = discord.ui.Button(label="Privacy Policy", url=PRIVACY_POLICY_LINK)
         self.add_item(item)
 
@@ -207,13 +208,6 @@ class WelcomeView(BaseView):
         self.add_item(item)
 
         await self.ctx.respond(embed=embed, view=self, ephemeral=True)
-
-        # Enabling rules to be accepted after 5 seconds
-        await asyncio.sleep(accept_time)
-
-        self.accept.disabled = False
-
-        await self.ctx.edit(view=self)
 
 
 def get_embed_theme(user):
@@ -490,8 +484,8 @@ class WordPractice(bridge.AutoShardedBot):
 
         self.log.warning(msg)
 
-    async def handle_new_user(self, ctx, callback=None):
-        view = WelcomeView(ctx, callback)
+    async def handle_new_user(self, ctx, callback=None, response=True):
+        view = WelcomeView(ctx, callback, response)
         await view.start()
 
     async def on_interaction(self, interaction):
@@ -501,7 +495,11 @@ class WordPractice(bridge.AutoShardedBot):
 
             # Asking the user to accept the rules before using the bot
             if ctx.initial_user is None:
-                return await self.handle_new_user(ctx)
+
+                async def callback():
+                    await self.process_application_commands(interaction)
+
+                return await self.handle_new_user(ctx, callback=callback)
 
             if await self.handle_after_welcome_check(ctx):
                 return
@@ -519,7 +517,11 @@ class WordPractice(bridge.AutoShardedBot):
 
             # Asking the user to accept the rules before using the bot
             if ctx.initial_user is None:
-                return await self.handle_new_user(ctx)
+
+                async def callback():
+                    await self.invoke(ctx)
+
+                return await self.handle_new_user(ctx, callback=callback)
 
             if await self.handle_after_welcome_check(ctx):
                 return

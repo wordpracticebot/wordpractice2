@@ -920,7 +920,9 @@ class RaceJoinView(BaseView):
         if user_data is None:
             ctx = await self.ctx.bot.get_application_context(interaction)
 
-            await self.ctx.bot.handle_new_user(ctx, callback=self.add_racer)
+            await self.ctx.bot.handle_new_user(
+                ctx, callback=self.add_racer, response=False
+            )
             return
 
         # Banner users
