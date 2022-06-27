@@ -81,24 +81,16 @@ class BaseView(discord.ui.View):
                     msg = self.ctx.interaction.message
 
                     if not msg:
-                        print("not it")
                         try:
                             await self.ctx.interaction.original_message()
                         except discord.NotFound:
-                            print("it was not found")
                             return
-
-                    else:
-                        print("got the interaction message")
 
                 else:
                     msg = self.ctx
 
             if not msg:
-                print("there is no message")
                 return
-
-            print(msg.components)
 
             if not msg.components:
                 return
