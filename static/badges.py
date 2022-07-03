@@ -76,6 +76,8 @@ default = {
     "gold_plant": "<:gold_plant:986006269020233749>",
     "gold_badge": "<:gold_badge:986006271348064256>",
     "thomas": "<:thomas:986006272472141865>",
+    "pineapple": "<:pineapple:992984425224749097>",
+    "sun": "<:sun:992987841992863815>"
 }
 # fmt: on
 
