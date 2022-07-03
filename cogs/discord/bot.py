@@ -51,6 +51,13 @@ SCORE_DATA_LABELS = {
     "Unix Timestamp": "unix_timestamp",
 }
 
+SEASON_TROPHY_DATA = [
+    ["Gold Trophy", icons.trophies[0], [1, 1]],
+    ["Silver Trophy", icons.trophies[1], [2, 2]],
+    ["Bronze Trophy", icons.trophies[2], [3, 3]],
+    ["Top 10 Trophy", icons.trophies[3], [4, 10]],
+]
+
 SCORES_PER_PAGE = 3
 
 EMOJIS_PER_TIER = 4
@@ -88,11 +95,47 @@ def get_graph_link(*, user, amt: int, dimensions: tuple):
     return f"{GRAPH_CDN_BASE_URL}/score_graph?raw_data={data}"
 
 
+def get_lb_display(p, u, c, author_id, placing):
+    extra = ""
+
+    if u["_id"] == author_id:
+        if placing is None:
+            placing = p, u
+
+        extra = "__"
+
+    badge_icon = get_badge_from_id(u["status"])
+
+    username = f"{u['name']}#{u['discriminator']}"
+
+    if badge_icon is not None:
+        username += f" {badge_icon}"
+
+    return f"`{p}.` {extra}{username} - {u['count']:,} {c.unit}{extra}", placing
+
+
+def get_user_placing(c, placing, user):
+    if placing is None:
+        # Getting the placing
+        placing = c.get_placing(user.id)
+
+    if placing is None:
+        place_display = "N/A"
+        count = c.get_stat(user)
+
+    else:
+        place_display = placing[0]
+        count = placing[1]["count"]
+
+    return place_display, count
+
+
 class SeasonView(ViewFromDict):
     def __init__(self, ctx):
         categories = {
-            "Information": self.get_info_embed,
+            "Trophies": self.get_season_trophy,
             "Rewards": self.get_reward_embed,
+            "Information": self.get_info_embed,
         }
 
         super().__init__(ctx, categories)
@@ -104,13 +147,14 @@ class SeasonView(ViewFromDict):
         return self.ctx.initial_user
 
     async def get_info_embed(self):
-        embed = self.ctx.embed(title="Season Information")
+        embed = self.ctx.embed(title=f"Season Information")
 
         info = {
-            "What are seasons?": "Seasons are a month-long competition open to all wordPractice users. Users compete to earn the most XP before the end of the season - medals are awarded to the top 10 users.",
-            "How do I earn XP?": f"XP {icons.xp} can be earned through completing typing tests, daily challenges, voting and much more.",
-            "What are season rewards?": "By completing seasonal challenges, users can win exclusive badges. View your progress by clicking the `Rewards` button below.",
-            "How do I view the season leaderboads?": "The season leaderboard can be viewed with `/leaderboard` under the season category.",
+            "What are seasons?": "Seasons are a month-long competition where users compete to earn the most XP.",
+            "How do I earn XP?": f"XP {icons.xp} can be earned by completing typing tests, daily challenges, voting and more.",
+            "What are trophies?": "Trophies are awarded to the top 10 users at the end of the season. Current trophy distribution can be found by clicking the `Trophies` button below.",
+            "What are season rewards?": "By earning XP, users can win exclusive badges. View your progress by clicking the `Rewards` button below.",
+            "How do I view the season leaderboads?": "The season leaderboard can be viewed with /leaderboard under the season category.",
         }
 
         for i, (title, desc) in enumerate(info.items()):
@@ -124,17 +168,23 @@ class SeasonView(ViewFromDict):
 
     async def get_reward_embed(self):
         embed = self.ctx.embed(
-            title="Season Rewards",
+            title=f"Season {self.season_info['number']} Rewards",
             description=(
                 "Unlock seasonal badges as you earn XP\n\n"
                 f"{icons.xp} **{self.user.xp:,} XP**\n\n"
             ),
         )
 
+        embed.set_thumbnail(url="https://i.imgur.com/sQQXQsw.png")
+
         challenges = [v async for v in get_season_tiers(self.ctx.bot)]
 
-        if challenges == []:
+        if self.season_info["enabled"] is False:
+            embed.description = "Sorry, there is no season right now..."
+
+        elif challenges == []:
             embed.description = "Sorry, there are no rewards available..."
+
         else:
 
             p = self.user.xp / challenges[-1][0]
@@ -158,8 +208,54 @@ class SeasonView(ViewFromDict):
 
         return embed
 
+    async def get_season_trophy(self):
+        embed = self.ctx.embed(
+            title=f"Season {self.season_info['number']} Trophy Distribution",
+            description="Earn trophies to display on your account by placing\nin the montly season.",
+        )
+
+        embed.set_thumbnail(url="https://i.imgur.com/OvcJTuI.png")
+
+        if self.season_info["enabled"] is False:
+            embed.description = "Sorry, there is no season right now..."
+
+        else:
+            placing = None
+
+            c = self.ctx.bot.lbs[1].stats[0]
+
+            for name, icon, (start, end) in SEASON_TROPHY_DATA:
+                lb_placings = []
+
+                for i in range(start, end + 1):
+                    u = c.data[i]
+
+                    lb_display, placing = get_lb_display(i, u, c, self.user.id, placing)
+
+                    lb_placings.append(lb_display)
+
+                embed.add_field(
+                    name=f"{name} {icon}", value="\n".join(lb_placings), inline=False
+                )
+
+            if placing is None:
+                place_display, count = get_user_placing(c, placing, self.user)
+
+                embed.add_field(
+                    name=f"{LINE_SPACE * 13}\n`{place_display}.` {self.user.display_name} - {count:,} {c.unit}",
+                    value="** **",
+                    inline=False,
+                )
+
+        return embed
+
     async def create_page(self):
         return await self.the_dict[self.page]()
+
+    async def start(self):
+        self.season_info = await self.ctx.bot.mongo.get_season_info()
+
+        return await super().start()
 
 
 class GraphButton(DictButton):
@@ -399,38 +495,17 @@ class LeaderboardView(ScrollView):
         for i, u in enumerate(c.data[self.page * 10 : (self.page + 1) * 10]):
             p = self.page * 10 + i + 1
 
-            extra = ""
-
-            if u["_id"] == self.user.id:
-                if self.placing is None:
-                    self.placing = p, u
-
-                extra = "__"
-
-            badge_icon = get_badge_from_id(u["status"])
-
-            username = f"{u['name']}#{u['discriminator']}"
-
-            if badge_icon is not None:
-                username += f" {badge_icon}"
+            lb_display, self.placing = get_lb_display(
+                p, u, c, self.user.id, self.placing
+            )
 
             embed.add_field(
-                name=f"`{p}.` {extra}{username} - {u['count']:,} {c.unit}{extra}",
+                name=lb_display,
                 value="** **",
                 inline=False,
             )
 
-        if self.placing is None:
-            # Getting the placing
-            self.placing = c.get_placing(self.user.id)
-
-        if self.placing is None:
-            place_display = "N/A"
-            count = c.get_stat(self.user)
-
-        else:
-            place_display = self.placing[0]
-            count = self.placing[1]["count"]
+        place_display, count = get_user_placing(c, self.placing, self.user)
 
         embed.add_field(
             name=f"{LINE_SPACE * 13}\n`{place_display}.` {self.user.display_name} - {count:,} {c.unit}",

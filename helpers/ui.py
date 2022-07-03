@@ -82,7 +82,7 @@ class BaseView(discord.ui.View):
 
                     if not msg:
                         try:
-                            await self.ctx.interaction.original_message()
+                            msg = await self.ctx.interaction.original_message()
                         except discord.NotFound:
                             return
 
