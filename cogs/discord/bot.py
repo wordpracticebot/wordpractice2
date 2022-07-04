@@ -227,10 +227,12 @@ class SeasonView(ViewFromDict):
             for name, icon, (start, end) in SEASON_TROPHY_DATA:
                 lb_placings = []
 
-                for i in range(start, end + 1):
+                for i in range(start - 1, end):
                     u = c.data[i]
 
-                    lb_display, placing = get_lb_display(i, u, c, self.user.id, placing)
+                    lb_display, placing = get_lb_display(
+                        i + 1, u, c, self.user.id, placing
+                    )
 
                     lb_placings.append(lb_display)
 
