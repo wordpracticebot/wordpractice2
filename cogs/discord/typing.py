@@ -145,7 +145,9 @@ def _get_test_time(start: float, end: float):
     return max(round((start - end), 2), 0.01)
 
 
+# I know the arguments are a mess
 def _add_test_stats_to_embed(
+    *,
     embed,
     wpm,
     raw,
@@ -157,6 +159,7 @@ def _add_test_stats_to_embed(
     pacer_name,
     word_display,
     xp_earned=None,
+    total_xp=None,
 ):
     embed.add_field(name=f"{icons.wpm} Wpm", value=wpm)
     embed.add_field(name=f"{icons.raw} Raw Wpm", value=raw)
@@ -165,7 +168,9 @@ def _add_test_stats_to_embed(
     embed.add_field(name=f"{icons.time} Time", value=f"{end_time}s")
 
     if xp_earned is not None:
-        embed.add_field(name=f"{icons.xp} Experience", value=xp_earned)
+        embed.add_field(
+            name=f"{icons.xp} Experience", value=f"{xp_earned} ({total_xp:;} total)"
+        )
 
     embed.add_field(name=f"{icons.mistake} Mistakes", value=mistakes)
 
@@ -523,16 +528,16 @@ class TestResultView(BaseView):
         word_display = _get_word_display(quote, raw_quote)
 
         embed = _add_test_stats_to_embed(
-            embed,
-            wpm,
-            raw,
-            acc,
-            end_time,
-            len(u_input) - cw,
-            word_history,
-            self.user.language,
-            pacer_name,
-            word_display,
+            embed=embed,
+            wpm=wpm,
+            raw=raw,
+            acc=acc,
+            end_time=end_time,
+            mistakes=len(u_input) - cw,
+            word_history=word_history,
+            language=self.user.language,
+            pacer_name=pacer_name,
+            word_display=word_display,
         )
 
         await message.reply(embed=embed, mention_author=False)
@@ -1373,18 +1378,25 @@ class Typing(commands.Cog):
 
         word_display = _get_word_display(quote, raw_quote)
 
+        # Adding some stats
+        user.test_amt += 1
+
+        user.add_xp(xp_earned)
+        user.add_words(cw)
+
         embed = _add_test_stats_to_embed(
-            embed,
-            wpm,
-            raw,
-            acc,
-            end_time,
-            len(u_input) - cw,
-            word_history,
-            user.language,
-            pacer_name,
-            word_display,
-            xp_earned,
+            embed=embed,
+            wpm=wpm,
+            raw=raw,
+            acc=acc,
+            end_time=end_time,
+            mistakes=len(u_input) - cw,
+            word_history=word_history,
+            language=user.language,
+            pacer_name=pacer_name,
+            word_display=word_display,
+            xp_earned=xp_earned,
+            total_xp=user.xp,
         )
 
         view = TestResultView(ctx, user, is_dict, length, wrong, *quote_info)
@@ -1400,11 +1412,6 @@ class Typing(commands.Cog):
         show_hs_captcha = False
 
         # Checking if there is a new high score
-
-        user.test_amt += 1
-
-        user.add_xp(xp_earned)
-        user.add_words(cw)
 
         result = get_test_zone_name(cw)
 

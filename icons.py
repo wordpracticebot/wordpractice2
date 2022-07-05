@@ -36,6 +36,10 @@ left_arrow = "<:left_arrow:945750740150943755>"
 right_arrow = "<:right_arrow:945750740238999602>"
 fast_right_arrow = "<:fast_right_arrow:945750740331266128>"
 
+# Coloured arrows
+up_arrow = "<:up_arrow:993667155793035404>"
+down_arrow = "<:up_arrow:993667155793035404>"
+
 # Trophies
 trophies = [
     "<:gold_trophy:953059551882653706>", # first

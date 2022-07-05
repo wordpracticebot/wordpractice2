@@ -2,6 +2,7 @@ import copy
 from datetime import datetime
 
 import discord
+import humanize
 from discord.ext import commands
 from discord.ext.commands import errors
 from PIL import ImageDraw
@@ -20,6 +21,17 @@ from helpers.user import get_user_cmds_run
 from helpers.utils import filter_commands, format_command, get_command_name
 from static.assets import achievement_base, uni_sans_heavy
 
+SEASON_PLACING_TIERS = (
+    (1, 1),
+    (2, 2),
+    (3, 3),
+    (4, 5),
+    (6, 10),
+    (11, 25),
+    (26, 50),
+    (51, 100),
+)
+
 
 def _generate_achievement_image(name, icon):
     img = achievement_base.copy()
@@ -37,6 +49,25 @@ def _generate_achievement_image(name, icon):
 class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    def _get_season_tier_index(self, user) -> tuple[int, int]:
+        # The season leaderboard
+        lb = self.bot.lbs[1].stats[0]
+
+        # Getting the user's placing
+        placing = lb.get_placing(user.id)
+
+        return (
+            next(
+                (
+                    i
+                    for i, (t1, t2) in enumerate(SEASON_PLACING_TIERS)
+                    if placing in range(t1, t2 + 1)
+                ),
+                None,
+            ),
+            placing,
+        )
 
     async def log_interaction(self, ctx):
         # Logging the interaction
@@ -351,6 +382,7 @@ class Events(commands.Cog):
             else:
                 self.bot.cmds_run[ctx.author.id] = new_cache_cmds
 
+        # Actually sending stuff
         if user.to_mongo() != new_user.to_mongo():
             embeds = []
 
@@ -397,14 +429,16 @@ class Events(commands.Cog):
                         f"{n} - {r.desc}" if r else n for n, r in c_completed.items()
                     )
 
-                    content += (
-                        f":trophy: **Categories Completed:**\n{r_overview}\n** **\n"
-                    )
+                    content += f":trophy: **Categories Completed:**\n{r_overview}"
 
                 if extra:
-                    content += f"and {extra} more achievements..."
+                    content += f"\n\n{extra} more achievements not shown..."
+
+                content += f"\n\nCheck all your achievements with `{ctx.prefix}achievements`\n** **"
 
                 await ctx.respond(content=content, files=files, ephemeral=True)
+
+            embeds = []
 
             # Daily streak
             if user.streak != new_user.streak:
@@ -417,7 +451,42 @@ class Events(commands.Cog):
                     add_footer=False,
                 )
 
-                await ctx.respond(embed=embed)
+                embeds.append(embed)
+
+            # Updating the user if their season placing moved up or down a tier
+            start_placing_index, start_placing = self._get_season_tier_index(user)
+            after_placing_index, after_placing = self._get_season_tier_index(new_user)
+
+            if after_placing is not None and start_placing_index != after_placing_index:
+
+                after_ordinal_placing = humanize.ordinal(after_placing)
+
+                if start_placing is None:
+                    placing_display = ""
+
+                else:
+                    icon = (
+                        icons.up_arrow
+                        if start_placing_index > after_placing_index
+                        else icons.down_arrow
+                    )
+
+                    placing_diff = abs(after_placing - start_placing)
+
+                    placing_display = f" ({icon}{placing_diff})"
+
+                embed = ctx.embed(
+                    title=f"Your season placing is now {after_ordinal_placing}{placing_display}",
+                    add_footer=False,
+                )
+                embed.set_footer(
+                    text=f"View the full leaderboard with {ctx.prefix}leaderboard"
+                )
+
+                embeds.append(embed)
+
+            if embeds != []:
+                await ctx.respond(embeds=embeds, ephemeral=True)
 
             # Replacing the user data with the new state
             await self.bot.mongo.replace_user_data(new_user, ctx.author)
