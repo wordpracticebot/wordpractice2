@@ -169,7 +169,7 @@ def _add_test_stats_to_embed(
 
     if xp_earned is not None:
         embed.add_field(
-            name=f"{icons.xp} Experience", value=f"{xp_earned} ({total_xp:;} total)"
+            name=f"{icons.xp} Experience", value=f"{xp_earned} ({total_xp:,} total)"
         )
 
     embed.add_field(name=f"{icons.mistake} Mistakes", value=mistakes)
