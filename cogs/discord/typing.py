@@ -1378,6 +1378,8 @@ class Typing(commands.Cog):
 
         word_display = _get_word_display(quote, raw_quote)
 
+        user = await ctx.bot.mongo.fetch_user(ctx.author)
+
         # Adding some stats
         user.test_amt += 1
 
@@ -1404,8 +1406,6 @@ class Typing(commands.Cog):
         view.message = await message.reply(embed=embed, view=view, mention_author=False)
 
         ctx.bot.active_end(ctx.author.id)
-
-        user = await ctx.bot.mongo.fetch_user(ctx.author)
 
         # For logging
         is_hs = False
