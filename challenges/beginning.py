@@ -1,4 +1,4 @@
-from discord import SlashCommand
+from discord import SlashCommand, SlashCommandGroup
 
 from constants import DEFAULT_THEME
 from helpers.user import get_user_cmds_run
@@ -56,6 +56,7 @@ class OpenMinded(Achievement):
     async def progress(self, ctx, user):
         slash_cmds = filter(
             lambda c: isinstance(c, SlashCommand)
+            and not isinstance(c, SlashCommandGroup)
             and not getattr(c.cog, "hidden", False),
             ctx.bot.walk_application_commands(),
         )

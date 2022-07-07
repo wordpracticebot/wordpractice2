@@ -305,6 +305,22 @@ class Events(commands.Cog):
         if days_between >= 1:
             new_user.last_streak = now
 
+        # Updating the user's executed commands
+
+        cmd_name = get_command_name(ctx.command)
+
+        cmds = get_user_cmds_run(self.bot, new_user)
+
+        if cmd_name not in cmds:
+            new_cache_cmds = self.bot.cmds_run.get(ctx.author.id, set()) | {cmd_name}
+
+            # Updating in database if the user document was going to be updated anyways or there are 3 or more commands not saved in database
+            if user.to_mongo() != new_user.to_mongo() or len(new_cache_cmds) >= 3:
+                new_user.cmds_run = list(set(new_user.cmds_run) | new_cache_cmds)
+
+            else:
+                self.bot.cmds_run[ctx.author.id] = new_cache_cmds
+
         # Achievements
 
         a_earned = {}
@@ -365,22 +381,6 @@ class Events(commands.Cog):
                 r.changer(new_user)
 
             new_user.last_season_value = v
-
-        # Updating the user's executed commands
-
-        cmd_name = get_command_name(ctx.command)
-
-        cmds = get_user_cmds_run(self.bot, new_user)
-
-        if cmd_name not in cmds:
-            new_cache_cmds = self.bot.cmds_run.get(ctx.author.id, set()) | {cmd_name}
-
-            # Updating in database if the user document was going to be updated anyways or there are 3 or more commands not saved in database
-            if user.to_mongo() != new_user.to_mongo() or len(new_cache_cmds) >= 3:
-                new_user.cmds_run = list(set(new_user.cmds_run) | new_cache_cmds)
-
-            else:
-                self.bot.cmds_run[ctx.author.id] = new_cache_cmds
 
         # Actually sending stuff
         if user.to_mongo() != new_user.to_mongo():

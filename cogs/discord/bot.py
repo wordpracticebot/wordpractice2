@@ -149,12 +149,21 @@ class SeasonView(ViewFromDict):
     async def get_info_embed(self):
         embed = self.ctx.embed(title=f"Season Information")
 
+        leaderboard_info = (
+            f"The season leaderboard can be viewed with `{self.ctx.prefix}leaderboard`"
+        )
+
+        if self.season_info["enabled"] is False:
+            leaderboard_info += " under the season category"
+
+        leaderboard_info += "."
+
         info = {
             "What are seasons?": "Seasons are a month-long competition where users compete to earn the most XP.",
             "How do I earn XP?": f"XP {icons.xp} can be earned by completing typing tests, daily challenges, voting and more.",
             "What are trophies?": "Trophies are awarded to the top 10 users at the end of the season. Current trophy distribution can be found by clicking the `Trophies` button below.",
             "What are season rewards?": "By earning XP, users can win exclusive badges. View your progress by clicking the `Rewards` button below.",
-            "How do I view the season leaderboads?": "The season leaderboard can be viewed with /leaderboard under the season category.",
+            "How do I view the season leaderboads?": leaderboard_info,
         }
 
         for i, (title, desc) in enumerate(info.items()):
@@ -211,7 +220,11 @@ class SeasonView(ViewFromDict):
     async def get_season_trophy(self):
         embed = self.ctx.embed(
             title=f"Season {self.season_info['number']} Trophy Distribution",
-            description="Earn trophies to display on your account by placing\nin the montly season.",
+            description=(
+                f"Earn trophies to display on your account by placing\n"
+                "in the montly season.\n\n"
+                f"View the full leaderboard with `{self.ctx.prefix}leaderboard`"
+            ),
         )
 
         embed.set_thumbnail(url="https://i.imgur.com/OvcJTuI.png")

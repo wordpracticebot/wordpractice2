@@ -172,7 +172,7 @@ def get_pacer(base, text_colour, quote, word_list, pacer, pacer_type):
     for i, group in enumerate(word_list):
         y += line_spacing
 
-        for i in range(int(arial.getsize(group)[0] // smooth)):
+        for i in range(1, int(arial.getsize(group)[0] // smooth)):
             im = rect_gen(base, smooth, text_colour, i, y, line_spacing)
 
             images.append(im)

@@ -87,7 +87,7 @@ class BaseView(discord.ui.View):
                             return
 
                 else:
-                    msg = self.ctx
+                    msg = self.ctx._original_response_message
 
             if not msg:
                 return
