@@ -13,7 +13,7 @@ class Redis(commands.Cog):
 
     async def connect(self):
         self.pool = await aioredis.from_url(
-            REDIS_URL, socket_timeout=10, max_connections=10
+            REDIS_URL, socket_timeout=10, max_connections=20
         )
 
     async def wait_until_ready(self):

@@ -71,7 +71,7 @@ def get_highscore_captcha_img(base_img, text_colour):
 
     for i in range(rows):
         for n in range(cols):
-            x = int(2.75 * np.cos(2 * np.pi * i / 22.8))
+            x = int(2.8 * np.cos(2 * np.pi * i / 22.5))
 
             img_output[i, n] = img[i, (n + x) % cols]
 

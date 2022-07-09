@@ -803,7 +803,8 @@ class RaceJoinView(BaseView):
                     value = (
                         f"** **{LONG_SPACE}{icons.wpm} Wpm: **{score.wpm}**\n"
                         f"{LONG_SPACE} {icons.raw} Raw Wpm: **{score.raw}**\n"
-                        f"{LONG_SPACE} {icons.acc} **{score.acc}%**"
+                        f"{LONG_SPACE} {icons.acc} Accuracy: **{score.acc}%**\n"
+                        f"{LONG_SPACE} {icons.xp} Experience: **{score.xp} ({r.data.xp + score.xp} total)**"
                     )
 
                     test_zone = get_test_zone_name(score.cw)
@@ -1495,9 +1496,13 @@ class Typing(commands.Cog):
 
             user.highspeed[zone] = score
 
+            description = f"You got a new high score of **{score.wpm}** on the {zone} test {zone_range}"
+
+            # TODO: add the daily placing
+
             embed = ctx.embed(
                 title=f":trophy: {user.display_name} | New High Score",
-                description=f"You got a new high score of **{score.wpm}** on the {zone} test {zone_range}",
+                description=description,
             )
 
             await send(embed=embed)

@@ -64,7 +64,7 @@ EMOJIS_PER_TIER = 4
 
 
 def _encrypt_data(data: dict):
-    encoded_data = zlib.compress(json.dumps(data).encode())
+    encoded_data = zlib.compress(json.dumps(data, separators=(",", ":")).encode())
 
     encrypted_data = Fernet(GRAPH_CDN_SECRET.encode()).encrypt(encoded_data)
 
@@ -74,10 +74,16 @@ def _encrypt_data(data: dict):
 def get_graph_link(*, user, amt: int, dimensions: tuple):
     values = [[], [], []]
 
+    round_amt = 2 if amt <= 25 else 1 if amt <= 50 else 0
+
+    round_num = lambda n: int(b) if (b := round(n, round_amt)).is_integer() else b
+
     for s in user.scores[-amt:]:
-        values[0].append(s.wpm)
-        values[1].append(s.raw)
-        values[2].append(s.acc)
+        values[0].append(round_num(s.wpm))
+        values[1].append(round_num(s.raw))
+        values[2].append(round_num(s.acc))
+
+    print(values)
 
     labels = ["Wpm", "Raw Wpm", "Accuracy"]
 
@@ -85,12 +91,14 @@ def get_graph_link(*, user, amt: int, dimensions: tuple):
 
     payload = {
         "fig_size": dimensions,
-        "until": time.time() + GRAPH_EXPIRE_TIME,
+        "until": int(time.time() + GRAPH_EXPIRE_TIME),
         "y_values": y_values,
         "colours": user.theme + ["#ffffff"],
     }
 
     data = _encrypt_data(payload)
+
+    print(len(f"{GRAPH_CDN_BASE_URL}/score_graph?raw_data={data}"))
 
     return f"{GRAPH_CDN_BASE_URL}/score_graph?raw_data={data}"
 
