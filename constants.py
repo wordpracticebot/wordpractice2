@@ -25,9 +25,8 @@ AUTO_MODERATOR_NAME = "Thomas Worker 99"  # :)
 AVG_AMT = 10
 
 # Leaderboards
-LB_LENGTH = 500
+LB_LENGTH = 1000
 LB_DISPLAY_AMT = 100
-COMPILE_INTERVAL = 5  # minutes
 UPDATE_24_HOUR_INTERVAL = 10  # minutes
 
 # Achievements

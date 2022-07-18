@@ -30,6 +30,10 @@ SEASON_PLACING_TIERS = (
     (11, 25),
     (26, 50),
     (51, 100),
+    (101, 250),
+    (251, 500),
+    (501, 750),
+    (751, 1000),
 )
 
 
@@ -46,28 +50,48 @@ def _generate_achievement_image(name, icon):
     return save_discord_static_img(img, "achievement")
 
 
+async def _update_placings(ctx, user):
+    update = {}
+
+    for i, (lb, s_lb) in enumerate(zip(ctx.bot.lbs, ctx.initial_values)):
+
+        # Not updating the placing if the leaderboard isn't enabled
+        if await lb.check(ctx) is False:
+            continue
+
+        for n, (stat, s_stat) in enumerate(zip(lb.stats, s_lb)):
+            if (v := stat.get_stat(user)) != s_stat:
+                update[f"lb.{i}.{n}"] = v
+
+    if not update:
+        return None, None
+
+    # Getting the current season placing of the user
+    start_placing = await ctx.bot.redis.zrevrank("lb.1.0", user.id)
+
+    # Updating the user's placing
+    for name, value in update.items():
+        await ctx.bot.redis.zadd(name, {user.id: value})
+
+    after_placing = await ctx.bot.redis.zrevrank("lb.1.0", user.id)
+
+    return start_placing, after_placing
+
+
+def _get_tier_index(placing) -> tuple[int, int]:
+    return next(
+        (
+            i
+            for i, (t1, t2) in enumerate(SEASON_PLACING_TIERS)
+            if placing in range(t1, t2 + 1)
+        ),
+        None,
+    )
+
+
 class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-    def _get_season_tier_index(self, user) -> tuple[int, int]:
-        # The season leaderboard
-        lb = self.bot.lbs[1].stats[0]
-
-        # Getting the user's placing
-        placing = lb.get_placing(user.id)
-
-        return (
-            next(
-                (
-                    i
-                    for i, (t1, t2) in enumerate(SEASON_PLACING_TIERS)
-                    if placing in range(t1, t2 + 1)
-                ),
-                None,
-            ),
-            placing,
-        )
 
     async def log_interaction(self, ctx):
         # Logging the interaction
@@ -382,82 +406,89 @@ class Events(commands.Cog):
 
             new_user.last_season_value = v
 
+        start_placing, after_placing = await _update_placings(ctx, new_user)
+
+        # ----- Done evaluating stuff ------
+
+        if user.to_mongo() == new_user.to_mongo():
+            return
+
         # Actually sending stuff
-        if user.to_mongo() != new_user.to_mongo():
-            embeds = []
 
-            # Sending a message if the daily challenge has been completed
-            if new_daily_completion:
+        embeds = []
 
-                desc = (
-                    None if daily_reward is None else f"**Reward:** {daily_reward.desc}"
+        # Sending a message if the daily challenge has been completed
+        if new_daily_completion:
+
+            desc = None if daily_reward is None else f"**Reward:** {daily_reward.desc}"
+
+            embed = ctx.embed(
+                title=":tada: Daily Challenge Complete",
+                description=desc,
+                add_footer=False,
+            )
+            embeds.append(embed)
+
+        if season_rewards != []:
+            _, rewards = zip(*season_rewards)
+
+            r_overview = "\n".join(group_rewards(rewards))
+
+            plural = "s" if len(season_rewards) > 1 else ""
+
+            embed = ctx.embed(
+                title=f":trophy: Unlocked Season Reward{plural}",
+                description=r_overview,
+                add_footer=False,
+            )
+            embed.add_footer(text=f"Equip your new badge with {ctx.prefix}equip")
+            embeds.append(embed)
+
+        if embeds != []:
+            await ctx.respond(embeds=embeds, ephemeral=True)
+
+        # Sending a message with the achievements that have been completed
+        if user.achievements != new_user.achievements:
+            files, extra = self.get_files_from_earned(a_earned)
+
+            content = ""
+
+            if c_completed:
+
+                r_overview = "\n".join(
+                    f"{n} - {r.desc}" if r else n for n, r in c_completed.items()
                 )
 
-                embed = ctx.embed(
-                    title=":tada: Daily Challenge Complete",
-                    description=desc,
-                    add_footer=False,
-                )
-                embeds.append(embed)
+                content += f":trophy: **Categories Completed:**\n{r_overview}"
 
-            if season_rewards != []:
-                _, rewards = zip(*season_rewards)
+            if extra:
+                content += f"\n\n{extra} more achievements not shown..."
 
-                r_overview = "\n".join(group_rewards(rewards))
+            content += f"\n\nCheck all your achievements with `{ctx.prefix}achievements`\n** **"
 
-                plural = "s" if len(season_rewards) > 1 else ""
+            await ctx.respond(content=content, files=files, ephemeral=True)
 
-                embed = ctx.embed(
-                    title=f":trophy: Unlocked Season Reward{plural}",
-                    description=r_overview,
-                    add_footer=False,
-                )
-                embeds.append(embed)
+        embeds = []
 
-            if embeds != []:
-                await ctx.respond(embeds=embeds, ephemeral=True)
+        # Daily streak
+        if user.streak != new_user.streak:
+            emoji = icons.success if new_user.streak > user.streak else icons.danger
 
-            # Sending a message with the achievements that have been completed
-            if user.achievements != new_user.achievements:
-                files, extra = self.get_files_from_earned(a_earned)
+            plural = "s" if new_user.streak > 1 else ""
 
-                content = ""
+            embed = ctx.embed(
+                title=f"{emoji} Your daily streak is now `{new_user.streak} day{plural}`",
+                add_footer=False,
+            )
 
-                if c_completed:
+            embeds.append(embed)
 
-                    r_overview = "\n".join(
-                        f"{n} - {r.desc}" if r else n for n, r in c_completed.items()
-                    )
+        # Updating the user if their season placing moved up or down a tier
+        if after_placing is not None:
+            start_placing_index = _get_tier_index(start_placing)
+            after_placing_index = _get_tier_index(after_placing)
 
-                    content += f":trophy: **Categories Completed:**\n{r_overview}"
-
-                if extra:
-                    content += f"\n\n{extra} more achievements not shown..."
-
-                content += f"\n\nCheck all your achievements with `{ctx.prefix}achievements`\n** **"
-
-                await ctx.respond(content=content, files=files, ephemeral=True)
-
-            embeds = []
-
-            # Daily streak
-            if user.streak != new_user.streak:
-                emoji = icons.success if new_user.streak > user.streak else icons.danger
-
-                plural = "s" if new_user.streak > 1 else ""
-
-                embed = ctx.embed(
-                    title=f"{emoji} Your daily streak is now `{new_user.streak} day{plural}`",
-                    add_footer=False,
-                )
-
-                embeds.append(embed)
-
-            # Updating the user if their season placing moved up or down a tier
-            start_placing_index, start_placing = self._get_season_tier_index(user)
-            after_placing_index, after_placing = self._get_season_tier_index(new_user)
-
-            if after_placing is not None and start_placing_index != after_placing_index:
+            if start_placing_index != after_placing_index:
 
                 after_ordinal_placing = humanize.ordinal(after_placing)
 
@@ -480,16 +511,16 @@ class Events(commands.Cog):
                     add_footer=False,
                 )
                 embed.set_footer(
-                    text=f"View the full leaderboard with {ctx.prefix}leaderboard"
+                    text=f"Learn about the monthly season with {ctx.prefix}season"
                 )
 
                 embeds.append(embed)
 
-            if embeds != []:
-                await ctx.respond(embeds=embeds, ephemeral=True)
+        if embeds != []:
+            await ctx.respond(embeds=embeds, ephemeral=True)
 
-            # Replacing the user data with the new state
-            await self.bot.mongo.replace_user_data(new_user, ctx.author)
+        # Replacing the user data with the new state
+        await self.bot.mongo.replace_user_data(new_user, ctx.author)
 
 
 def setup(bot):

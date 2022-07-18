@@ -17,6 +17,7 @@ from constants import (
     ERROR_CLR,
     GITHUB_LINK,
     INFO_VIDEO,
+    LB_DISPLAY_AMT,
     LB_LENGTH,
     PERMISSONS,
     PRIMARY_CLR,
@@ -32,16 +33,43 @@ from helpers.utils import get_hint
 THIN_SPACE = "\N{THIN SPACE}"
 
 
+def _get_leaderboard_values(bot, user_data):
+    placings = []
+
+    for lb in bot.lbs:
+        category = []
+
+        for stat in lb.stats:
+            category.append(stat.get_stat(user_data))
+
+        placings.append(category)
+
+    return placings
+
+
 class LBCategory:
-    def __init__(self, bot, name, unit, query, get_stat):
+    def __init__(self, parent_index, index, bot, name, unit, query, get_stat):
+        self.parent_index = parent_index
+        self.index = index
+
         self.bot = bot
         self.name = name
         self.unit = unit
 
-        self.data = None
-
         self.query = query
         self.get_stat = get_stat
+
+    @property
+    def lb_key(self):
+        return f"lb.{self.parent_index}.{self.index}"
+
+    async def get_placing(self, user_id):
+        return await self.bot.redis.zrevrank(self.lb_key, user_id)
+
+    async def get_raw_lb_data(self, end=LB_DISPLAY_AMT):
+        raw_data = await self.bot.redis.zrevrange(self.lb_key, 0, end, withscores=True)
+
+        return {int(u.decode()): v for u, v in raw_data}
 
     async def update(self):
         cursor = self.bot.mongo.db.users.aggregate(
@@ -49,9 +77,6 @@ class LBCategory:
                 {
                     "$project": {
                         "_id": 1,
-                        "name": 1,
-                        "discriminator": 1,
-                        "status": 1,
                         "count": self.query,
                     }
                 },
@@ -59,36 +84,36 @@ class LBCategory:
                 {"$limit": LB_LENGTH},
             ]
         )
-        self.data = [i async for i in cursor]
 
-    def get_placing(self, user_id: int):
-        if self.data is None:
-            return
+        return {i["_id"]: i["count"] async for i in cursor}
 
-        return next(
-            ((i + 1, u) for i, u in enumerate(self.data) if u["_id"] == int(user_id)),
-            None,
-        )
+    @classmethod
+    def new(cls, *args, **kwargs):
+        def do_it(parent_index, index):
+            return cls(parent_index, index, *args, **kwargs)
+
+        return do_it
 
 
 class Leaderboard:
     def __init__(
         self,
+        index: int,
         *,
         title: str,
-        desc: str,
         emoji: str,
         default: int,
         stats: list[LBCategory],
         check=None,
         priority=0,
     ):
+        self.index = index
+
         # Meta data
         self.title = title
-        self.desc = desc
         self.emoji = emoji
 
-        self.stats = stats
+        self.stats = self.initialize_stats(stats)
 
         if len(self.stats) <= default:
             raise Exception("Default out of range")
@@ -100,15 +125,28 @@ class Leaderboard:
 
         self.priority = priority
 
+    def initialize_stats(self, stats):
+        return [s(self.index, i) for i, s in enumerate(stats)]
+
+    @property
+    def desc(self):
+        return ", ".join(s.name for s in self.stats)
+
     async def check(self, ctx):
         if self._check is None:
             return True
 
         return await self._check(ctx)
 
-    async def update_all(self):
-        for stat in self.stats:
-            await stat.update()
+    @classmethod
+    def new(cls, *args, **kwargs):
+        return lambda index: cls(index, *args, **kwargs)
+
+
+class HSLeaderboard(Leaderboard):
+    @property
+    def desc(self):
+        return super().desc + " Test"
 
 
 def unqualify(name):
@@ -216,7 +254,9 @@ def get_embed_theme(user):
 
 class CustomContextItems:
     def __init__(self):
+        # Initial stats
         self.initial_user = None
+        self.initial_values = []
 
         self.achievements_completed = []  # list of additional achievements completed
 
@@ -251,10 +291,15 @@ class CustomContextItems:
         color = kwargs.pop("color", self.theme or PRIMARY_CLR)
         return CustomEmbed(self.bot, color=color, hint=self.hint, **kwargs)
 
-    async def add_initial_user(self, user):
-        user_data = await self.bot.mongo.fetch_user(user)
+    async def add_initial_stats(self, user):
+        # Getting the initial user
+        self.initial_user = await self.bot.mongo.fetch_user(user)
 
-        self.initial_user = user_data
+        if self.initial_user is None:
+            return
+
+        # Getting the initial placing for each category
+        self.initial_values = _get_leaderboard_values(self.bot, self.initial_user)
 
 
 class CustomAppContext(bridge.BridgeApplicationContext, CustomContextItems):
@@ -337,49 +382,50 @@ class WordPractice(bridge.AutoShardedBot):
 
         # fmt: off
         self.lbs = [
-            Leaderboard(
+            Leaderboard.new(
                 title="All Time",
-                desc="Words Typed",
                 emoji="\N{EARTH GLOBE AMERICAS}",
-                stats=[LBCategory(self, "Words Typed", "words", "$words", lambda u: u.words)],
+                stats=[LBCategory.new(self, "Words Typed", "words", "$words", lambda u: u.words)],
                 default=0,
                 priority=1
             ),
-            Leaderboard(
+            Leaderboard.new(
                 title="Monthly Season",
-                desc="Experience",
                 emoji="\N{SPORTS MEDAL}",
-                stats=[LBCategory(self, "Experience", "xp", "$xp", lambda u: u.xp)],
+                stats=[LBCategory.new(self, "Experience", "xp", "$xp", lambda u: u.xp)],
                 default=0,
                 check=season_check,
                 priority=2
             ),
-            Leaderboard(
+            Leaderboard.new(
                 title="24 Hour",
-                desc="Experience, Words Typed",
                 emoji="\N{CLOCK FACE ONE OCLOCK}",
                 stats=[
-                    LBCategory(self,"Experience","xp", {"$sum": {"$arrayElemAt": ["$last24", 1]}}, lambda u: sum(u.last24[1])),
-                    LBCategory(self, "Words Typed", "words", {"$sum": {"$arrayElemAt": ["$last24", 0]}}, lambda u: sum(u.last24[0])),
+                    LBCategory.new(self,"Experience","xp", {"$sum": {"$arrayElemAt": ["$last24", 1]}}, lambda u: sum(u.last24[1])),
+                    LBCategory.new(self, "Words Typed", "words", {"$sum": {"$arrayElemAt": ["$last24", 0]}}, lambda u: sum(u.last24[0])),
                 ],
                 default=0,
             ),
-            Leaderboard(
+            Leaderboard.new(
                 title="High Score",
-                desc=f"{', '.join(t.capitalize() for t in TEST_ZONES.keys())} Test",
                 emoji="\N{RUNNER}",
                 stats=[
-                    LBCategory(self, s.capitalize(), "wpm", f"$highspeed.{s}.wpm", get_hs(s)) for s in TEST_ZONES.keys()
+                    LBCategory.new(self, s.capitalize(), "wpm", f"$highspeed.{s}.wpm", get_hs(s)) for s in TEST_ZONES.keys()
                 ],
                 default=1,
             ),
         ]
         # fmt: on
-        self.last_lb_update = time.time()
+
+        self.initialize_lbs()
 
         self.start_time = time.time()
 
         self.load_exts()
+
+    def initialize_lbs(self):
+        for i, lb in enumerate(self.lbs):
+            self.lbs[i] = lb(i)
 
     def active_start(self, user_id: int):
         # If the user is currently in a test
@@ -436,14 +482,14 @@ class WordPractice(bridge.AutoShardedBot):
     async def get_application_context(self, interaction, cls=CustomAppContext):
         ctx = await super().get_application_context(interaction, cls)
 
-        await ctx.add_initial_user(interaction.user)
+        await ctx.add_initial_stats(interaction.user)
 
         return ctx
 
     async def get_context(self, message, *, cls=CustomPrefixContext):
         ctx = await super().get_context(message, cls=cls)
 
-        await ctx.add_initial_user(message.author)
+        await ctx.add_initial_stats(message.author)
 
         return ctx
 

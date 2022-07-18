@@ -36,7 +36,7 @@ from constants import (
 from helpers.ui import get_log_embed
 from helpers.user import get_expanded_24_hour_stat
 from helpers.utils import datetime_to_unix, get_test_type
-from static.badges import get_badge_from_id, get_badges_from_ids
+from static.badges import get_badge_from_id
 
 
 def _get_meta_data(user):
@@ -312,6 +312,35 @@ class Mongo(commands.Cog):
         score = dict(self.Score.schema.as_marshmallow_schema()().load({}))
 
         return {s: score for s in TEST_ZONES.keys()}
+
+    async def fetch_many_users(self, *user_ids):
+        data = {}
+        not_found = set()
+
+        # Trying to get as many users as posisble from the cache
+        users = await self.bot.redis.hmget("user", *user_ids)
+
+        for _id, u in zip(user_ids, users):
+            if u is None:
+                not_found.add(_id)
+            else:
+                data[_id] = self.User.build_from_mongo(pickle.loads(u))
+
+        if not_found:
+            # Fetching the rest of the users from the database
+            cursor = self.User.find({"id": {"$in": list(not_found)}})
+
+            fetched_users = {u.id: u async for u in cursor}
+
+            raw_fetched_users = {
+                _id: pickle.dumps(u.to_mongo()) for _id, u in fetched_users.items()
+            }
+            # Caching all the fetched users
+            await self.bot.redis.hmset("user", raw_fetched_users)
+
+            data.update(fetched_users)
+
+        return data
 
     async def fetch_user(self, user: Union[discord.Member, int], create=False):
         if isinstance(user, int):

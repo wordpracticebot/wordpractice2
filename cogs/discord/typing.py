@@ -238,7 +238,7 @@ class HighScoreCaptchaView(BaseView):
     async def start_captcha(self, button, interaction):
         await self.handle_captcha(self, button, interaction)
 
-    async def log_captcha_completion(self, raw, acc, failed: bool):
+    async def log_captcha_completion(self, raw, acc, word_history, failed: bool):
         completion_type = "Fail" if failed else "Pass"
 
         embed = get_log_embed(
@@ -248,7 +248,8 @@ class HighScoreCaptchaView(BaseView):
                 f"**Original Wpm:** {self.original_wpm}\n"
                 f"**Raw:** {raw} / {self.target}\n"
                 f"**Acc:** {acc} / {CAPTCHA_ACC_PERC}\n"
-                f"**Attempts:** {self.attempts} / {MAX_CAPTCHA_ATTEMPTS}"
+                f"**Attempts:** {self.attempts} / {MAX_CAPTCHA_ATTEMPTS}\n"
+                f"**Word History:**\n> {word_history}"
             ),
             error=failed,
         )
@@ -372,7 +373,7 @@ class HighScoreCaptchaView(BaseView):
                 invoke_completion(self.ctx)
 
                 # Logging the pass of the high score captcha
-                return await self.log_captcha_completion(raw, acc, False)
+                return await self.log_captcha_completion(raw, acc, word_history, False)
 
         self.attempts += 1
 
@@ -390,7 +391,7 @@ class HighScoreCaptchaView(BaseView):
 
             invoke_completion(self.ctx)
 
-            return await self.log_captcha_completion(raw, acc, True)
+            return await self.log_captcha_completion(raw, acc, word_history, True)
 
         plural = "s" if attempts_left > 1 else ""
 
@@ -400,7 +401,7 @@ class HighScoreCaptchaView(BaseView):
 
         view.message = await self.ctx.respond(embed=embed, view=view)
 
-        await self.log_captcha_completion(raw, acc, True)
+        await self.log_captcha_completion(raw, acc, word_history, True)
 
     def add_results(self, embed, raw, acc, word_history):
         embed.add_field(name=f"{icons.raw} Raw Wpm", value=f"{raw} / {self.target}")
@@ -1343,7 +1344,7 @@ class Typing(commands.Cog):
 
         # Prompting a captcha at intervals to prevent automated accounts
         if (user.test_amt + 1) % CAPTCHA_INTERVAL == 0:
-            return await cls.handle_interval_captcha(ctx, user)
+            return await cls.handle_interval_captcha(ctx, user, send)
 
         result = await cls.personal_test_input(
             user, ctx, int(is_dict), quote_info, send
@@ -1525,7 +1526,7 @@ class Typing(commands.Cog):
         return score, False
 
     @classmethod
-    async def handle_interval_captcha(cls, ctx, user):
+    async def handle_interval_captcha(cls, ctx, user, send):
         # Getting the quote for the captcha
         words, _ = _load_test_file(word_list.languages["english"]["easy"])
         captcha_word = random.choice(words)
@@ -1543,7 +1544,7 @@ class Typing(commands.Cog):
 
         embed.set_image(url=f"attachment://captcha.{STATIC_IMAGE_FORMAT}")
 
-        await ctx.respond(embed=embed, file=file)
+        await send(embed=embed, file=file)
 
         # Waiting for user input
         try:

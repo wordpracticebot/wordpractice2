@@ -6,7 +6,7 @@ import numpy as np
 from discord.ext import commands, tasks
 
 from config import DBL_TOKEN, TESTING
-from constants import AVG_AMT, CHALLENGE_AMT, COMPILE_INTERVAL, UPDATE_24_HOUR_INTERVAL
+from constants import AVG_AMT, CHALLENGE_AMT, UPDATE_24_HOUR_INTERVAL
 
 
 class Tasks(commands.Cog):
@@ -18,16 +18,14 @@ class Tasks(commands.Cog):
             "Authorization": DBL_TOKEN,
         }
 
-        if TESTING is False and DBL_TOKEN is not None:
-            self.post_guild_count.start()
+        if TESTING is False:
+            if DBL_TOKEN is not None:
+                self.post_guild_count.start()
 
-        for u in [
-            self.update_leaderboards,
-            self.update_24_hour,
-            self.daily_restart,
-            self.clear_cooldowns,
-            self.update_percentiles,
-        ]:
+            for u in [self.update_24_hour, self.daily_restart]:
+                u.start()
+
+        for u in [self.update_percentiles, self.clear_cooldowns]:
             u.start()
 
     @tasks.loop(minutes=UPDATE_24_HOUR_INTERVAL)
@@ -69,13 +67,6 @@ class Tasks(commands.Cog):
 
         if all_ids:
             await self.bot.redis.hdel("user", *all_ids)
-
-    @tasks.loop(minutes=COMPILE_INTERVAL)
-    async def update_leaderboards(self):
-        for lb in self.bot.lbs:
-            await lb.update_all()
-
-        self.bot.last_lb_update = time.time()
 
     # Updates the typing average percentile
     # Is updated infrequently because it provides an estimate
@@ -169,6 +160,19 @@ class Tasks(commands.Cog):
         a = await self.bot.redis.hgetall("user")
 
         await self.bot.redis.hdel("user", *a.keys())
+
+        # Updating all the leaderboards
+
+        for i, lb in enumerate(self.bot.lbs):
+            for n, stat in enumerate(lb.stats):
+                name = f"lb.{i}.{n}"
+                # Wiping the leaderboard
+                total = await self.bot.redis.zcard(name)
+                await self.bot.redis.zremrangebyrank(name, 0, total)
+
+                stat_pairs = await stat.update()
+
+                await self.bot.redis.zadd(name, stat_pairs)
 
     # Clearing cache
     @tasks.loop(minutes=10)

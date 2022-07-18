@@ -22,7 +22,6 @@ from challenges.season import get_season_tiers
 from config import GRAPH_CDN_SECRET
 from constants import (
     AVG_AMT,
-    COMPILE_INTERVAL,
     GRAPH_CDN_BASE_URL,
     GRAPH_EXPIRE_TIME,
     LB_DISPLAY_AMT,
@@ -36,7 +35,6 @@ from helpers.converters import user_option
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_pacer_display, get_theme_display, get_typing_average
 from helpers.utils import calculate_score_consistency, cmd_run_before, get_bar
-from static.badges import get_badge_from_id
 
 THIN_SPACE = "\N{THIN SPACE}"
 LINE_SPACE = "\N{BOX DRAWINGS LIGHT HORIZONTAL}"
@@ -63,6 +61,31 @@ SCORES_PER_PAGE = 3
 EMOJIS_PER_TIER = 4
 
 
+async def _get_users_from_lb(bot, lb: dict):
+    data = []
+
+    user_data = await bot.mongo.fetch_many_users(*lb.keys())
+
+    for u, v in list(lb.items()):
+        data.append([user_data[u], v])
+
+    return data
+
+
+async def _get_lb_placing(lb_data, c, user_id):
+    if user_id in lb_data:
+        placing = list(lb_data.keys()).index(user_id) + 1
+    else:
+        placing = None
+
+    lb_placing = placing
+
+    if placing is None:
+        placing = await c.get_placing(user_id)
+
+    return placing, lb_placing
+
+
 def _encrypt_data(data: dict):
     encoded_data = zlib.compress(json.dumps(data, separators=(",", ":")).encode())
 
@@ -83,8 +106,6 @@ def get_graph_link(*, user, amt: int, dimensions: tuple):
         values[1].append(round_num(s.raw))
         values[2].append(round_num(s.acc))
 
-    print(values)
-
     labels = ["Wpm", "Raw Wpm", "Accuracy"]
 
     y_values = dict(zip(labels, values))
@@ -98,44 +119,15 @@ def get_graph_link(*, user, amt: int, dimensions: tuple):
 
     data = _encrypt_data(payload)
 
-    print(len(f"{GRAPH_CDN_BASE_URL}/score_graph?raw_data={data}"))
-
     return f"{GRAPH_CDN_BASE_URL}/score_graph?raw_data={data}"
 
 
-def get_lb_display(p, u, c, author_id, placing):
-    extra = ""
+def get_lb_display(p, c, u, value, author_id):
+    extra = "__" if u.id == author_id else ""
 
-    if u["_id"] == author_id:
-        if placing is None:
-            placing = p, u
+    value = int(value) if value.is_integer() else float(value)
 
-        extra = "__"
-
-    badge_icon = get_badge_from_id(u["status"])
-
-    username = f"{u['name']}#{u['discriminator']}"
-
-    if badge_icon is not None:
-        username += f" {badge_icon}"
-
-    return f"`{p}.` {extra}{username} - {u['count']:,} {c.unit}{extra}", placing
-
-
-def get_user_placing(c, placing, user):
-    if placing is None:
-        # Getting the placing
-        placing = c.get_placing(user.id)
-
-    if placing is None:
-        place_display = "N/A"
-        count = c.get_stat(user)
-
-    else:
-        place_display = placing[0]
-        count = placing[1]["count"]
-
-    return place_display, count
+    return f"`{p}.` {extra}{u.display_name} - {value:,} {c.unit}{extra}"
 
 
 class SeasonView(ViewFromDict):
@@ -149,10 +141,6 @@ class SeasonView(ViewFromDict):
         super().__init__(ctx, categories)
 
         self.season_info = None
-
-    @property
-    def user(self):
-        return self.ctx.initial_user
 
     async def get_info_embed(self):
         embed = self.ctx.embed(title=f"Season Information")
@@ -241,18 +229,14 @@ class SeasonView(ViewFromDict):
             embed.description = "Sorry, there is no season right now..."
 
         else:
-            placing = None
-
-            c = self.ctx.bot.lbs[1].stats[0]
-
             for name, icon, (start, end) in SEASON_TROPHY_DATA:
                 lb_placings = []
 
                 for i in range(start - 1, end):
-                    u = c.data[i]
+                    u, value = self.lb_data[i]
 
-                    lb_display, placing = get_lb_display(
-                        i + 1, u, c, self.user.id, placing
+                    lb_display = get_lb_display(
+                        i + 1, self.category, u, value, self.ctx.author.id
                     )
 
                     lb_placings.append(lb_display)
@@ -261,11 +245,13 @@ class SeasonView(ViewFromDict):
                     name=f"{name} {icon}", value="\n".join(lb_placings), inline=False
                 )
 
-            if placing is None:
-                place_display, count = get_user_placing(c, placing, self.user)
+            if self.lb_placing is None:
+                placing = "N/A" if self.placing is None else self.placing
+
+                value = self.category.get_stat(self.user)
 
                 embed.add_field(
-                    name=f"{LINE_SPACE * 13}\n`{place_display}.` {self.user.display_name} - {count:,} {c.unit}",
+                    name=f"{LINE_SPACE * 13}\n`{placing}.` {self.user.display_name} - {value:,} {self.category.unit}",
                     value="** **",
                     inline=False,
                 )
@@ -275,8 +261,28 @@ class SeasonView(ViewFromDict):
     async def create_page(self):
         return await self.the_dict[self.page]()
 
+    @property
+    def category(self):
+        return self.ctx.bot.lbs[1].stats[0]
+
+    @property
+    def user(self):
+        return self.ctx.initial_user
+
     async def start(self):
         self.season_info = await self.ctx.bot.mongo.get_season_info()
+
+        # Getting the highest placing that will be displayed
+        end = SEASON_TROPHY_DATA[-1][2][1]
+
+        raw_lb_data = await self.category.get_raw_lb_data(end)
+
+        self.lb_data = await _get_users_from_lb(self.ctx.bot, raw_lb_data)
+
+        # Getting the placing of the author
+        self.placing, self.lb_placing = await _get_lb_placing(
+            raw_lb_data, self.category, self.ctx.author.id
+        )
 
         return await super().start()
 
@@ -487,17 +493,19 @@ class LeaderboardButton(discord.ui.Button):
 
 
 class LeaderboardView(ScrollView):
-    def __init__(self, ctx, user):
+    def __init__(self, ctx):
         super().__init__(ctx, int(LB_DISPLAY_AMT / 10), row=2, compact=True)
 
         self.timeout = 60
 
-        self.user = user
-
-        # For storing placing across same page
-        self.placing = None
+        # Caches the data for each leaderboard {lb_key: (lb, placing, lb_placing)}
+        self.lb_data = {}
 
         self.active_btns = []
+
+    @property
+    def user(self):
+        return self.ctx.initial_user
 
     @property
     def lb(self):
@@ -506,21 +514,30 @@ class LeaderboardView(ScrollView):
     async def create_page(self):
         c = self.lb.stats[self.stat]
 
-        time_until_next_update = int(
-            self.ctx.bot.last_lb_update + COMPILE_INTERVAL * 60
-        )
-
         embed = self.ctx.embed(
-            title=f"{self.lb.title} Leaderboard | Page {self.page + 1}",
-            description=f"The leaderboard updates again in <t:{time_until_next_update}:R>",
+            title=f"{self.lb.title} Leaderboard | Page {self.page + 1}"
         )
 
-        for i, u in enumerate(c.data[self.page * 10 : (self.page + 1) * 10]):
+        # Checking if the leaderboard data was cached
+        if c.lb_key in self.lb_data:
+            lb, placing, _ = self.lb_data[c.lb_key]
+
+        else:
+            raw_lb_data = await c.get_raw_lb_data()
+
+            lb = await _get_users_from_lb(self.ctx.bot, raw_lb_data)
+
+            placing, lb_placing = await _get_lb_placing(
+                raw_lb_data, c, self.ctx.author.id
+            )
+
+            self.lb_data[c.lb_key] = (lb, placing, lb_placing)
+
+        # Generating the leaderboard UI
+        for i, (u, value) in enumerate(lb[self.page * 10 : (self.page + 1) * 10]):
             p = self.page * 10 + i + 1
 
-            lb_display, self.placing = get_lb_display(
-                p, u, c, self.user.id, self.placing
-            )
+            lb_display = get_lb_display(p, c, u, value, self.ctx.author.id)
 
             embed.add_field(
                 name=lb_display,
@@ -528,7 +545,9 @@ class LeaderboardView(ScrollView):
                 inline=False,
             )
 
-        place_display, count = get_user_placing(c, self.placing, self.user)
+        place_display = "N/A" if placing is None else placing
+
+        count = c.get_stat(self.user)
 
         embed.add_field(
             name=f"{LINE_SPACE * 13}\n`{place_display}.` {self.user.display_name} - {count:,} {c.unit}",
@@ -539,13 +558,18 @@ class LeaderboardView(ScrollView):
         return embed
 
     async def jump_to_placing(self, interaction):
-        if self.placing is None:
+        c = self.lb.stats[self.stat]
+
+        # The leaderboard data has to be cached for the user to be on the page
+        lb_placing = self.lb_data[c.lb_key][2]
+
+        if lb_placing is None:
             return await interaction.response.send_message(
                 f"You are outside of the top {LB_DISPLAY_AMT}", ephemeral=True
             )
 
         # Getting the page where the user is placed
-        page = int((self.placing[0] - 1) / 10)
+        page = int((lb_placing - 1) / 10)
 
         if self.page != page:
             self.page = page
@@ -558,7 +582,6 @@ class LeaderboardView(ScrollView):
         if self.stat != stat:
             self.stat = stat
             self.page = 0
-            self.placing = None
 
             await self.update_all(interaction)
 
@@ -637,14 +660,14 @@ class ProfileView(BaseView):
         self.page = list(self.callbacks.keys())[0]
 
     async def update_message(self, interaction):
-        embed = self.get_embed()
+        embed = await self.get_embed()
         await interaction.response.edit_message(embed=embed, view=self)
 
-    def get_embed(self):
+    async def get_embed(self):
         """Generates the base embed for all the pages"""
         base_embed = self.get_base_embed(self.page)
 
-        return self.callbacks[self.page][1](base_embed)
+        return await self.callbacks[self.page][1](base_embed)
 
     def get_base_embed(self, page_name):
         embed = self.ctx.embed(title=self.user.display_name)
@@ -665,11 +688,13 @@ class ProfileView(BaseView):
 
         return "+"
 
-    def get_placing_display(self, user, category: int, stat: int):
-        placing = self.ctx.bot.lbs[category].stats[stat].get_placing(user.id)
+    async def get_placing_display(self, user, category: int, stat: int):
+        c = self.ctx.bot.lbs[category].stats[stat]
+
+        placing = await c.get_placing(user.id)
 
         if placing is None:
-            return f"(> {LB_LENGTH})", False
+            return f"(> {LB_LENGTH})"
 
         placing = placing[0]
 
@@ -683,9 +708,9 @@ class ProfileView(BaseView):
             emoji = ":third_place:"
 
         else:
-            return f"({humanize.ordinal(placing)})", False
+            return f"({humanize.ordinal(placing)})"
 
-        return emoji, True
+        return emoji
 
     def get_thin_spacing(self, text: str, is_emoji: bool):
         if is_emoji:
@@ -710,7 +735,7 @@ class ProfileView(BaseView):
 
         return f"{num}{num_spacing * THIN_SPACE}"
 
-    def create_account_page(self, embed):
+    async def create_account_page(self, embed):
         embed.set_thumbnail(url="https://i.imgur.com/KrXiy9S.png")
 
         in_between = 35
@@ -720,7 +745,7 @@ class ProfileView(BaseView):
 
         fr_words = self.format_account_stat(f"{self.user.words:,}", 6 + in_between)
         fr_xp = self.format_account_stat(f"{self.user.xp:,}", 17 + in_between)
-        fr_24_words = f"{sum(self.user.last24[0]):,}"
+        fr_24_xp = f"{sum(self.user.last24[1]):,}"
 
         if self.user.badges == []:
             badges = "User has no badges..."
@@ -728,7 +753,7 @@ class ProfileView(BaseView):
             badges = " ".join(b.raw for b in self.user.badge_objs)
 
         embed.description = (
-            f"**Words:** {fr_words}**XP:** {fr_xp}**XP:** {fr_24_words}\n\n"
+            f"**Words:** {fr_words}**XP:** {fr_xp}**XP:** {fr_24_xp}\n\n"
             f"**Badges ({len(self.user.badges)})**\n"
             f"{badges}"
         )
@@ -782,7 +807,7 @@ class ProfileView(BaseView):
 
         return embed
 
-    def create_typing_page(self, embed):
+    async def create_typing_page(self, embed):
         embed.title += f"{THIN_SPACE*115}** **"
         embed.set_thumbnail(url="https://i.imgur.com/BZzMGjc.png")
         embed.add_field(
@@ -794,7 +819,7 @@ class ProfileView(BaseView):
         hs1, hs2, hs3 = self.user.highspeed.values()
 
         # Short high score
-        placing = self.get_placing_display(self.user, 3, 0)[0]
+        placing = await self.get_placing_display(self.user, 3, 0)
 
         embed.add_field(
             name=f"Range:{THIN_SPACE*26}10-20:",
@@ -806,14 +831,14 @@ class ProfileView(BaseView):
         )
 
         # Medium high score
-        placing = self.get_placing_display(self.user, 3, 1)[0]
+        placing = await self.get_placing_display(self.user, 3, 1)
 
         embed.add_field(
             name="21-50:",
             value=(f"{hs2.wpm}\n{hs2.acc}%\n**{placing}**"),
         )
 
-        placing = self.get_placing_display(self.user, 3, 2)[0]
+        placing = await self.get_placing_display(self.user, 3, 2)
 
         embed.add_field(
             name="51-100:",
@@ -859,7 +884,7 @@ class ProfileView(BaseView):
         }
 
     async def start(self):
-        embed = self.get_embed()
+        embed = await self.get_embed()
 
         selector = ProfileSelect(self.callbacks)
 
@@ -999,12 +1024,12 @@ class Bot(commands.Cog):
         view = GraphView(ctx, user_data)
         await view.start()
 
-    @cooldown(6, 2)
+    @cooldown(10, 3)
     @bridge.bridge_command()
     async def leaderboard(self, ctx):
         """See the top users in any category"""
 
-        view = LeaderboardView(ctx, ctx.initial_user)
+        view = LeaderboardView(ctx)
 
         await view.start()
 
