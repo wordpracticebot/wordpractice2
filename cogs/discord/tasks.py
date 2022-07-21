@@ -163,16 +163,15 @@ class Tasks(commands.Cog):
 
         # Updating all the leaderboards
 
-        for i, lb in enumerate(self.bot.lbs):
-            for n, stat in enumerate(lb.stats):
-                name = f"lb.{i}.{n}"
+        for lb in self.bot.lbs:
+            for stat in lb.stats:
                 # Wiping the leaderboard
-                total = await self.bot.redis.zcard(name)
-                await self.bot.redis.zremrangebyrank(name, 0, total)
+                total = await self.bot.redis.zcard(stat.lb_key)
+                await self.bot.redis.zremrangebyrank(stat.lb_key, 0, total)
 
                 stat_pairs = await stat.update()
 
-                await self.bot.redis.zadd(name, stat_pairs)
+                await self.bot.redis.zadd(stat.lb_key, stat_pairs)
 
     # Clearing cache
     @tasks.loop(minutes=10)

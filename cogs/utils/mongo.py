@@ -370,11 +370,9 @@ class Mongo(commands.Cog):
                     )
 
                     await self.replace_user_data(u)
-                else:
-                    await self.bot.redis.hset("user", user_id, None)
-                    return
+                    return u
 
-                return u
+                return
 
         uj = u.to_mongo()
 
@@ -447,6 +445,11 @@ class Mongo(commands.Cog):
                 user[field] = value
 
         await self.replace_user_data(user)
+
+        # Removing the user from the leaderboard
+        for lb in self.bot.lbs:
+            for stat in lb.stats:
+                await stat.remove_user(user.id)
 
     async def restore_user(self, user):
         backup = await self.UserBackup.find_one({"id": user.id})

@@ -214,7 +214,7 @@ class Misc(commands.Cog):
             else:
                 badge_display = ""
 
-            embed.add_field(name=f"`{name}`{badge_display}", value=f"> {desc}\n\n** **")
+            embed.add_field(name=f"`{name}`{badge_display}", value=f"{desc}\n\n** **")
 
             if i % 2 == 1:
                 embed.add_field(name="** **", value="** **")

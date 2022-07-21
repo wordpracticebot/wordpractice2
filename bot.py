@@ -66,10 +66,25 @@ class LBCategory:
     async def get_placing(self, user_id):
         return await self.bot.redis.zrevrank(self.lb_key, user_id)
 
-    async def get_raw_lb_data(self, end=LB_DISPLAY_AMT):
+    async def remove_user(self, user_id):
+        return await self.bot.redis.srem(self.lb_key, user_id)
+
+    def get_initial_value(self, ctx):
+        return ctx.initial_values[self.parent_index][self.index]
+
+    async def get_lb_data(self, end=LB_DISPLAY_AMT):
         raw_data = await self.bot.redis.zrevrange(self.lb_key, 0, end, withscores=True)
 
         return {int(u.decode()): v for u, v in raw_data}
+
+    async def get_lb_values_from_score(self, min, max):
+        raw_data = await self.bot.redis.zrevrangebyscore(
+            self.lb_key, min=min, max=max, withscores=True
+        )
+
+        _, values = zip(*raw_data)
+
+        return list(values)
 
     async def update(self):
         cursor = self.bot.mongo.db.users.aggregate(
@@ -201,7 +216,7 @@ class WelcomeView(BaseView):
 
         view = create_link_view(
             {
-                "Community Server": SUPPORT_SERVER_INVITE,
+                "Server": SUPPORT_SERVER_INVITE,
                 "Video": INFO_VIDEO,
                 "Github": GITHUB_LINK,
             }

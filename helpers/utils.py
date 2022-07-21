@@ -390,7 +390,7 @@ def get_test_zone_name(cw: int):
 
     n, r = m
 
-    return n, f"({r[0]}-{r[-1]}) words"
+    return n, f"({r[0]}-{r[-1]} words)"
 
 
 # https://stackoverflow.com/a/64506715

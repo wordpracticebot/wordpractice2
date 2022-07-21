@@ -4,11 +4,13 @@ import math
 import random
 import textwrap
 import time
+from bisect import bisect, bisect_left
 from copy import copy
 from datetime import datetime
 from itertools import chain, groupby
 
 import discord
+import humanize
 from captcha.image import ImageCaptcha
 from discord.commands import SlashCommandGroup
 from discord.ext import commands, tasks
@@ -452,16 +454,25 @@ class TestResultView(BaseView):
         self.quote = quote
         self.wrap_width = wrap_width
 
-        self.user = self.ctx.initial_user = user
+        self.ctx.initial_user = user
 
     async def disable_btn(self, button):
         button.disabled = True
 
         await self.message.edit(view=self)
 
+    @property
+    def user(self):
+        return self.ctx.initial_user
+
+    async def get_user(self):
+        self.ctx.initial_user = await self.ctx.bot.mongo.fetch_user(self.user.id)
+
     @discord.ui.button(label="Next Test", style=discord.ButtonStyle.success)
     async def next_test(self, button, interaction):
         await self.disable_btn(button)
+
+        await self.get_user()
 
         if self.is_dict:
             quote = await Typing.handle_dictionary_input(self.ctx, self.length)
@@ -479,7 +490,11 @@ class TestResultView(BaseView):
 
     @discord.ui.button(label="Practice Difficult", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
+        await self.disable_btn(button)
+
         self.ctx.bot.active_start(self.ctx.author.id)
+
+        await self.get_user()
 
         if self.wrong == []:
             quote = self.quote
@@ -496,8 +511,6 @@ class TestResultView(BaseView):
                 words |= set(random.sample(add_words, minimum - a))
 
             quote = random.choices(list(words), k=max(len(self.quote), 10))
-
-        await self.disable_btn(button)
 
         test_info = (quote, self.wrap_width)
 
@@ -1109,13 +1122,13 @@ class Typing(commands.Cog):
         await self.do_typing_test(ctx, False, quote_info, length, ctx.respond)
 
     @cooldown(5, 1)
-    @commands.group(invoke_without_command=True)
+    @commands.group(usage="[length]", invoke_without_command=True)
     @copy_doc(tt_dictionary)
     async def tt(self, ctx, length: int = 35):
         await invoke_slash_command(self.tt_dictionary, self, ctx, length)
 
     @cooldown(5, 1)
-    @tt.command(name="quote")
+    @tt.command(usage="[length]", name="quote")
     @copy_doc(tt_quote)
     async def _tt_quote(self, ctx, length: str):
         await invoke_slash_command(self.tt_quote, self, ctx, length)
@@ -1141,13 +1154,13 @@ class Typing(commands.Cog):
         await self.show_race_start(ctx, False, quote_info)
 
     @cooldown(6, 2)
-    @commands.group(invoke_without_command=True)
+    @commands.group(usage="[length]", invoke_without_command=True)
     @copy_doc(race_dictionary)
     async def race(self, ctx, length: int):
         await invoke_slash_command(self.race_dictionary, self, ctx, length)
 
     @cooldown(6, 2)
-    @race.command(name="quote")
+    @race.command(usage="[length]", name="quote")
     @copy_doc(race_quote)
     async def _race_quote(self, ctx, length: str):
         await invoke_slash_command(self.race_quote, self, ctx, length)
@@ -1497,9 +1510,34 @@ class Typing(commands.Cog):
 
             user.highspeed[zone] = score
 
-            description = f"You got a new high score of **{score.wpm}** on the {zone} test {zone_range}"
+            description = f"You got a new high score of **{score.wpm}** on the **{zone} test** {zone_range}"
 
-            # TODO: add the daily placing
+            # Getting the user's placing for that zone
+            c = ctx.bot.lbs[3].stats[list(TEST_ZONES.keys()).index(zone)]
+            initial_value = c.get_initial_value(ctx)
+
+            score_lb = await c.get_lb_values_from_score(max="inf", min=initial_value)
+
+            # Reversing because bisect only supports ascending lists
+            score_lb.reverse()
+
+            if score.wpm >= score_lb[0]:
+                score_index = bisect(score_lb, score.wpm)
+
+                potential_placing = len(score_lb) - score_index
+
+                diff_display = ""
+
+                # Adding the difference in placing
+                if initial_value >= score_lb[0]:
+                    initial_index = bisect(score_lb, initial_value)
+
+                    if initial_index != score_index:
+                        diff = score_index - initial_index
+
+                        diff_display = f" ({icons.up_arrow}{diff})"
+
+                description += f"\n\nAlltime Placing: **{humanize.ordinal(potential_placing)}{diff_display}**"
 
             embed = ctx.embed(
                 title=f":trophy: {user.display_name} | New High Score",

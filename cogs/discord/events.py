@@ -211,6 +211,9 @@ class Events(commands.Cog):
                 ctx, title="Bot Missing Permissions", severe=True
             )
 
+        elif isinstance(error, errors.MissingPermissions):
+            await self.send_basic_error(ctx, title="You can't do that", severe=True)
+
         return self.bot.active_end(ctx.author.id)
 
     async def handle_user_input_error(self, ctx, error):

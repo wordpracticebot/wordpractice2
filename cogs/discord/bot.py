@@ -275,7 +275,7 @@ class SeasonView(ViewFromDict):
         # Getting the highest placing that will be displayed
         end = SEASON_TROPHY_DATA[-1][2][1]
 
-        raw_lb_data = await self.category.get_raw_lb_data(end)
+        raw_lb_data = await self.category.get_lb_data(end)
 
         self.lb_data = await _get_users_from_lb(self.ctx.bot, raw_lb_data)
 
@@ -494,7 +494,7 @@ class LeaderboardButton(discord.ui.Button):
 
 class LeaderboardView(ScrollView):
     def __init__(self, ctx):
-        super().__init__(ctx, int(LB_DISPLAY_AMT / 10), row=2, compact=True)
+        super().__init__(ctx, int(LB_DISPLAY_AMT / 10), row=2, compact=False)
 
         self.timeout = 60
 
@@ -523,7 +523,7 @@ class LeaderboardView(ScrollView):
             lb, placing, _ = self.lb_data[c.lb_key]
 
         else:
-            raw_lb_data = await c.get_raw_lb_data()
+            raw_lb_data = await c.get_lb_data()
 
             lb = await _get_users_from_lb(self.ctx.bot, raw_lb_data)
 
@@ -695,8 +695,6 @@ class ProfileView(BaseView):
 
         if placing is None:
             return f"(> {LB_LENGTH})"
-
-        placing = placing[0]
 
         if placing == 1:
             emoji = ":first_place:"

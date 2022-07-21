@@ -468,8 +468,6 @@ class Customization(commands.Cog):
 
         user = await user_check(ctx, user)
 
-        author_data = await self.bot.mongo.fetch_user(ctx.author)
-
         embed = ctx.embed(
             title=f"{user.display_name} | User Settings",
         )
@@ -483,7 +481,7 @@ class Customization(commands.Cog):
             value=f"{theme_icon} {theme_name} (`{user.theme[0]}`, `{user.theme[1]}`)"
             + (
                 ""
-                if author_data.is_premium
+                if ctx.initial_user.is_premium
                 else f"\n**[Donators]({PREMIUM_LINK})** can unlock custom themes!"
             ),
             inline=False,
