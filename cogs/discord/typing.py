@@ -98,9 +98,7 @@ async def _cheating_check(ctx, user, user_data, score):
 
         reason = "Cheating on the typing test"
 
-        user_data = await ctx.bot.mongo.add_inf(
-            ctx, user, user_data, None, reason, True
-        )
+        user_data = await ctx.bot.mongo.add_inf(ctx, user, user_data, reason)
 
         await ctx.bot.mongo.wipe_user(user_data)
 

@@ -509,7 +509,9 @@ class Mongo(commands.Cog):
         """
         return await self.get_info_data("season-info")
 
-    async def add_inf(self, ctx, user, user_data, mod, reason, is_ban: bool):
+    async def add_inf(
+        self, ctx, user, user_data, reason, mod=None, is_ban: bool = True
+    ):
         """Doesn't update in the database"""
 
         mod, mod_id = self.get_auto_mod(mod)

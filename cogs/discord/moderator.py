@@ -7,7 +7,7 @@ import icons
 from config import MODERATORS, SUPPORT_GUILD_ID
 from helpers.checks import user_check
 from helpers.converters import user_option
-from helpers.ui import BaseView, ScrollView, create_link_view
+from helpers.ui import BaseView, ScrollView
 from helpers.utils import message_banned_user
 
 INFRACTIONS_PER_PAGE = 3
@@ -147,7 +147,7 @@ class Moderator(commands.Cog):
         # Banning and wiping the user
 
         user_data = await self.bot.mongo.add_inf(
-            ctx, user, user_data, ctx.author, reason, True
+            ctx, user, user_data, reason, mod=ctx.author
         )
 
         if wipe:
@@ -179,7 +179,7 @@ class Moderator(commands.Cog):
             raise commands.BadArgument("That user is not banned")
 
         user_data = await self.bot.mongo.add_inf(
-            ctx, user, user_data, ctx.author, reason, False
+            ctx, user, user_data, reason, is_ban=False, mod=ctx.author
         )
 
         await self.bot.mongo.replace_user_data(user_data)

@@ -4,6 +4,7 @@ import inspect
 import pkgutil
 import time
 import traceback
+from collections import Counter
 from io import BytesIO
 
 import aiohttp
@@ -27,8 +28,8 @@ from constants import (
     TEST_ZONES,
 )
 from helpers.errors import OnGoingTest
-from helpers.ui import BaseView, CustomEmbed, create_link_view
-from helpers.utils import get_hint
+from helpers.ui import BaseView, CustomEmbed, create_link_view, get_log_embed
+from helpers.utils import get_hint, message_banned_user
 
 THIN_SPACE = "\N{THIN SPACE}"
 
@@ -385,6 +386,11 @@ class WordPractice(bridge.AutoShardedBot):
         # Not using MaxConcurrency because it's based on context so it doesn't work with users who join race
         self.active_tests = []
 
+        self.spam_control = commands.CooldownMapping.from_cooldown(
+            6, 8, commands.BucketType.user  # rate, per
+        )
+        self.spam_count = Counter()
+
         # Leaderboards
 
         def get_hs(s):
@@ -504,6 +510,9 @@ class WordPractice(bridge.AutoShardedBot):
     async def get_context(self, message, *, cls=CustomPrefixContext):
         ctx = await super().get_context(message, cls=cls)
 
+        if ctx.command is not None:
+            return
+
         await ctx.add_initial_stats(message.author)
 
         return ctx
@@ -573,8 +582,7 @@ class WordPractice(bridge.AutoShardedBot):
 
         ctx = await self.get_context(message)
 
-        if ctx.command is not None:
-
+        if ctx:
             # Asking the user to accept the rules before using the bot
             if ctx.initial_user is None:
 
@@ -585,6 +593,47 @@ class WordPractice(bridge.AutoShardedBot):
 
             if await self.handle_after_welcome_check(ctx):
                 return
+
+            # Spam control
+            # https://github.com/Rapptz/RoboDanny/blob/rewrite/bot.py
+            bucket = self.spam_control.get_bucket(message)
+
+            current = message.created_at.replace().timestamp()
+            retry_after = bucket.update_rate_limit(current)
+
+            author_id = message.author.id
+
+            if retry_after and author_id != self.owner_id:
+                self.spam_count[author_id] += 1
+
+                if (amt := self.spam_count[author_id]) >= 3:
+                    del self.spam_count[author_id]
+
+                    reason = "Spamming commands"
+
+                    # Banning the user
+                    user_data = await ctx.bot.mongo.add_inf(
+                        ctx, ctx.author, ctx.initial_user, reason
+                    )
+
+                    # Updating the user's data
+                    await self.mongo.replace_user_data(user_data)
+
+                    await message_banned_user(ctx, ctx.author, reason)
+
+                else:
+                    # Flagging the user for spamming commands
+                    embed = get_log_embed(
+                        ctx,
+                        title="User Spamming Commands",
+                        additional=f"**Times Flagged:** {amt}",
+                        error=True,
+                    )
+
+                    await self.impt_wh.send(embed=embed)
+
+            else:
+                self.spam_count.pop(author_id, None)
 
         await self.invoke(ctx)
 
