@@ -510,8 +510,11 @@ class WordPractice(bridge.AutoShardedBot):
     async def get_context(self, message, *, cls=CustomPrefixContext):
         ctx = await super().get_context(message, cls=cls)
 
-        if ctx.command is not None:
+        if ctx is None:
             return
+
+        if ctx.command is None:
+            return ctx
 
         await ctx.add_initial_stats(message.author)
 
@@ -582,7 +585,10 @@ class WordPractice(bridge.AutoShardedBot):
 
         ctx = await self.get_context(message)
 
-        if ctx:
+        if ctx is None:
+            return
+
+        if ctx.command is not None:
             # Asking the user to accept the rules before using the bot
             if ctx.initial_user is None:
 

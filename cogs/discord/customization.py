@@ -125,9 +125,6 @@ class EquipView(ScrollView):
         self.update_select_view()
         return await super().update_buttons()
 
-    async def create_page(self):
-        ...
-
     def update_select_view(self):
         if self.select_view is not None:
             self.remove_item(self.select_view)

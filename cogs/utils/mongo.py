@@ -51,6 +51,29 @@ def _get_meta_data(user):
     }
 
 
+class Tournament(Document):
+    name = StringField(required=True)
+    description = StringField(required=True)
+
+    link = StringField(required=True)
+    icon = StringField(required=True)
+
+    start_time = DateTimeField(required=True)
+    end_time = DateTimeField(required=True)
+
+    @property
+    def unix_start(self):
+        return datetime_to_unix(self.start_time)
+
+    @property
+    def unix_end(self):
+        return datetime_to_unix(self.end_time)
+
+
+class QualificationTournament(Tournament):
+    ...
+
+
 class Infraction(EmbeddedDocument):
     mod_name = StringField(required=True)  # NAME#DISCRIMINATOR
     mod_id = IntegerField(require=True)
@@ -283,7 +306,15 @@ class Mongo(commands.Cog):
 
         g = globals()
 
-        for n in ("Infraction", "Score", "UserBase", "User", "UserBackup"):
+        for n in (
+            "Infraction",
+            "Score",
+            "UserBase",
+            "User",
+            "UserBackup",
+            "Tournament",
+            "QualificationTournament",
+        ):
             setattr(self, n, instance.register(g[n]))
             getattr(self, n).bot = bot
 
@@ -312,6 +343,12 @@ class Mongo(commands.Cog):
         score = dict(self.Score.schema.as_marshmallow_schema()().load({}))
 
         return {s: score for s in TEST_ZONES.keys()}
+
+    async def fetch_all_tournaments(self):
+        # Fetching the tournament data from teh database
+        data = self.bot.mongo.Tournament.find()
+
+        return [d async for d in data]
 
     async def fetch_many_users(self, *user_ids):
         data = {}

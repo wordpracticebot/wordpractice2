@@ -4,7 +4,7 @@ import math
 import random
 import textwrap
 import time
-from bisect import bisect, bisect_left
+from bisect import bisect
 from copy import copy
 from datetime import datetime
 from itertools import chain, groupby
@@ -13,7 +13,7 @@ import discord
 import humanize
 from captcha.image import ImageCaptcha
 from discord.commands import SlashCommandGroup
-from discord.ext import commands, tasks
+from discord.ext import bridge, commands, tasks
 from discord.utils import escape_markdown
 from humanfriendly import format_timespan
 
@@ -47,7 +47,7 @@ from helpers.image import (
     get_raw_base_img,
     save_discord_static_img,
 )
-from helpers.ui import BaseView, create_link_view, get_log_embed
+from helpers.ui import BaseView, ScrollView, create_link_view, get_log_embed
 from helpers.user import get_pacer_display, get_pacer_speed
 from helpers.utils import (
     cmd_run_before,
@@ -198,6 +198,28 @@ def _add_test_stats_to_embed(
     embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
 
     return embed
+
+
+class TournamentView(ScrollView):
+    def __init__(self, ctx, t_data):
+        super().__init__(ctx, max_page=len(t_data))
+
+        self.t_data = t_data
+
+    async def create_page(self):
+        t = self.t_data[self.page]
+
+        time_display = f"<t:{t.unix_start}:f> - <t:{t.unix_end}:f>"
+
+        embed = self.ctx.embed(
+            title=t.name,
+            description=f"{t.description}\n\n{time_display}\n\n**Rankings:**",
+            url=t.link,
+        )
+
+        embed.set_thumbnail(url=t.icon)
+
+        return embed
 
 
 class RetryView(BaseView):
@@ -1100,6 +1122,18 @@ class Typing(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    @cooldown(10, 3)
+    @bridge.bridge_command()
+    async def tournaments(self, ctx):
+        """Typing tournaments"""
+
+        # Fetching the tournament data
+        t_data = await self.bot.mongo.fetch_all_tournaments()
+
+        view = TournamentView(ctx, t_data)
+
+        await view.start()
 
     @cooldown(5, 1)
     @tt_group.command(name="dictionary")

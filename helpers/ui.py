@@ -163,7 +163,7 @@ class PageView(BaseView):
         super().__init__(ctx)
 
     async def create_page(self) -> discord.Embed:
-        return self.ctx.embed()
+        ...
 
     async def update_buttons(self):
         ...
