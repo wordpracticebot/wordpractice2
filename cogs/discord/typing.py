@@ -201,10 +201,31 @@ def _add_test_stats_to_embed(
 
 
 class TournamentView(ScrollView):
-    def __init__(self, ctx, t_data):
-        super().__init__(ctx, max_page=len(t_data))
+    def __init__(self, ctx, raw_t_data):
 
-        self.t_data = t_data
+        self.start_date = datetime.utcnow()
+
+        self.t_data = self.sort_t_data(raw_t_data)
+
+        super().__init__(ctx, max_page=len(self.t_data))
+
+    def sort_t_data(self, raw_t_data):
+        # Ranking order: [soonest - latest, finished]
+
+        # Separating the finished and unfinished tournaments
+        finished = []
+        unfinished = []
+
+        for t in raw_t_data:
+            if t.end_time < self.start_date:
+                finished.append(t)
+            else:
+                unfinished.append(t)
+
+        tournaments = finished + unfinished
+
+        # Sorting the tournaments by end time
+        return sorted(tournaments, key=lambda t: t.end_time, reverse=True)
 
     @property
     def t(self):
@@ -218,7 +239,7 @@ class TournamentView(ScrollView):
         await super().update_buttons()
 
         # Updating the join button
-        if self.t.end_time < datetime.utcnow():
+        if self.t.end_time < self.start_date:
             self.start_btn.disabled = True
             self.start_btn.label = "Finished"
             self.start_btn.style = discord.ButtonStyle.grey
@@ -531,8 +552,6 @@ class TestResultView(BaseView):
     async def practice_test(self, button, interaction):
         await self.disable_btn(button)
 
-        self.ctx.bot.active_start(self.ctx.author.id)
-
         await self.get_user()
 
         if self.wrong == []:
@@ -558,7 +577,6 @@ class TestResultView(BaseView):
         )
 
         if result is None:
-            self.ctx.bot.active_end(self.ctx.author.id)
             return
 
         message, end_time, pacer_name, raw_quote = result
@@ -596,8 +614,6 @@ class TestResultView(BaseView):
         await message.reply(embed=embed, mention_author=False)
 
         await self.ctx.respond("Warning: Practice tests are not saved")
-
-        self.ctx.bot.active_end(self.ctx.author.id)
 
 
 class RaceMember:
@@ -1274,6 +1290,8 @@ class Typing(commands.Cog):
 
     @staticmethod
     async def personal_test_input(user, ctx, test_type_int, quote_info, send):
+        ctx.bot.active_start(ctx.author.id)
+
         quote, wrap_width = quote_info
 
         # Loading embed
@@ -1398,10 +1416,11 @@ class Typing(commands.Cog):
 
             return message, end_time, pacer_name, raw_quote
 
+        finally:
+            ctx.bot.active_end(ctx.author.id)
+
     @classmethod
     async def do_typing_test(cls, ctx, is_dict, quote_info, length, send):
-        ctx.bot.active_start(ctx.author.id)
-
         quote, _ = quote_info
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
@@ -1415,7 +1434,6 @@ class Typing(commands.Cog):
         )
 
         if result is None:
-            ctx.bot.active_end(ctx.author.id)
             return
 
         message, end_time, pacer_name, raw_quote = result
@@ -1470,8 +1488,6 @@ class Typing(commands.Cog):
         view = TestResultView(ctx, user, is_dict, length, wrong, *quote_info)
 
         view.message = await message.reply(embed=embed, view=view, mention_author=False)
-
-        ctx.bot.active_end(ctx.author.id)
 
         # For logging
         is_hs = False
@@ -1616,6 +1632,8 @@ class Typing(commands.Cog):
 
     @classmethod
     async def handle_interval_captcha(cls, ctx, user, send):
+        ctx.bot.active_start(ctx.author.id)
+
         # Getting the quote for the captcha
         words, _ = _load_test_file(word_list.languages["english"]["easy"])
         captcha_word = random.choice(words)
@@ -1646,7 +1664,10 @@ class Typing(commands.Cog):
                 description="You did not complete the captcha within 2 minutes",
             )
             await ctx.respond(embed=embed)
-            return ctx.bot.active_end(ctx.author.id)
+            return
+
+        finally:
+            ctx.bot.active_end(ctx.author.id)
 
         word_display = f"**Word:** {captcha_word}"
 
@@ -1695,8 +1716,6 @@ class Typing(commands.Cog):
                     additional=f"**Fails:** {fails}",
                     error=True,
                 )
-
-        ctx.bot.active_end(ctx.author.id)
 
         # Logging the captcha
         await ctx.bot.test_wh.send(embed=embed)
