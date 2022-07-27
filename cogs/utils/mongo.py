@@ -51,6 +51,14 @@ def _get_meta_data(user):
     }
 
 
+class TournamentValue(EmbeddedDocument):
+    # Can be used to store data that is unique to the tournament
+    data = ListField(IntegerField, default=[])
+
+    # The score of the user in the tournament (used for ranking)
+    value = IntegerField(required=True)
+
+
 class Tournament(Document):
     name = StringField(required=True)
     description = StringField(required=True)
@@ -60,6 +68,11 @@ class Tournament(Document):
 
     start_time = DateTimeField(required=True)
     end_time = DateTimeField(required=True)
+
+    rankings = DictField(IntegerField(), EmbeddedField(TournamentValue), default={})
+
+    async def add_ranking(self, user, value: TournamentValue):
+        self.rankings[user.id] = value
 
     @property
     def unix_start(self):
@@ -71,7 +84,8 @@ class Tournament(Document):
 
 
 class QualificationTournament(Tournament):
-    ...
+    # Amount of users allowed to qualify for the tournament
+    amount = IntegerField(required=True)
 
 
 class Infraction(EmbeddedDocument):
@@ -369,15 +383,19 @@ class Mongo(commands.Cog):
 
             fetched_users = {u.id: u async for u in cursor}
 
-            raw_fetched_users = {
-                _id: pickle.dumps(u.to_mongo()) for _id, u in fetched_users.items()
-            }
-            # Caching all the fetched users
-            await self.bot.redis.hmset("user", raw_fetched_users)
+            self.bot.dispatch("cache_fetched_users", fetched_users)
 
             data.update(fetched_users)
 
         return data
+
+    @commands.Cog.listener()
+    async def on_cache_fetched_users(self, fetched_users):
+        raw_fetched_users = {
+            _id: pickle.dumps(u.to_mongo()) for _id, u in fetched_users.items()
+        }
+
+        await self.bot.redis.hmset("user", raw_fetched_users)
 
     async def fetch_user(self, user: Union[discord.Member, int], create=False):
         if isinstance(user, int):

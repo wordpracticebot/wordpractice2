@@ -206,18 +206,37 @@ class TournamentView(ScrollView):
 
         self.t_data = t_data
 
-    async def create_page(self):
-        t = self.t_data[self.page]
+    @property
+    def t(self):
+        return self.t_data[self.page]
 
-        time_display = f"<t:{t.unix_start}:f> - <t:{t.unix_end}:f>"
+    @discord.ui.button()
+    async def start_btn(self, button, interaction):
+        ...
+
+    async def update_buttons(self):
+        await super().update_buttons()
+
+        # Updating the join button
+        if self.t.end_time < datetime.utcnow():
+            self.start_btn.disabled = True
+            self.start_btn.label = "Finished"
+            self.start_btn.style = discord.ButtonStyle.grey
+        else:
+            self.start_btn.disabled = False
+            self.start_btn.label = "Start"
+            self.start_btn.style = discord.ButtonStyle.primary
+
+    async def create_page(self):
+        time_display = f"<t:{self.t.unix_start}:f> - <t:{self.t.unix_end}:f>"
 
         embed = self.ctx.embed(
-            title=t.name,
-            description=f"{t.description}\n\n{time_display}\n\n**Rankings:**",
-            url=t.link,
+            title=self.t.name,
+            description=f"{self.t.description}\n\n{time_display}\n\n**Rankings:**",
+            url=self.t.link,
         )
 
-        embed.set_thumbnail(url=t.icon)
+        embed.set_thumbnail(url=self.t.icon)
 
         return embed
 

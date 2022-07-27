@@ -1027,6 +1027,8 @@ class Bot(commands.Cog):
     async def leaderboard(self, ctx):
         """See the top users in any category"""
 
+        await ctx.defer()
+
         view = LeaderboardView(ctx)
 
         await view.start()
