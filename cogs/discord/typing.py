@@ -1522,7 +1522,7 @@ class Typing(commands.Cog):
 
         # Prompting a captcha at intervals to prevent automated accounts
         if (user.test_amt + 1) % CAPTCHA_INTERVAL == 0:
-            return await cls.handle_interval_captcha(ctx, user, send)
+            return await cls.handle_interval_captcha(ctx, user, is_dict, length, send)
 
         result = await cls.personal_test_input(
             user, ctx, int(is_dict), quote_info, send
@@ -1730,7 +1730,7 @@ class Typing(commands.Cog):
         return score, False
 
     @classmethod
-    async def handle_interval_captcha(cls, ctx, user, send):
+    async def handle_interval_captcha(cls, ctx, user, is_dict, length, send):
         ctx.bot.active_start(ctx.author.id)
 
         # Getting the quote for the captcha
@@ -1777,10 +1777,9 @@ class Typing(commands.Cog):
             message.content is not None
             and message.content.lower() == captcha_word.lower()
         ):
-            embed = ctx.embed(
+            result_embed = ctx.embed(
                 title=f"{icons.success} Captcha Completed", add_footer=False
             )
-            await ctx.respond(embed=embed)
 
             user.test_amt += 1
 
@@ -1791,9 +1790,7 @@ class Typing(commands.Cog):
             )
 
         else:
-            embed = ctx.error_embed(title=f"{icons.caution} Captcha Failed")
-
-            await ctx.respond(embed=embed)
+            result_embed = ctx.error_embed(title=f"{icons.caution} Captcha Failed")
 
             embed = get_log_embed(
                 ctx,
@@ -1815,6 +1812,12 @@ class Typing(commands.Cog):
                     additional=f"**Fails:** {fails}",
                     error=True,
                 )
+
+        view = TestResultView(ctx, user, is_dict, length)
+
+        view.message = await message.reply(
+            embed=result_embed, view=view, mention_author=False
+        )
 
         # Logging the captcha
         await ctx.bot.test_wh.send(embed=embed)
