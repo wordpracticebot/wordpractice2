@@ -145,7 +145,6 @@ def _get_test_time(start: float, end: float):
     return max(round((start - end), 2), 0.01)
 
 
-# I know the arguments are a mess
 def _add_test_stats_to_embed(
     *,
     embed,
@@ -155,11 +154,9 @@ def _add_test_stats_to_embed(
     end_time,
     mistakes,
     word_history,
-    language,
-    pacer_name,
-    word_display,
     xp_earned=None,
     total_xp=None,
+    show_thumbnail=True,
 ):
     embed.add_field(name=f"{icons.wpm} Wpm", value=wpm)
     embed.add_field(name=f"{icons.raw} Raw Wpm", value=raw)
@@ -177,25 +174,32 @@ def _add_test_stats_to_embed(
     if xp_earned is None:
         embed.add_field(name="** **", value="** **")
 
+    embed.add_field(
+        name="** **",
+        value=f"**Word History**\n> {word_history}",
+        inline=False,
+    )
+
+    if show_thumbnail:
+        embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
+
+    return embed
+
+
+def _add_test_settings_to_embed(embed, language, pacer_name, word_display):
     escape = "\U0000001b"
 
     colour_num = random.randint(31, 36)
 
     embed.add_field(
         name="** **",
-        value=(
-            f"**Word History**\n> {word_history}\n\n"
-            f"```ansi\n{escape}[1;2m{escape}[1;{colour_num}mTest Settings```\n** **"
-        ),
+        value=f"```ansi\n{escape}[1;2m{escape}[1;{colour_num}mTest Settings```\n** **",
         inline=False,
     )
-
     # Settings
     embed.add_field(name=f"{icons.language} Language", value=language.capitalize())
     embed.add_field(name=f"{icons.pacer} Pacer", value=pacer_name)
     embed.add_field(name=f"{icons.words} Words", value=word_display)
-
-    embed.set_thumbnail(url="https://i.imgur.com/l9sLfQx.png")
 
     return embed
 
@@ -206,6 +210,8 @@ class TournamentView(ScrollView):
         self.start_date = datetime.utcnow()
 
         self.t_data = self.sort_t_data(raw_t_data)
+
+        self.prev_view = None
 
         super().__init__(ctx, max_page=len(self.t_data))
 
@@ -233,7 +239,88 @@ class TournamentView(ScrollView):
 
     @discord.ui.button()
     async def start_btn(self, button, interaction):
-        ...
+        # Disabling the other buttons
+        self.disable_all_items()
+
+        await interaction.message.edit(view=self)
+
+        await self.do_tournament_test(interaction)
+
+    async def do_tournament_test(self, _interaction):
+        async def _test_callback(interaction):
+
+            if self.prev_view is not None:
+                # Disabling the buttons if they were clicked
+                await self.prev_view.disable_btn(self.prev_view.next_test)
+
+            # The amount of words in each tournament test
+            length = 30
+
+            quote_info = await Typing.handle_dictionary_input(self.ctx, length)
+
+            user = await self.ctx.bot.mongo.fetch_user(self.ctx.author)
+
+            is_dict = True
+
+            result = await Typing.personal_test_input(
+                user,
+                self.ctx,
+                int(is_dict),
+                quote_info,
+                interaction.response.send_message,
+            )
+
+            if result is None:
+                return
+
+            message, end_time, *_ = result
+
+            u_input = message.content.split()
+
+            wpm, raw, acc, _, cw, word_history, _ = get_test_stats(
+                u_input, quote_info[0], end_time
+            )
+
+            # Sending the results
+            embed = self.ctx.embed(
+                title=f"{self.t.name} Tournament Test\n\n`Statistics`"
+            )
+
+            embed.set_author(
+                name=self.ctx.author,
+                icon_url=self.ctx.author.display_avatar.url,
+            )
+
+            embed = _add_test_stats_to_embed(
+                embed=embed,
+                wpm=wpm,
+                raw=raw,
+                acc=acc,
+                end_time=end_time,
+                mistakes=len(u_input) - cw,
+                word_history=word_history,
+                show_thumbnail=False,
+            )
+
+            embed.set_thumbnail(url=self.t.icon)
+
+            view = TestResultView(self.ctx, user, is_dict, length)
+
+            self.prev_view = view
+
+            view.next_test.callback = _test_callback
+
+            view.message = await message.reply(
+                embed=embed, view=view, mention_author=False
+            )
+
+            # TODO: Save the result to the tournament
+            ...
+
+            # TODO: Show the user the updated results
+            ...
+
+        await _test_callback(_interaction)
 
     async def update_buttons(self):
         await super().update_buttons()
@@ -246,7 +333,7 @@ class TournamentView(ScrollView):
         else:
             self.start_btn.disabled = False
             self.start_btn.label = "Start"
-            self.start_btn.style = discord.ButtonStyle.primary
+            self.start_btn.style = discord.ButtonStyle.success
 
     async def create_page(self):
         time_display = f"<t:{self.t.unix_start}:f> - <t:{self.t.unix_end}:f>"
@@ -495,13 +582,11 @@ class HighScoreCaptchaView(BaseView):
 
 
 class TestResultView(BaseView):
-    def __init__(self, ctx, user, is_dict, length, wrong, quote, wrap_width):
+    def __init__(self, ctx, user, is_dict, length):
         super().__init__(ctx)
 
         # Adding link buttons because they can't be added with a decorator
-        self.add_item(
-            discord.ui.Button(label="Community Server", url=SUPPORT_SERVER_INVITE)
-        )
+        self.add_item(discord.ui.Button(label="Join Server", url=SUPPORT_SERVER_INVITE))
         self.add_item(
             discord.ui.Button(label="Invite Bot", url=ctx.bot.create_invite_link())
         )
@@ -509,10 +594,6 @@ class TestResultView(BaseView):
         # Settings of the test completed
         self.length = length
         self.is_dict = is_dict
-        self.wrong = wrong
-
-        self.quote = quote
-        self.wrap_width = wrap_width
 
         self.ctx.initial_user = user
 
@@ -547,6 +628,16 @@ class TestResultView(BaseView):
             interaction.response.send_message,
         )
         invoke_completion(self.ctx)
+
+
+class TypingTestResultView(TestResultView):
+    def __init__(self, ctx, user, is_dict, length, wrong, quote, wrap_width):
+        super().__init__(ctx, user, is_dict, length)
+
+        self.wrong = wrong
+
+        self.quote = quote
+        self.wrap_width = wrap_width
 
     @discord.ui.button(label="Practice Difficult", style=discord.ButtonStyle.primary)
     async def practice_test(self, button, interaction):
@@ -606,6 +697,10 @@ class TestResultView(BaseView):
             end_time=end_time,
             mistakes=len(u_input) - cw,
             word_history=word_history,
+        )
+
+        embed = _add_test_settings_to_embed(
+            embed,
             language=self.user.language,
             pacer_name=pacer_name,
             word_display=word_display,
@@ -1421,7 +1516,7 @@ class Typing(commands.Cog):
 
     @classmethod
     async def do_typing_test(cls, ctx, is_dict, quote_info, length, send):
-        quote, _ = quote_info
+        quote = quote_info[0]
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
@@ -1478,14 +1573,18 @@ class Typing(commands.Cog):
             end_time=end_time,
             mistakes=len(u_input) - cw,
             word_history=word_history,
-            language=user.language,
-            pacer_name=pacer_name,
-            word_display=word_display,
             xp_earned=xp_earned,
             total_xp=user.xp,
         )
 
-        view = TestResultView(ctx, user, is_dict, length, wrong, *quote_info)
+        embed = _add_test_settings_to_embed(
+            embed,
+            language=user.language,
+            pacer_name=pacer_name,
+            word_display=word_display,
+        )
+
+        view = TypingTestResultView(ctx, user, is_dict, length, wrong, *quote_info)
 
         view.message = await message.reply(embed=embed, view=view, mention_author=False)
 
