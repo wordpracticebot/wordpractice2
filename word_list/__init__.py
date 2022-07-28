@@ -29,6 +29,9 @@ languages = {
     "bengali": {
         "normal": "bengali/bengali_1k.json"
     },
+    "malay": {
+        "easy": "malay/malay.json",
+    },
     "russian": {
         "easy": "russian/russian.json",
         "normal": "russian/russian_1k.json",
@@ -69,4 +72,16 @@ languages = {
         "easy": "filipino/filipino.json",
         "normal": "filipino/filipino_1k.json",
     },
+    "greek": {
+        "easy": "greek/greek.json",
+    },
+    "swedish": {
+        "easy": "swedish/swedish.json",
+        "normal": "swedish/swedish_1k.json",
+    },
+    "danish": {
+        "easy": "danish/danish.json",
+        "normal": "danish/danish_1k.json",
+        "hard": "danish/danish_10k.json",
+    }
 }
