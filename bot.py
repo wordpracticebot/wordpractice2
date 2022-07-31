@@ -14,7 +14,7 @@ from discord.ext import bridge, commands
 
 import cogs
 import config
-from constants import (
+from data.constants import (
     ERROR_CLR,
     GITHUB_LINK,
     INFO_VIDEO,

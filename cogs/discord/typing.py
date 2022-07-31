@@ -17,9 +17,9 @@ from discord.ext import bridge, commands, tasks
 from discord.utils import escape_markdown
 from humanfriendly import format_timespan
 
-import icons
+import data.icons as icons
 import word_list
-from constants import (
+from data.constants import (
     CAPTCHA_ACC_PERC,
     CAPTCHA_INTERVAL,
     CAPTCHA_STARTING_THRESHOLD,
@@ -52,16 +52,19 @@ from helpers.user import get_pacer_display, get_pacer_speed
 from helpers.utils import (
     cmd_run_before,
     copy_doc,
+    get_lb_display,
     get_test_stats,
     get_test_type,
     get_test_zone,
     get_test_zone_name,
+    get_users_from_lb,
     get_xp_earned,
     invoke_completion,
     invoke_slash_command,
     message_banned_user,
 )
 
+# Spacing
 THIN_SPACE = "\N{THIN SPACE}"
 LONG_SPACE = "\N{IDEOGRAPHIC SPACE}"
 
@@ -94,6 +97,7 @@ def _get_log_additional(wpm, raw, acc, word_display, xp_earned):
 
 
 async def _cheating_check(ctx, user, user_data, score):
+    """Prevents blatant cheating"""
     if score.wpm >= IMPOSSIBLE_THRESHOLD:
 
         reason = "Cheating on the typing test"
@@ -103,8 +107,6 @@ async def _cheating_check(ctx, user, user_data, score):
         await ctx.bot.mongo.wipe_user(user_data)
 
         await message_banned_user(ctx, user, reason)
-
-        # TODO: log the word history
 
         embed = get_log_embed(
             ctx,
@@ -137,7 +139,7 @@ def _get_test_warning(raw, acc, result):
     return
 
 
-def get_user_input(message):
+def _get_user_input(message):
     return [] if message.content is None else message.content.split()
 
 
@@ -211,27 +213,34 @@ class TournamentView(ScrollView):
 
         self.t_data = self.sort_t_data(raw_t_data)
 
+        # Caches the leaderboard data
+        self.lb_data = None
+
         self.prev_view = None
 
         super().__init__(ctx, max_page=len(self.t_data))
 
-    def sort_t_data(self, raw_t_data):
-        # Ranking order: [soonest - latest, finished]
+    def get_tournament_type(self, t):
+        if t.end_time > self.start_date:
+            return 0
+        elif self.start_date < t.start_time:
+            return 1
+        else:
+            return 2
 
-        # Separating the finished and unfinished tournaments
-        finished = []
-        unfinished = []
+    def sort_t_data(self, raw_t_data):
+        # Ranking order: [soonest finish - latest finish, not started, finished]
+
+        # Separating the tournaments into the three classifications in order that they will be shown in
+        tournaments = [[], [], []]
 
         for t in raw_t_data:
-            if t.end_time < self.start_date:
-                finished.append(t)
-            else:
-                unfinished.append(t)
+            t_type = self.get_tournament_type(t)
 
-        tournaments = finished + unfinished
+            tournaments[t_type].append(t)
 
-        # Sorting the tournaments by end time
-        return sorted(tournaments, key=lambda t: t.end_time, reverse=True)
+        # Grouping and sorting the tournaments by end time
+        return sorted(sum(tournaments, []), key=lambda t: t.end_time, reverse=True)
 
     @property
     def t(self):
@@ -258,6 +267,8 @@ class TournamentView(ScrollView):
 
             quote_info = await Typing.handle_dictionary_input(self.ctx, length)
 
+            quote = quote_info[0]
+
             user = await self.ctx.bot.mongo.fetch_user(self.ctx.author)
 
             is_dict = True
@@ -277,8 +288,8 @@ class TournamentView(ScrollView):
 
             u_input = message.content.split()
 
-            wpm, raw, acc, _, cw, word_history, _ = get_test_stats(
-                u_input, quote_info[0], end_time
+            wpm, raw, acc, _, cw, word_history, wrong = get_test_stats(
+                u_input, quote, end_time
             )
 
             # Sending the results
@@ -314,8 +325,29 @@ class TournamentView(ScrollView):
                 embed=embed, view=view, mention_author=False
             )
 
-            # TODO: Save the result to the tournament
-            ...
+            # TODO: add warnings and only save if there are no warnings
+
+            score = self.ctx.bot.mongo.Score(
+                wpm=wpm,
+                raw=raw,
+                acc=acc,
+                cw=cw,
+                tw=len(quote),
+                xp=0,
+                timestamp=datetime.utcnow(),
+                is_race=False,
+                test_type_int=int(is_dict),
+                wrong=wrong,
+            )
+
+            # Getting the tournament value of the score (the value that is going to be stored)
+            value = self.t.get_value(score)
+
+            # Save the result to the tournament
+            await self.ctx.bot.mongo.db.tournament.update_one(
+                {"_id": self.t.id},
+                {"$max": {f"rankings.{self.ctx.author.id}": value}},
+            )
 
             # TODO: Show the user the updated results
             ...
@@ -326,23 +358,64 @@ class TournamentView(ScrollView):
         await super().update_buttons()
 
         # Updating the join button
-        if self.t.end_time < self.start_date:
-            self.start_btn.disabled = True
-            self.start_btn.label = "Finished"
-            self.start_btn.style = discord.ButtonStyle.grey
-        else:
+
+        t_type = self.get_tournament_type(self.t)
+
+        if t_type == 0:
             self.start_btn.disabled = False
             self.start_btn.label = "Start"
             self.start_btn.style = discord.ButtonStyle.success
+        else:
+            self.start_btn.disabled = True
+            self.start_btn.style = discord.ButtonStyle.grey
+
+            if t_type == 1:
+                self.start_btn.label = "Not Started"
+            else:
+                self.start_btn.label = "Finished"
 
     async def create_page(self):
-        time_display = f"<t:{self.t.unix_start}:f> - <t:{self.t.unix_end}:f>"
+        t_type = self.get_tournament_type(self.t)
+
+        if t_type == 0:
+            t_time = f"Ends in <t:{self.t.unix_end}:R> (<t:{self.t.unix_end}:f>)"
+        elif t_type == 1:
+            t_time = f"Starts in <t:{self.t.unix_start}:R> (<t:{self.t.unix_start}:f>)"
+        else:
+            t_time = f"Ended <t:{self.t.unix_end}:R> (<t:{self.t.unix_end}:f>)"
 
         embed = self.ctx.embed(
             title=self.t.name,
-            description=f"{self.t.description}\n\n{time_display}\n\n**Rankings:**",
+            description=f"{self.t.description}\n\n{t_time}\n\n**Rankings:**",
             url=self.t.link,
         )
+
+        # Displaying the rankings of the tournament
+        if self.t.rankings:
+
+            if self.lb_data is None:
+                data = await get_users_from_lb(self.ctx.bot, self.t.rankings)
+
+                self.lb_data = sorted(data, key=lambda x: x[1], reverse=True)
+
+            # TODO: add a util for this
+            for i, (u, v) in enumerate(
+                self.lb_data[self.page * 10 : (self.page + 1) * 10]
+            ):
+                lb_display = get_lb_display(
+                    i + 1, self.t.unit, u, v, self.ctx.author.id
+                )
+
+                embed.add_field(
+                    name=lb_display,
+                    value="** **",
+                    inline=False,
+                )
+
+            # TODO: add the rankings of the user and make a util for that
+
+        else:
+            embed.description += "\nNo users have participated yet"
 
         embed.set_thumbnail(url=self.t.icon)
 
@@ -493,7 +566,7 @@ class HighScoreCaptchaView(BaseView):
                 message.created_at.timestamp(), start_msg.created_at.timestamp() + lag
             )
 
-            u_input = get_user_input(message)
+            u_input = _get_user_input(message)
 
             _, raw, _, cc, _, word_history, _ = get_test_stats(u_input, quote, end_time)
 
@@ -839,7 +912,7 @@ class RaceJoinView(BaseView):
 
         r = self.racers[m.author.id]
 
-        u_input = get_user_input(m)
+        u_input = _get_user_input(m)
 
         wpm, raw, _, cc, cw, _, wrong = get_test_stats(u_input, self.quote, end_time)
 
@@ -1253,8 +1326,8 @@ class Typing(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @cooldown(10, 3)
     @bridge.bridge_command()
+    @cooldown(10, 3)
     async def tournaments(self, ctx):
         """Typing tournaments"""
 
@@ -1265,8 +1338,8 @@ class Typing(commands.Cog):
 
         await view.start()
 
-    @cooldown(5, 1)
     @tt_group.command(name="dictionary")
+    @cooldown(5, 1)
     @word_option
     async def tt_dictionary(self, ctx, length: int):
         """Take a dictionary typing test"""
@@ -1274,8 +1347,8 @@ class Typing(commands.Cog):
 
         await self.do_typing_test(ctx, True, quote_info, length, ctx.respond)
 
-    @cooldown(5, 1)
     @tt_group.command(name="quote")
+    @cooldown(5, 1)
     @quote_option
     async def tt_quote(self, ctx, length: str):
         """Take a quote typing test"""
@@ -1283,20 +1356,20 @@ class Typing(commands.Cog):
 
         await self.do_typing_test(ctx, False, quote_info, length, ctx.respond)
 
-    @cooldown(5, 1)
     @commands.group(usage="[length]", invoke_without_command=True)
+    @cooldown(5, 1)
     @copy_doc(tt_dictionary)
     async def tt(self, ctx, length: int = 35):
         await invoke_slash_command(self.tt_dictionary, self, ctx, length)
 
-    @cooldown(5, 1)
     @tt.command(usage="[length]", name="quote")
+    @cooldown(5, 1)
     @copy_doc(tt_quote)
     async def _tt_quote(self, ctx, length: str):
         await invoke_slash_command(self.tt_quote, self, ctx, length)
 
-    @cooldown(6, 2)
     @race_group.command(name="dictionary")
+    @cooldown(6, 2)
     @word_option
     async def race_dictionary(self, ctx, length: int = 35):
         """Take a multiplayer dictionary typing test"""
@@ -1305,8 +1378,8 @@ class Typing(commands.Cog):
 
         await self.show_race_start(ctx, True, quote_info)
 
-    @cooldown(6, 2)
     @race_group.command(name="quote")
+    @cooldown(6, 2)
     @quote_option
     async def race_quote(self, ctx, length: str):
         """Take a multiplayer quote typing test"""
@@ -1315,14 +1388,14 @@ class Typing(commands.Cog):
 
         await self.show_race_start(ctx, False, quote_info)
 
-    @cooldown(6, 2)
     @commands.group(usage="[length]", invoke_without_command=True)
+    @cooldown(6, 2)
     @copy_doc(race_dictionary)
     async def race(self, ctx, length: int):
         await invoke_slash_command(self.race_dictionary, self, ctx, length)
 
-    @cooldown(6, 2)
     @race.command(usage="[length]", name="quote")
+    @cooldown(6, 2)
     @copy_doc(race_quote)
     async def _race_quote(self, ctx, length: str):
         await invoke_slash_command(self.race_quote, self, ctx, length)

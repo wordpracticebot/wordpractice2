@@ -6,7 +6,7 @@ import numpy as np
 from discord.ext import commands, tasks
 
 from config import DBL_TOKEN, TESTING
-from constants import AVG_AMT, CHALLENGE_AMT, UPDATE_24_HOUR_INTERVAL
+from data.constants import AVG_AMT, CHALLENGE_AMT, UPDATE_24_HOUR_INTERVAL
 
 
 class Tasks(commands.Cog):

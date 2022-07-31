@@ -4,9 +4,9 @@ import discord
 from discord.commands import Option, SlashCommandGroup
 from discord.ext import bridge, commands
 
-import icons
+import data.icons as icons
 import word_list
-from constants import (
+from data.constants import (
     DEFAULT_WRAP,
     MIN_PACER_SPEED,
     PACER_PLANES,
@@ -209,9 +209,9 @@ class Customization(commands.Cog):
 
     formatted_pacer_planes = [p.capitalize() for p in PACER_PLANES]
 
+    @theme_group.command(name="custom")
     @premium_command()
     @cooldown(8, 3)
-    @theme_group.command(name="custom")
     @colour_option("background")
     @colour_option("text")
     async def theme_custom(self, ctx, background, text):
@@ -250,8 +250,8 @@ class Customization(commands.Cog):
 
         await self.bot.mongo.replace_user_data(user, ctx.author)
 
-    @cooldown(8, 3)
     @theme_group.command()
+    @cooldown(8, 3)
     async def premade(self, ctx):
         """Choose a premade theme for your typing test"""
 
@@ -263,15 +263,15 @@ class Customization(commands.Cog):
 
         await ctx.respond(content="** **", view=view)
 
-    @cooldown(8, 3)
     @commands.group(hidden=True, invoke_without_command=True)
+    @cooldown(8, 3)
     @copy_doc(premade)
     async def theme(self, ctx):
         await invoke_slash_command(self.premade, self, ctx)
 
-    @premium_command()
-    @cooldown(8, 3)
     @theme.command(name="custom")
+    @cooldown(8, 3)
+    @premium_command()
     @copy_doc(theme_custom)
     async def _theme_custom(self, ctx, background, text):
         converter = HexOrRGB()
@@ -281,14 +281,14 @@ class Customization(commands.Cog):
 
         await invoke_slash_command(self.theme_custom, self, ctx, background, text)
 
-    @cooldown(8, 3)
     @theme.command(name="premade")
+    @cooldown(8, 3)
     @copy_doc(premade)
     async def _premade(self, ctx):
         await invoke_slash_command(self.premade, self, ctx)
 
-    @cooldown(8, 3)
     @bridge.bridge_command()
+    @cooldown(8, 3)
     @difficulty_option
     @language_option
     async def language(self, ctx, name: str, difficulty: str):
@@ -326,8 +326,8 @@ class Customization(commands.Cog):
 
         await self.bot.mongo.replace_user_data(user, ctx.author)
 
-    @cooldown(8, 3)
     @pacer_group.command()
+    @cooldown(8, 3)
     async def style(
         self,
         ctx,
@@ -354,26 +354,26 @@ class Customization(commands.Cog):
 
         await self.bot.mongo.replace_user_data(user, ctx.author)
 
-    @cooldown(8, 3)
     @pacer_group.command()
+    @cooldown(8, 3)
     async def pb(self, ctx):
         """Set your typing test pacer to your personal best"""
         await self.handle_update_pacer_speed(ctx, "Personal Best", "pb")
 
-    @cooldown(8, 3)
     @pacer_group.command()
+    @cooldown(8, 3)
     async def average(self, ctx):
         """Set your typing test pacer to your average speed"""
         await self.handle_update_pacer_speed(ctx, "Average", "avg")
 
-    @cooldown(8, 3)
     @pacer_group.command()
+    @cooldown(8, 3)
     async def off(self, ctx):
         """Turn off your typing test pacer"""
         await self.handle_update_pacer_speed(ctx, "Off", "")
 
-    @cooldown(8, 3)
     @pacer_group.command(name="custom")
+    @cooldown(8, 3)
     async def pacer_custom(
         self,
         ctx,
@@ -391,19 +391,19 @@ class Customization(commands.Cog):
 
         await self.handle_update_pacer_speed(ctx, f"{speed} wpm", str(speed))
 
-    @cooldown(8, 3)
     @commands.group(hidden=True, case_insensitive=True, invoke_without_command=True)
+    @cooldown(8, 3)
     async def pacer(self, ctx, speed: int):
         await invoke_slash_command(self.pacer_custom, self, ctx, speed)
 
-    @cooldown(8, 3)
     @pacer.command(name="custom")
+    @cooldown(8, 3)
     @copy_doc(pacer_custom)
     async def _pacer_custom(self, ctx, speed: int):
         await invoke_slash_command(self.pacer_custom, self, ctx, speed)
 
-    @cooldown(8, 3)
     @pacer.command(name="style")
+    @cooldown(8, 3)
     @copy_doc(style)
     async def _style(self, ctx, plane: str):
 
@@ -414,26 +414,26 @@ class Customization(commands.Cog):
 
         await invoke_slash_command(self.style, self, ctx, plane)
 
-    @cooldown(8, 3)
     @pacer.command(name="pb")
+    @cooldown(8, 3)
     @copy_doc(pb)
     async def _pb(self, ctx):
         await invoke_slash_command(self.pb, self, ctx)
 
-    @cooldown(8, 3)
     @pacer.command(name="average")
+    @cooldown(8, 3)
     @copy_doc(average)
     async def _average(self, ctx):
         await invoke_slash_command(self.average, self, ctx)
 
-    @cooldown(8, 3)
     @pacer.command(name="off")
+    @cooldown(8, 3)
     @copy_doc(off)
     async def _off(self, ctx):
         await invoke_slash_command(self.off, self, ctx)
 
-    @cooldown(8, 3)
     @bridge.bridge_command()
+    @cooldown(8, 3)
     async def equip(self, ctx):
         """Equip a badge that you own"""
         user = ctx.initial_user
@@ -449,13 +449,13 @@ class Customization(commands.Cog):
 
         await view.start()
 
-    @cooldown(5, 2)
     @commands.user_command(name="Typing Settings")
+    @cooldown(5, 2)
     async def settings_user(self, ctx, member: discord.Member):
         await self.handle_settings_cmd(ctx, member)
 
-    @cooldown(5, 2)
     @bridge.bridge_command()
+    @cooldown(5, 2)
     @user_option
     async def settings(self, ctx, user: discord.User = None):
         """View user settings"""

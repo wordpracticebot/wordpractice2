@@ -5,10 +5,10 @@ from textwrap import TextWrapper
 import discord
 from discord.ext import bridge, commands
 
-import icons
+import data.icons as icons
 from challenges.achievements import categories, get_achievement_display
 from config import SUPPORT_GUILD_ID
-from constants import (
+from data.constants import (
     INFO_VIDEO,
     PRIVACY_POLICY_LINK,
     RULES_LINK,
@@ -52,24 +52,6 @@ CREDITS = [
         "Thank you to freepik for the awesome free assets!",
     ],
 ]
-
-
-def _add_commands(prefix, embed, cmds):
-    """Formats commands fields and adds them to embeds"""
-
-    wrapper = TextWrapper(width=55)
-
-    for cmd in cmds:
-        cmd_name = format_command(cmd)
-
-        embed.add_field(
-            name=f"{prefix}{cmd_name}",
-            value="\n".join(wrapper.wrap(text=cmd.description or cmd.help))
-            or "No command description",
-            inline=False,
-        )
-
-    return embed
 
 
 class CategorySelect(discord.ui.Select):
@@ -151,7 +133,18 @@ class HelpView(BaseView):
             description=cog.description or "No category description",
         )
 
-        embed = _add_commands(self.ctx.prefix, embed, cmds)
+        wrapper = TextWrapper(width=55)
+
+        # Displaying all the commands
+        for cmd in cmds:
+            cmd_name = format_command(cmd)
+
+            embed.add_field(
+                name=f"{self.ctx.prefix}{cmd_name}",
+                value="\n".join(wrapper.wrap(text=cmd.description or cmd.help))
+                or "No command description",
+                inline=False,
+            )
 
         return embed
 
@@ -230,8 +223,8 @@ class Misc(commands.Cog):
 
         await view.start()
 
-    @cooldown(3, 1)
     @bridge.bridge_command()
+    @cooldown(3, 1)
     async def stats(self, ctx):
         """Various statistics related to the bot"""
         embed = ctx.embed(title="Bot Stats")
@@ -262,11 +255,7 @@ class Misc(commands.Cog):
         )
         embed.set_thumbnail(url="https://i.imgur.com/CBl34Rv.png")
 
-        view = create_link_view(
-            {
-                "Privacy Policy": PRIVACY_POLICY_LINK,
-            }
-        )
+        view = create_link_view({"Privacy Policy": PRIVACY_POLICY_LINK})
 
         await ctx.respond(embed=embed, view=view)
 
@@ -281,11 +270,7 @@ class Misc(commands.Cog):
 
         embed.set_thumbnail(url="https://i.imgur.com/HCntMH9.png")
 
-        view = create_link_view(
-            {
-                "Rules": RULES_LINK,
-            }
-        )
+        view = create_link_view({"Rules": RULES_LINK})
 
         await ctx.respond(embed=embed, view=view)
 

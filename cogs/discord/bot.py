@@ -11,7 +11,7 @@ import humanize
 from cryptography.fernet import Fernet
 from discord.ext import bridge, commands
 
-import icons
+import data.icons as icons
 from challenges.achievements import (
     categories,
     get_achievement_display,
@@ -20,7 +20,7 @@ from challenges.achievements import (
 from challenges.daily import get_daily_challenges
 from challenges.season import get_season_tiers
 from config import GRAPH_CDN_SECRET
-from constants import (
+from data.constants import (
     AVG_AMT,
     GRAPH_CDN_BASE_URL,
     GRAPH_EXPIRE_TIME,
@@ -34,42 +34,29 @@ from helpers.checks import cooldown, user_check
 from helpers.converters import user_option
 from helpers.ui import BaseView, DictButton, ScrollView, ViewFromDict
 from helpers.user import get_pacer_display, get_theme_display, get_typing_average
-from helpers.utils import calculate_score_consistency, cmd_run_before, get_bar
+from helpers.utils import (
+    calculate_score_consistency,
+    cmd_run_before,
+    get_bar,
+    get_lb_display,
+    get_users_from_lb,
+)
 
+# Spacing characteres
 THIN_SPACE = "\N{THIN SPACE}"
 LINE_SPACE = "\N{BOX DRAWINGS LIGHT HORIZONTAL}"
 
-SCORE_DATA_LABELS = {
-    "Wpm": "wpm",
-    "Raw Wpm": "raw",
-    "Accuracy": "acc",
-    "Correct Words": "cw",
-    "Total Words": "tw",
-    "Experience": "xp",
-    "Unix Timestamp": "unix_timestamp",
-}
+# Score command
+SCORES_PER_PAGE = 3
 
+# Season command
+EMOJIS_PER_TIER = 4
 SEASON_TROPHY_DATA = [
     ["Gold Trophy", icons.trophies[0], [1, 1]],
     ["Silver Trophy", icons.trophies[1], [2, 2]],
     ["Bronze Trophy", icons.trophies[2], [3, 3]],
     ["Top 10 Trophy", icons.trophies[3], [4, 10]],
 ]
-
-SCORES_PER_PAGE = 3
-
-EMOJIS_PER_TIER = 4
-
-
-async def _get_users_from_lb(bot, lb: dict):
-    data = []
-
-    user_data = await bot.mongo.fetch_many_users(*lb.keys())
-
-    for u, v in list(lb.items()):
-        data.append([user_data[u], v])
-
-    return data
 
 
 async def _get_lb_placing(lb_data, c, user_id):
@@ -84,14 +71,6 @@ async def _get_lb_placing(lb_data, c, user_id):
         placing = await c.get_placing(user_id)
 
     return placing, lb_placing
-
-
-def _encrypt_data(data: dict):
-    encoded_data = zlib.compress(json.dumps(data, separators=(",", ":")).encode())
-
-    encrypted_data = Fernet(GRAPH_CDN_SECRET.encode()).encrypt(encoded_data)
-
-    return encrypted_data.decode()
 
 
 def get_graph_link(*, user, amt: int, dimensions: tuple):
@@ -117,17 +96,14 @@ def get_graph_link(*, user, amt: int, dimensions: tuple):
         "colours": user.theme + ["#ffffff"],
     }
 
-    data = _encrypt_data(payload)
+    # Encrypting the data
+    encoded_data = zlib.compress(json.dumps(payload, separators=(",", ":")).encode())
+
+    encrypted_data = Fernet(GRAPH_CDN_SECRET.encode()).encrypt(encoded_data)
+
+    data = encrypted_data.decode()
 
     return f"{GRAPH_CDN_BASE_URL}/score_graph?raw_data={data}"
-
-
-def get_lb_display(p, c, u, value, author_id):
-    extra = "__" if u.id == author_id else ""
-
-    value = int(value) if value.is_integer() else float(value)
-
-    return f"`{p}.` {extra}{u.display_name} - {value:,} {c.unit}{extra}"
 
 
 class SeasonView(ViewFromDict):
@@ -236,7 +212,7 @@ class SeasonView(ViewFromDict):
                     u, value = self.lb_data[i]
 
                     lb_display = get_lb_display(
-                        i + 1, self.category, u, value, self.ctx.author.id
+                        i + 1, self.category.unit, u, value, self.ctx.author.id
                     )
 
                     lb_placings.append(lb_display)
@@ -277,7 +253,7 @@ class SeasonView(ViewFromDict):
 
         raw_lb_data = await self.category.get_lb_data(end)
 
-        self.lb_data = await _get_users_from_lb(self.ctx.bot, raw_lb_data)
+        self.lb_data = await get_users_from_lb(self.ctx.bot, raw_lb_data)
 
         # Getting the placing of the author
         self.placing, self.lb_placing = await _get_lb_placing(
@@ -300,7 +276,7 @@ class GraphButton(DictButton):
 
 class GraphView(ViewFromDict):
     def __init__(self, ctx, user):
-        test_amts = [10, 25, 50, 100]
+        test_amts = [10, 25, 50, 100, 200]
 
         super().__init__(ctx, {f"{i} Tests": i for i in test_amts})
 
@@ -351,7 +327,7 @@ class GraphView(ViewFromDict):
             self.link_cache[total] = url
 
         if self.user.is_premium is False:
-            embed.set_footer(text="Donators can save up to 250 tests")
+            embed.set_footer(text=f"Donators can save up to {SCORE_SAVE_AMT} tests")
 
         embed.set_image(url=url)
 
@@ -366,15 +342,28 @@ class ScoreView(ScrollView):
 
         self.user = user
 
-    @property
-    def user_scores(self):
-        return self.user.scores[::-1][:REGULAR_SCORE_LIMIT]
+        self.user_scores = self.get_user_scores()
+
+    def get_user_scores(self):
+        limit = SCORE_SAVE_AMT if self.user.is_premium else REGULAR_SCORE_LIMIT
+
+        return self.user.scores[::-1][:limit]
 
     def get_formatted_data(self):
-        data = {n: [] for n in SCORE_DATA_LABELS.keys()}
+        data_labels = {
+            "Wpm": "wpm",
+            "Raw Wpm": "raw",
+            "Accuracy": "acc",
+            "Correct Words": "cw",
+            "Total Words": "tw",
+            "Experience": "xp",
+            "Unix Timestamp": "unix_timestamp",
+        }
+
+        data = {n: [] for n in data_labels.keys()}
 
         for s in self.user_scores:
-            for n, v in SCORE_DATA_LABELS.items():
+            for n, v in data_labels.items():
                 data[n].append(getattr(s, v))
 
         return data
@@ -525,7 +514,7 @@ class LeaderboardView(ScrollView):
         else:
             raw_lb_data = await c.get_lb_data()
 
-            lb = await _get_users_from_lb(self.ctx.bot, raw_lb_data)
+            lb = await get_users_from_lb(self.ctx.bot, raw_lb_data)
 
             placing, lb_placing = await _get_lb_placing(
                 raw_lb_data, c, self.ctx.author.id
@@ -537,7 +526,7 @@ class LeaderboardView(ScrollView):
         for i, (u, value) in enumerate(lb[self.page * 10 : (self.page + 1) * 10]):
             p = self.page * 10 + i + 1
 
-            lb_display = get_lb_display(p, c, u, value, self.ctx.author.id)
+            lb_display = get_lb_display(p, c.unit, u, value, self.ctx.author.id)
 
             embed.add_field(
                 name=lb_display,
@@ -982,15 +971,15 @@ class Bot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @cooldown(7, 2)
     @bridge.bridge_command()
+    @cooldown(7, 2)
     @user_option
     async def profile(self, ctx, user: discord.User = None):
         """View user statistics"""
         await self.handle_profile_cmd(ctx, user)
 
-    @cooldown(7, 2)
     @commands.user_command(name="Typing Profile")
+    @cooldown(7, 2)
     async def profile_user(self, ctx, member: discord.Member):
         await self.handle_profile_cmd(ctx, member)
 
@@ -1001,15 +990,15 @@ class Bot(commands.Cog):
 
         await view.start()
 
-    @cooldown(5, 2)
     @bridge.bridge_command()
+    @cooldown(5, 2)
     @user_option
     async def graph(self, ctx, user: discord.User = None):
         """See a graph of a user's typing scores"""
         await self.handle_graph_cmd(ctx, user)
 
-    @cooldown(5, 2)
     @commands.user_command(name="Typing Graph")
+    @cooldown(5, 2)
     async def graph_user(self, ctx, member: discord.Member):
         await self.handle_graph_cmd(ctx, member)
 
@@ -1022,8 +1011,8 @@ class Bot(commands.Cog):
         view = GraphView(ctx, user_data)
         await view.start()
 
-    @cooldown(10, 3)
     @bridge.bridge_command()
+    @cooldown(10, 5)
     async def leaderboard(self, ctx):
         """See the top users in any category"""
 
@@ -1033,8 +1022,8 @@ class Bot(commands.Cog):
 
         await view.start()
 
-    @cooldown(5, 2)
     @bridge.bridge_command()
+    @cooldown(5, 2)
     @user_option
     async def achievements(self, ctx, user: discord.User = None):
         """See all the achievements"""
@@ -1044,8 +1033,8 @@ class Bot(commands.Cog):
 
         await view.start()
 
-    @cooldown(5, 2)
     @bridge.bridge_command()
+    @cooldown(5, 2)
     async def challenges(self, ctx):
         """View the daily challenges and your progress on them"""
 
@@ -1112,8 +1101,8 @@ class Bot(commands.Cog):
                 "Challenges restart at the same time every day!", ephemeral=True
             )
 
-    @cooldown(6, 2)
     @bridge.bridge_command()
+    @cooldown(6, 2)
     async def season(self, ctx):
         """Information about the monthly season and your progress in it"""
         view = SeasonView(ctx)
@@ -1132,8 +1121,8 @@ class Bot(commands.Cog):
 
         return user_data
 
-    @cooldown(6, 2)
     @bridge.bridge_command()
+    @cooldown(6, 2)
     @user_option
     async def scores(self, ctx, user: discord.User = None):
         """View and download a user's recent typing scores"""
@@ -1146,8 +1135,8 @@ class Bot(commands.Cog):
 
         await view.start()
 
-    @cooldown(5, 2)
     @bridge.bridge_command()
+    @cooldown(5, 2)
     @user_option
     async def badges(self, ctx, user: discord.User = None):
         """View a user's badges"""

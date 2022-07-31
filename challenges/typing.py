@@ -15,14 +15,6 @@ class Speed(Achievement):
         return user.highest_speed, self.wpm
 
 
-class OverflowSpeed(Speed):
-    def __init__(self, name, wpm):
-        super().__init__(
-            name,
-            wpm,
-        )
-
-
 class Perfectionist(Achievement):
     def __init__(self, amt):
         super().__init__(

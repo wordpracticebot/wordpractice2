@@ -1,10 +1,11 @@
 import time
 
 import discord
+from discord.ext import commands
 from discord.utils import escape_markdown
 
-import icons
-from constants import DEFAULT_VIEW_TIMEOUT, SUPPORT_SERVER_INVITE
+import data.icons as icons
+from data.constants import DEFAULT_VIEW_TIMEOUT, SUPPORT_SERVER_INVITE
 from helpers.errors import OnGoingTest
 
 
@@ -59,7 +60,7 @@ class CustomEmbed(discord.Embed):
 class BaseView(discord.ui.View):
     def __init__(
         self,
-        ctx,
+        ctx: commands.Context,
         timeout=DEFAULT_VIEW_TIMEOUT,
         message=None,
         personal=True,

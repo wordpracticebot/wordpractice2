@@ -8,12 +8,12 @@ from discord.ext.commands import errors
 from PIL import ImageDraw
 from rapidfuzz import fuzz, process
 
-import icons
+import data.icons as icons
 from challenges.achievements import check_achievements, check_categories
 from challenges.daily import get_daily_challenges
 from challenges.rewards import group_rewards
 from challenges.season import check_season_rewards
-from constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
+from data.constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument, OnGoingTest
 from helpers.image import save_discord_static_img
 from helpers.ui import create_link_view, get_log_embed

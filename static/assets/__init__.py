@@ -1,6 +1,6 @@
 from PIL import Image, ImageFont
 
-from constants import FONT_SIZE
+from data.constants import FONT_SIZE
 
 path = "./static/assets"
 

@@ -3,7 +3,7 @@ import time
 import discord
 from discord.ext import commands
 
-from constants import PREMIUM_LINK
+from data.constants import PREMIUM_LINK
 from helpers.ui import create_link_view
 from helpers.utils import get_command_name
 
@@ -11,7 +11,7 @@ from helpers.utils import get_command_name
 def premium_command():
     async def predicate(ctx):
         if ctx.initial_user.is_premium is False:
-            view = create_link_view({"Support wordPractice by donating!": PREMIUM_LINK})
+            view = create_link_view({"Support us by donating!": PREMIUM_LINK})
 
             embed = ctx.error_embed(
                 title="Premium Command",
@@ -59,7 +59,7 @@ def cooldown(regular: int, premium: int):
 
         c_time = time.time()
 
-        if user.is_premium:
+        if user.premium:
             c_time += premium
         else:
             c_time += regular

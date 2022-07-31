@@ -1,6 +1,6 @@
 from discord import SlashCommand, SlashCommandGroup
 
-from constants import DEFAULT_THEME
+from data.constants import DEFAULT_THEME
 from helpers.user import get_user_cmds_run
 from helpers.utils import get_command_name
 from static.assets import beginning_icon

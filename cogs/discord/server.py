@@ -1,13 +1,13 @@
 import discord
 from discord.ext import bridge, commands
 
-import icons
+import data.icons as icons
 from config import SUPPORT_GUILD_ID
-from constants import SUPPORT_SERVER_INVITE
+from data.constants import SUPPORT_SERVER_INVITE
+from data.roles import SERVER_ROLES
 from helpers.checks import cooldown
 from helpers.ui import create_link_view
 from helpers.user import get_typing_average
-from roles import SERVER_ROLES
 
 
 class Server(commands.Cog):
@@ -22,8 +22,8 @@ class Server(commands.Cog):
     def get_role_from_id(self, roles, role_id: int):
         return discord.utils.get(roles, id=role_id)
 
-    @cooldown(10, 3)
     @bridge.bridge_command(guild_ids=[SUPPORT_GUILD_ID])
+    @cooldown(10, 3)
     async def roles(self, ctx):
         """Update your wordPractice roles on the server"""
 

@@ -5,7 +5,7 @@ from discord.ext import commands
 
 
 class Logging(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot):
         self.bot = bot
 
         logging.getLogger("discord").setLevel(logging.INFO)

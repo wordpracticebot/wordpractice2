@@ -3,7 +3,7 @@ import math
 import discord
 from discord.ext import bridge, commands
 
-import icons
+import data.icons as icons
 from config import MODERATORS, SUPPORT_GUILD_ID
 from helpers.checks import user_check
 from helpers.converters import user_option

@@ -74,11 +74,11 @@ VOTING_SITES = {
 SUPPORT_SERVER_VOTE_LINK = "https://top.gg/servers/742960643312713738/vote"
 
 # Premium
-PREMIUM_LAUNCHED = False
+PREMIUM_LAUNCHED = True
 PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
 
 # Score saving
-SCORE_SAVE_AMT = 100
+SCORE_SAVE_AMT = 200
 REGULAR_SCORE_LIMIT = 50
 
 # Daily challenges

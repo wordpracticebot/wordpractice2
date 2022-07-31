@@ -1,4 +1,4 @@
-import icons
+import data.icons as icons
 from helpers.utils import get_bar
 
 from .badges import badges

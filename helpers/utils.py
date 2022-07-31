@@ -9,10 +9,10 @@ from typing import Callable
 from discord import SlashCommand, SlashCommandGroup, UserCommand
 from discord.ext import commands
 
-from constants import SUPPORT_SERVER_INVITE, TEST_ZONES
+from data.constants import SUPPORT_SERVER_INVITE, TEST_ZONES
+from data.icons import h_progress_bar, overflow_bar, v_progress_bar
 from helpers.ui import create_link_view
 from helpers.user import get_user_cmds_run
-from icons import h_progress_bar, overflow_bar, v_progress_bar
 from static.hints import date_hints, hints, random_hints
 
 BARS = (h_progress_bar, overflow_bar, v_progress_bar)
@@ -463,3 +463,22 @@ def invoke_completion(ctx):
         ctx.bot.dispatch("application_command_completion", ctx)
     else:
         ctx.bot.dispatch("command_completion", ctx)
+
+
+async def get_users_from_lb(bot, lb: dict):
+    data = []
+
+    user_data = await bot.mongo.fetch_many_users(*lb.keys())
+
+    for u, v in lb.items():
+        data.append([user_data[int(u)], v])
+
+    return data
+
+
+def get_lb_display(p, unit, u, value, author_id):
+    extra = "__" if u.id == author_id else ""
+
+    value = int(value) if value.is_integer() else float(value)
+
+    return f"`{p}.` {extra}{u.display_name} - {value:,} {unit}{extra}"

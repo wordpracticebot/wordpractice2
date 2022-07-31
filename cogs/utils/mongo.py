@@ -24,7 +24,7 @@ from umongo.frameworks import MotorAsyncIOInstance
 
 from challenges.rewards import BadgeReward
 from config import DATABASE_NAME, DATABASE_URI
-from constants import (
+from data.constants import (
     AUTO_MODERATOR_NAME,
     CHALLENGE_AMT,
     DEFAULT_THEME,
@@ -49,43 +49,6 @@ def _get_meta_data(user):
         "infractions": user.infractions,
         "banned": user.banned,
     }
-
-
-class TournamentValue(EmbeddedDocument):
-    # Can be used to store data that is unique to the tournament
-    data = ListField(IntegerField, default=[])
-
-    # The score of the user in the tournament (used for ranking)
-    value = IntegerField(required=True)
-
-
-class Tournament(Document):
-    name = StringField(required=True)
-    description = StringField(required=True)
-
-    link = StringField(required=True)
-    icon = StringField(required=True)
-
-    start_time = DateTimeField(required=True)
-    end_time = DateTimeField(required=True)
-
-    rankings = DictField(IntegerField(), EmbeddedField(TournamentValue), default={})
-
-    async def add_ranking(self, user, value: TournamentValue):
-        self.rankings[user.id] = value
-
-    @property
-    def unix_start(self):
-        return datetime_to_unix(self.start_time)
-
-    @property
-    def unix_end(self):
-        return datetime_to_unix(self.end_time)
-
-
-class QualificationTournament(Tournament):
-    # Amount of users allowed to qualify for the tournament
-    amount = IntegerField(required=True)
 
 
 class Infraction(EmbeddedDocument):
@@ -311,8 +274,41 @@ class UserBackup(UserBase):
         return datetime_to_unix(self.wiped_at)
 
 
+class Tournament(Document):
+    name = StringField(required=True)
+    description = StringField(required=True)
+
+    link = StringField(required=True)
+    icon = StringField(required=True)
+
+    start_time = DateTimeField(required=True)
+    end_time = DateTimeField(required=True)
+
+    unit = StringField(required=True)
+
+    rankings = DictField(IntegerField(), IntegerField(), default={})
+
+    def get_value(self, score: Score):
+        return score.wpm
+
+    @property
+    def unix_start(self):
+        return datetime_to_unix(self.start_time)
+
+    @property
+    def unix_end(self):
+        return datetime_to_unix(self.end_time)
+
+
+class QualificationTournament(Tournament):
+    unit = "wpm"
+
+    # Amount of users allowed to qualify for the tournament
+    amount = IntegerField(required=True)
+
+
 class Mongo(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot):
         self.bot = bot
         self.db = AsyncIOMotorClient(DATABASE_URI, io_loop=bot.loop)[DATABASE_NAME]
 
@@ -372,8 +368,10 @@ class Mongo(commands.Cog):
         users = await self.bot.redis.hmget("user", *user_ids)
 
         for _id, u in zip(user_ids, users):
+            _id = int(_id)
+
             if u is None:
-                not_found.add(_id)
+                not_found.add(int(_id))
             else:
                 data[_id] = self.User.build_from_mongo(pickle.loads(u))
 

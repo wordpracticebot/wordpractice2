@@ -4,7 +4,7 @@ Challenges are not directly related to achievements but they use almost the same
 import random
 from functools import lru_cache
 
-from constants import CHALLENGE_AMT
+from data.constants import CHALLENGE_AMT
 from helpers.user import get_daily_stat
 from helpers.utils import datetime_to_unix, get_start_of_day, is_today, weighted_lottery
 

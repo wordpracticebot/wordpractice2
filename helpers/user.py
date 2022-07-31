@@ -1,7 +1,12 @@
 import time
 from datetime import datetime
 
-from constants import AVG_AMT, MIN_PACER_SPEED, PACER_PLANES, UPDATE_24_HOUR_INTERVAL
+from data.constants import (
+    AVG_AMT,
+    MIN_PACER_SPEED,
+    PACER_PLANES,
+    UPDATE_24_HOUR_INTERVAL,
+)
 from static.themes import default
 
 

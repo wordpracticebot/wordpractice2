@@ -6,7 +6,7 @@ import discord
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-from constants import SIDE_BORDER, SPACING, STATIC_IMAGE_FORMAT, TOP_BORDER
+from data.constants import SIDE_BORDER, SPACING, STATIC_IMAGE_FORMAT, TOP_BORDER
 from static.assets import arial
 
 from .utils import run_in_executor

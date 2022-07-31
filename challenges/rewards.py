@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-import icons
+import data.icons as icons
 from static.badges import get_badge_from_id
 
 
