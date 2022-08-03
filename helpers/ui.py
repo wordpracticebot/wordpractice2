@@ -224,7 +224,7 @@ class ScrollView(PageView):
         return self._iter
 
     @property
-    def max_page(self):
+    def max_page(self) -> int:
         return math.ceil(len(self.iter) / self.per_page)
 
     @property

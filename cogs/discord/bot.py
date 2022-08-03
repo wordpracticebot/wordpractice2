@@ -400,10 +400,8 @@ class ScoreView(ScrollView):
         await self.send_as_file(buffer, "json", button, interaction)
 
     async def create_page(self):
-        # end_page = min((self.page + 1) * SCORES_PER_PAGE, total_scores)
-
         embed = self.ctx.embed(
-            title=f"{self.user.display_name} | Recent Scores ({self.start_page + 1} - {self.end_page} of {self.max_page})",
+            title=f"{self.user.display_name} | Recent Scores ({self.start_page + 1} - {self.end_page} of {len(self.iter)})",
             description=" "
             if self.user.is_premium
             else f"**[Donators]({PREMIUM_LINK})** can download and save up to {SCORE_SAVE_AMT} test scores!",

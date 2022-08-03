@@ -226,7 +226,7 @@ class TournamentView(ScrollView):
 
     @property
     def max_page(self):
-        return len(self.t.rankings) / self.per_page
+        return math.ceil(len(self.t.rankings) / self.per_page)
 
     @property
     def t(self):
@@ -416,9 +416,18 @@ class TournamentView(ScrollView):
         else:
             t_time = f"Ended <t:{self.t.unix_end}:R> (<t:{self.t.unix_end}:f>)"
 
+        if self.t.rankings and self.page + 1 != self.max_page:
+            page_display = f"(Page {self.page + 1} - {self.max_page})"
+        else:
+            page_display = ""
+
         embed = self.ctx.embed(
             title=self.t.name,
-            description=f"{self.t.description}\n\n{t_time}\n\n**Rankings:**",
+            description=(
+                f"{self.t.description}\n\n"
+                f"{t_time}\n\n"
+                f"**Rankings: {page_display}**"
+            ),
             url=self.t.link,
         )
 
