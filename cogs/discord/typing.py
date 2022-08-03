@@ -218,7 +218,26 @@ class TournamentView(ScrollView):
 
         self.prev_view = None
 
-        super().__init__(ctx, max_page=len(self.t_data))
+        # The current tournament index
+        self.t_page = 0
+
+        # The scroll view is used for scroll between the rankings in each tournament
+        super().__init__(ctx, iter=self.get_iter, per_page=10, row=1)
+
+    @property
+    def max_page(self):
+        return len(self.t.rankings) / self.per_page
+
+    @property
+    def t(self):
+        return self.t_data[self.t_page]
+
+    @property
+    def t_max_page(self):
+        return len(self.t_data)
+
+    def get_iter(self):
+        return self.lb_data
 
     def get_tournament_type(self, t):
         if t.end_time > self.start_date:
@@ -241,19 +260,6 @@ class TournamentView(ScrollView):
 
         # Grouping and sorting the tournaments by end time
         return sorted(sum(tournaments, []), key=lambda t: t.end_time, reverse=True)
-
-    @property
-    def t(self):
-        return self.t_data[self.page]
-
-    @discord.ui.button()
-    async def start_btn(self, button, interaction):
-        # Disabling the other buttons
-        self.disable_all_items()
-
-        await interaction.message.edit(view=self)
-
-        await self.do_tournament_test(interaction)
 
     async def do_tournament_test(self, _interaction):
         async def _test_callback(interaction):
@@ -354,8 +360,34 @@ class TournamentView(ScrollView):
 
         await _test_callback(_interaction)
 
+    @discord.ui.button(row=2)
+    async def start_btn(self, button, interaction):
+        # Disabling the other buttons
+        self.disable_all_items()
+
+        await interaction.message.edit(view=self)
+
+        await self.do_tournament_test(interaction)
+
+    @discord.ui.button(label="Next Tournament", style=discord.ButtonStyle.primary)
+    async def next_tournament(self, button, interaction):
+        if self.t_page != 0:
+            self.t_page -= 1
+            await self.update_all(interaction)
+
+    @discord.ui.button(label="Previous Tournament", style=discord.ButtonStyle.primary)
+    async def prev_tournament(self, button, interaction):
+        if self.t_page != self.t_max_page:
+            self.t_page += 1
+            await self.update_all(interaction)
+
     async def update_buttons(self):
         await super().update_buttons()
+
+        # Updating the scrolling tournament page buttons
+
+        self.next_tournament.disabled = self.t_page == 0
+        self.prev_tournament.disabled = self.t_page == self.t_max_page - 1
 
         # Updating the join button
 
@@ -398,10 +430,8 @@ class TournamentView(ScrollView):
 
                 self.lb_data = sorted(data, key=lambda x: x[1], reverse=True)
 
-            # TODO: add a util for this
-            for i, (u, v) in enumerate(
-                self.lb_data[self.page * 10 : (self.page + 1) * 10]
-            ):
+            for i, (u, v) in enumerate(self.items):
+
                 lb_display = get_lb_display(
                     i + 1, self.t.unit, u, v, self.ctx.author.id
                 )

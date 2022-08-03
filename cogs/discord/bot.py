@@ -46,9 +46,6 @@ from helpers.utils import (
 THIN_SPACE = "\N{THIN SPACE}"
 LINE_SPACE = "\N{BOX DRAWINGS LIGHT HORIZONTAL}"
 
-# Score command
-SCORES_PER_PAGE = 3
-
 # Season command
 EMOJIS_PER_TIER = 4
 SEASON_TROPHY_DATA = [
@@ -336,13 +333,11 @@ class GraphView(ViewFromDict):
 
 class ScoreView(ScrollView):
     def __init__(self, ctx, user):
-        page_amt = math.ceil(len(user.scores) / SCORES_PER_PAGE)
-
-        super().__init__(ctx, page_amt, compact=page_amt < 7)
-
         self.user = user
 
-        self.user_scores = self.get_user_scores()
+        iter = self.get_user_scores()
+
+        super().__init__(ctx, iter=iter, per_page=3)
 
     def get_user_scores(self):
         limit = SCORE_SAVE_AMT if self.user.is_premium else REGULAR_SCORE_LIMIT
@@ -362,7 +357,7 @@ class ScoreView(ScrollView):
 
         data = {n: [] for n in data_labels.keys()}
 
-        for s in self.user_scores:
+        for s in self.iter:
             for n, v in data_labels.items():
                 data[n].append(getattr(s, v))
 
@@ -405,23 +400,20 @@ class ScoreView(ScrollView):
         await self.send_as_file(buffer, "json", button, interaction)
 
     async def create_page(self):
-        total_scores = len(self.user_scores)
-
-        start_page = self.page * SCORES_PER_PAGE
-        end_page = min((self.page + 1) * SCORES_PER_PAGE, total_scores)
+        # end_page = min((self.page + 1) * SCORES_PER_PAGE, total_scores)
 
         embed = self.ctx.embed(
-            title=f"{self.user.display_name} | Recent Scores ({start_page + 1} - {end_page} of {total_scores})",
+            title=f"{self.user.display_name} | Recent Scores ({self.start_page + 1} - {self.end_page} of {self.max_page})",
             description=" "
             if self.user.is_premium
             else f"**[Donators]({PREMIUM_LINK})** can download and save up to {SCORE_SAVE_AMT} test scores!",
         )
 
-        for i, s in enumerate(self.user_scores[start_page:end_page]):
+        for i, s in enumerate(self.items):
             timestamp = s.unix_timestamp
 
             embed.add_field(
-                name=f"Score {start_page + i + 1} ({s.test_type})",
+                name=f"Score {self.start_page + i + 1} ({s.test_type})",
                 value=(
                     f">>> **Wpm:** {s.wpm}\n"
                     f"**Raw:** 108.21 {s.raw}\n"
@@ -483,7 +475,7 @@ class LeaderboardButton(discord.ui.Button):
 
 class LeaderboardView(ScrollView):
     def __init__(self, ctx):
-        super().__init__(ctx, int(LB_DISPLAY_AMT / 10), row=2, compact=False)
+        super().__init__(ctx, iter=self.get_iter, per_page=10, row=2)
 
         self.timeout = 60
 
@@ -491,6 +483,18 @@ class LeaderboardView(ScrollView):
         self.lb_data = {}
 
         self.active_btns = []
+
+    def get_iter(self):
+        lb = self.lb_data.get(self.c.lb_key)
+
+        if lb is None:
+            return None
+
+        return lb[0]
+
+    @property
+    def max_page(self):
+        return LB_DISPLAY_AMT
 
     @property
     def user(self):
@@ -500,33 +504,35 @@ class LeaderboardView(ScrollView):
     def lb(self):
         return self.lbs[self.category]
 
-    async def create_page(self):
-        c = self.lb.stats[self.stat]
+    @property
+    def c(self):
+        return self.lb.stats[self.stat]
 
+    async def create_page(self):
         embed = self.ctx.embed(
             title=f"{self.lb.title} Leaderboard | Page {self.page + 1}"
         )
 
         # Checking if the leaderboard data was cached
-        if c.lb_key in self.lb_data:
-            lb, placing, _ = self.lb_data[c.lb_key]
+        if self.c.lb_key in self.lb_data:
+            lb, placing, _ = self.lb_data[self.c.lb_key]
 
         else:
-            raw_lb_data = await c.get_lb_data()
+            raw_lb_data = await self.c.get_lb_data()
 
             lb = await get_users_from_lb(self.ctx.bot, raw_lb_data)
 
             placing, lb_placing = await _get_lb_placing(
-                raw_lb_data, c, self.ctx.author.id
+                raw_lb_data, self.c, self.ctx.author.id
             )
 
-            self.lb_data[c.lb_key] = (lb, placing, lb_placing)
+            self.lb_data[self.c.lb_key] = (lb, placing, lb_placing)
 
         # Generating the leaderboard UI
-        for i, (u, value) in enumerate(lb[self.page * 10 : (self.page + 1) * 10]):
-            p = self.page * 10 + i + 1
+        for i, (u, value) in enumerate(self.items):
+            p = self.start_page + i + 1
 
-            lb_display = get_lb_display(p, c.unit, u, value, self.ctx.author.id)
+            lb_display = get_lb_display(p, self.c.unit, u, value, self.ctx.author.id)
 
             embed.add_field(
                 name=lb_display,
@@ -536,10 +542,10 @@ class LeaderboardView(ScrollView):
 
         place_display = "N/A" if placing is None else placing
 
-        count = c.get_stat(self.user)
+        count = self.c.get_stat(self.user)
 
         embed.add_field(
-            name=f"{LINE_SPACE * 13}\n`{place_display}.` {self.user.display_name} - {count:,} {c.unit}",
+            name=f"{LINE_SPACE * 13}\n`{place_display}.` {self.user.display_name} - {count:,} {self.c.unit}",
             value="** **",
             inline=False,
         )
@@ -547,10 +553,8 @@ class LeaderboardView(ScrollView):
         return embed
 
     async def jump_to_placing(self, interaction):
-        c = self.lb.stats[self.stat]
-
         # The leaderboard data has to be cached for the user to be on the page
-        lb_placing = self.lb_data[c.lb_key][2]
+        lb_placing = self.lb_data[self.c.lb_key][2]
 
         if lb_placing is None:
             return await interaction.response.send_message(

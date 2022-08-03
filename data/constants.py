@@ -74,7 +74,7 @@ VOTING_SITES = {
 SUPPORT_SERVER_VOTE_LINK = "https://top.gg/servers/742960643312713738/vote"
 
 # Premium
-PREMIUM_LAUNCHED = True
+PREMIUM_LAUNCHED = False
 PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
 
 # Score saving

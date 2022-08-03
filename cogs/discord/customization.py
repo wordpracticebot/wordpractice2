@@ -111,11 +111,7 @@ class EquipSelect(discord.ui.Select):
 class EquipView(ScrollView):
     def __init__(self, ctx, user):
 
-        self.total_badges = len(user.badges)
-
-        page_amt = math.ceil(self.total_badges / 24)
-
-        super().__init__(ctx, page_amt, row=2)
+        super().__init__(ctx, iter=self.total_badges, per_page=24, row=2)
 
         self.user = user
 
@@ -129,12 +125,7 @@ class EquipView(ScrollView):
         if self.select_view is not None:
             self.remove_item(self.select_view)
 
-        start_page = self.page * 24
-        end_page = min((self.page + 1) * 24, self.total_badges)
-
-        self.select_view = EquipSelect(
-            self.ctx, self.user.badge_objs[start_page:end_page]
-        )
+        self.select_view = EquipSelect(self.ctx, self.items)
         self.add_item(self.select_view)
 
 

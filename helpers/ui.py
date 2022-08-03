@@ -1,4 +1,6 @@
+import math
 import time
+from typing import Callable, Iterable, Union
 
 import discord
 from discord.ext import commands
@@ -199,15 +201,51 @@ class PageView(BaseView):
 
 
 class ScrollView(PageView):
-    def __init__(self, ctx, max_page: int, row=0, compact=True):
+    def __init__(
+        self, ctx, *, iter: Union[Iterable, Callable], per_page: int = 1, row=0
+    ):
         super().__init__(ctx)
 
-        self.compact = compact
-        self.max_page = max_page
-        self.page = 0
+        self._iter = iter
+
+        self.per_page = per_page
+
         self.row = row
 
+        self.page = 0
+
         self.add_items()
+
+    @property
+    def iter(self):
+        if isinstance(self._iter, Callable):
+            return self._iter()
+
+        return self._iter
+
+    @property
+    def max_page(self):
+        return math.ceil(len(self.iter) / self.per_page)
+
+    @property
+    def compact(self):
+        return self.max_page > 7
+
+    @property
+    def has_btns(self):
+        return self.max_page > 1
+
+    @property
+    def start_page(self):
+        return self.page * self.per_page
+
+    @property
+    def end_page(self):
+        return (self.page + 1) * self.per_page
+
+    @property
+    def items(self):
+        return self.iter[self.start_page : self.end_page]
 
     def add_scroll_btn(self, emoji, callback):
         btn = discord.ui.Button(
@@ -222,10 +260,6 @@ class ScrollView(PageView):
         setattr(self, callback.__name__, btn)
 
         return btn
-
-    @property
-    def has_btns(self):
-        return self.max_page > 1
 
     def add_items(self):
         if not self.has_btns:

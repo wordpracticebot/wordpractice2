@@ -33,29 +33,22 @@ mod_command = bridge.bridge_command(
 
 class CatView(ScrollView):
     def __init__(self, ctx, user):
-        page_amt = math.ceil(len(user.infractions) / INFRACTIONS_PER_PAGE)
-
-        super().__init__(ctx, page_amt)
+        super().__init__(ctx, iter=user.infractions, per_page=INFRACTIONS_PER_PAGE)
 
         self.user = user
 
     async def create_page(self):
-        total_infs = len(self.user.infractions)
-
-        # TODO: add a util for this because it's duplicated in scoresview
-        start_page = self.page * INFRACTIONS_PER_PAGE
-        end_page = min((self.page + 1) * INFRACTIONS_PER_PAGE, total_infs)
 
         embed = self.ctx.error_embed(
             title=f"{self.user.username}'s Recent Infractions",
             description=f"**Current Ban Status:** {self.user.banned}",
         )
 
-        for i, inf in enumerate(self.user.infractions[::-1][start_page:end_page]):
+        for i, inf in enumerate(self.items):
             timestamp = inf.unix_timestamp
 
             embed.add_field(
-                name=f"Infraction {total_infs - (start_page + i)} ({inf.name})",
+                name=f"Infraction {self.max_page - (self.start_page + i)} ({inf.name})",
                 value=(
                     f">>> Moderator: {inf.mod_name} ({inf.mod_id})\n"
                     f"Reason: {inf.reason}\n"
