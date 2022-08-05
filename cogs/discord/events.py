@@ -1,4 +1,5 @@
 import copy
+import random
 from datetime import datetime
 
 import discord
@@ -414,6 +415,14 @@ class Events(commands.Cog):
         # ----- Done evaluating stuff ------
 
         if user.to_mongo() == new_user.to_mongo():
+            # Random chance of there being an announcement
+            if random.randint(0, 20) == 0:
+                announcements = await self.bot.mongo.get_announcements()
+
+                msg = random.choice(announcements)
+
+                await ctx.respond(msg)
+
             return
 
         # Actually sending stuff

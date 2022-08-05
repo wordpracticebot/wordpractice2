@@ -573,6 +573,11 @@ class Mongo(commands.Cog):
         """
         return await self.get_info_data("season-info")
 
+    async def get_announcements(self):
+        raw_data = await self.get_info_data("announcements")
+
+        return raw_data["data"]
+
     async def add_inf(
         self, ctx, user, user_data, reason, mod=None, is_ban: bool = True
     ):
