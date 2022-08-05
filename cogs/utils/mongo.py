@@ -22,6 +22,7 @@ from umongo.fields import (
 )
 from umongo.frameworks import MotorAsyncIOInstance
 
+import data.icons as icons
 from challenges.rewards import BadgeReward
 from config import DATABASE_NAME, DATABASE_URI
 from data.constants import (
@@ -299,12 +300,22 @@ class Tournament(Document):
     def unix_end(self):
         return datetime_to_unix(self.end_time)
 
+    def get_ranking_prefix(self, placing: int, value: int) -> str:
+        # 1 is the highest placing
+        return
+
 
 class QualificationTournament(Tournament):
     unit = "wpm"
 
     # Amount of users allowed to qualify for the tournament
     amount = IntegerField(required=True)
+
+    def get_ranking_prefix(self, placing: int, _) -> str:
+        if placing <= self.amount:
+            return icons.green_dot
+
+        return icons.red_dot
 
 
 class Mongo(commands.Cog):

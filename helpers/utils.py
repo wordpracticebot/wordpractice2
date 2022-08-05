@@ -3,6 +3,7 @@ import difflib
 import functools
 import math
 import random
+from bisect import bisect
 from datetime import datetime, timezone
 from typing import Callable
 
@@ -15,6 +16,7 @@ from helpers.ui import create_link_view
 from helpers.user import get_user_cmds_run
 from static.hints import date_hints, hints, random_hints
 
+# For the progress bars
 BARS = (h_progress_bar, overflow_bar, v_progress_bar)
 
 
@@ -476,9 +478,38 @@ async def get_users_from_lb(bot, lb: dict):
     return data
 
 
-def get_lb_display(p, unit, u, value, author_id):
-    extra = "__" if u.id == author_id else ""
+def get_lb_display(p, unit, u, value, author_id=None):
+    extra = "__" if author_id is not None and u.id == author_id else ""
 
-    value = int(value) if value.is_integer() else float(value)
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
 
     return f"`{p}.` {extra}{u.display_name} - {value:,} {unit}{extra}"
+
+
+def estimate_placing(lb: list[int], old_value: int, new_value: int) -> int:
+    """Estimates the new placing of a user from a leaderboard of descending values"""
+
+    # Reversing because bisect only supports ascending lists
+    lb.reverse()
+
+    if new_value >= lb[0]:
+        score_index = bisect(lb, new_value)
+
+        potential_placing = len(lb) - score_index + 1
+
+        # Adding the difference in placing
+        if old_value >= lb[0]:
+            initial_index = bisect(lb, old_value)
+
+            if initial_index != score_index:
+                diff = score_index - initial_index
+
+                return potential_placing, diff
+
+            # A difference of False means that the placing is the same
+            return potential_placing, False
+
+        return potential_placing, None
+
+    return None

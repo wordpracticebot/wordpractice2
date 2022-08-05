@@ -42,8 +42,9 @@ from helpers.utils import (
     get_users_from_lb,
 )
 
-# Spacing characteres
+# Spacing characters
 THIN_SPACE = "\N{THIN SPACE}"
+
 LINE_SPACE = "\N{BOX DRAWINGS LIGHT HORIZONTAL}"
 
 # Season command
@@ -223,8 +224,10 @@ class SeasonView(ViewFromDict):
 
                 value = self.category.get_stat(self.user)
 
+                display = get_lb_display(placing, self.category.unit, self.user, value)
+
                 embed.add_field(
-                    name=f"{LINE_SPACE * 13}\n`{placing}.` {self.user.display_name} - {value:,} {self.category.unit}",
+                    name=f"{LINE_SPACE * 13}\n{display}",
                     value="** **",
                     inline=False,
                 )
@@ -542,8 +545,10 @@ class LeaderboardView(ScrollView):
 
         count = self.c.get_stat(self.user)
 
+        display = get_lb_display(place_display, self.c.unit, self.user, count)
+
         embed.add_field(
-            name=f"{LINE_SPACE * 13}\n`{place_display}.` {self.user.display_name} - {count:,} {self.c.unit}",
+            name=f"{LINE_SPACE * 13}\n{display}",
             value="** **",
             inline=False,
         )

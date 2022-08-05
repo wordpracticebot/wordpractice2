@@ -4,7 +4,6 @@ import math
 import random
 import textwrap
 import time
-from bisect import bisect
 from copy import copy
 from datetime import datetime
 from itertools import chain, groupby
@@ -52,6 +51,7 @@ from helpers.user import get_pacer_display, get_pacer_speed
 from helpers.utils import (
     cmd_run_before,
     copy_doc,
+    estimate_placing,
     get_lb_display,
     get_test_stats,
     get_test_type,
@@ -67,6 +67,8 @@ from helpers.utils import (
 # Spacing
 THIN_SPACE = "\N{THIN SPACE}"
 LONG_SPACE = "\N{IDEOGRAPHIC SPACE}"
+
+LINE_SPACE = "\N{BOX DRAWINGS LIGHT HORIZONTAL}"
 
 HIGH_SCORE_CAPTCHA_TIMEOUT = 60
 
@@ -236,6 +238,10 @@ class TournamentView(ScrollView):
     def t_max_page(self):
         return len(self.t_data)
 
+    @property
+    def user(self):
+        return self.ctx.initial_user
+
     def get_iter(self):
         return self.lb_data
 
@@ -260,6 +266,13 @@ class TournamentView(ScrollView):
 
         # Grouping and sorting the tournaments by end time
         return sorted(sum(tournaments, []), key=lambda t: t.end_time, reverse=True)
+
+    def get_placing(self, user_id: int):
+        placing = next(
+            ((i, v) for i, (u, v) in enumerate(self.lb_data) if u.id == user_id), None
+        )
+
+        return placing
 
     async def do_tournament_test(self, _interaction):
         async def _test_callback(interaction):
@@ -331,8 +344,7 @@ class TournamentView(ScrollView):
                 embed=embed, view=view, mention_author=False
             )
 
-            # TODO: add warnings and only save if there are no warnings
-
+            # Creating the score object to manage the statistics better
             score = self.ctx.bot.mongo.Score(
                 wpm=wpm,
                 raw=raw,
@@ -346,17 +358,58 @@ class TournamentView(ScrollView):
                 wrong=wrong,
             )
 
-            # Getting the tournament value of the score (the value that is going to be stored)
-            value = self.t.get_value(score)
+            test_zone = get_test_zone_name(score.cw)
 
-            # Save the result to the tournament
-            await self.ctx.bot.mongo.db.tournament.update_one(
-                {"_id": self.t.id},
-                {"$max": {f"rankings.{self.ctx.author.id}": value}},
-            )
+            warning = _get_test_warning(score.raw, score.acc, test_zone)
 
-            # TODO: Show the user the updated results
-            ...
+            # Checking if there are any warnings
+            if warning is not None:
+                await self.ctx.respond(f"Warning: {warning}", ephemeral=True)
+
+            else:
+                result = await _cheating_check(
+                    self.ctx, self.ctx.author.id, user, score
+                )
+
+                if result:
+                    user = result
+
+                else:
+                    # Getting the tournament value of the score (the value that is going to be stored)
+                    value = self.t.get_value(score)
+
+                    # Save the result to the tournament
+                    await self.ctx.bot.mongo.db.tournament.update_one(
+                        {"_id": self.t.id},
+                        {"$max": {f"rankings.{self.ctx.author.id}": value}},
+                    )
+
+                    # Estimating the new placing of the user in the tournament
+
+                    placing = self.get_placing(self.ctx.author.id)
+
+                    if placing is not None:
+
+                        old_value = placing[1]
+
+                        estimate = estimate_placing(
+                            list(self.t.rankings.values()), old_value, value
+                        )
+
+                        if estimate is not None:
+
+                            potential_placing, diff = estimate
+
+                            if diff is not False:
+
+                                placing = humanize.ordinal(potential_placing)
+
+                                msg = f"**Your tournament placing is now {placing}**"
+
+                                if diff is not None:
+                                    msg += f" ({icons.up_arrow}{diff})"
+
+                                await self.ctx.respond(msg, ephemeral=True)
 
         await _test_callback(_interaction)
 
@@ -441,9 +494,16 @@ class TournamentView(ScrollView):
 
             for i, (u, v) in enumerate(self.items):
 
+                placing = i + 1
+
                 lb_display = get_lb_display(
-                    i + 1, self.t.unit, u, v, self.ctx.author.id
+                    placing, self.t.unit, u, v, self.ctx.author.id
                 )
+
+                prefix = self.t.get_ranking_prefix(placing, v)
+
+                if prefix is not None:
+                    lb_display = prefix + lb_display
 
                 embed.add_field(
                     name=lb_display,
@@ -451,7 +511,25 @@ class TournamentView(ScrollView):
                     inline=False,
                 )
 
-            # TODO: add the rankings of the user and make a util for that
+            # Checking if the author is in the rankings
+            if str(self.ctx.author.id) in self.t.rankings:
+                # Getting the placing of the user
+                placing_index, score = self.get_placing(self.ctx.author.id)
+
+                display = get_lb_display(
+                    placing_index + 1, self.t.unit, self.user, score
+                )
+
+                prefix = self.t.get_ranking_prefix(placing_index + 1, v)
+
+                if prefix is not None:
+                    display = prefix + display
+
+                embed.add_field(
+                    name=f"{LINE_SPACE * 13}\n{display}",
+                    value="** **",
+                    inline=False,
+                )
 
         else:
             embed.description += "\nNo users have participated yet"
@@ -1796,24 +1874,15 @@ class Typing(commands.Cog):
 
             score_lb = await c.get_lb_values_from_score(max="inf", min=initial_value)
 
-            # Reversing because bisect only supports ascending lists
-            score_lb.reverse()
+            estimate = estimate_placing(score_lb, initial_value, score.wpm)
 
-            if score.wpm >= score_lb[0]:
-                score_index = bisect(score_lb, score.wpm)
+            if estimate is not None:
+                potential_placing, diff = estimate
 
-                potential_placing = len(score_lb) - score_index
-
-                diff_display = ""
-
-                # Adding the difference in placing
-                if initial_value >= score_lb[0]:
-                    initial_index = bisect(score_lb, initial_value)
-
-                    if initial_index != score_index:
-                        diff = score_index - initial_index
-
-                        diff_display = f" ({icons.up_arrow}{diff})"
+                if diff is None:
+                    diff_display = ""
+                else:
+                    diff_display = f" ({icons.up_arrow}{diff})"
 
                 description += f"\n\nAlltime Placing: **{humanize.ordinal(potential_placing)}{diff_display}**"
 
