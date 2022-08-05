@@ -88,16 +88,6 @@ def _get_word_display(quote, raw_quote):
     return f"{len(quote)} ({len(raw_quote)} chars)"
 
 
-def _get_log_additional(wpm, raw, acc, word_display, xp_earned):
-    return (
-        f"**Wpm:** {wpm}\n"
-        f"**Raw:** {raw}\n"
-        f"**Accuracy:** {acc}\n"
-        f"**Word Amount:** {word_display}\n"
-        f"**XP:** {xp_earned}"
-    )
-
-
 async def _cheating_check(ctx, user, user_data, score):
     """Prevents blatant cheating"""
     if score.wpm >= IMPOSSIBLE_THRESHOLD:
@@ -288,6 +278,8 @@ class TournamentView(ScrollView):
 
             quote = quote_info[0]
 
+            raw_quote = " ".join(quote)
+
             user = await self.ctx.bot.mongo.fetch_user(self.ctx.author)
 
             is_dict = True
@@ -388,6 +380,8 @@ class TournamentView(ScrollView):
 
                     placing = self.get_placing(self.ctx.author.id)
 
+                    # TODO: remove a lot of these indents
+
                     if placing is not None:
 
                         old_value = placing[1]
@@ -410,6 +404,21 @@ class TournamentView(ScrollView):
                                     msg += f" ({icons.up_arrow}{diff})"
 
                                 await self.ctx.respond(msg, ephemeral=True)
+
+            word_display = _get_word_display(quote, raw_quote)
+
+            additional = f"**Tournament Name**: {self.t.name}"
+
+            await Typing.log_typing_test(
+                self.ctx,
+                "Tournament Test",
+                score,
+                word_display,
+                word_history,
+                additional=additional,
+            )
+
+            invoke_completion(self.ctx)
 
         await _test_callback(_interaction)
 
@@ -588,7 +597,7 @@ class HighScoreCaptchaView(BaseView):
                 f"**Raw:** {raw} / {self.target}\n"
                 f"**Acc:** {acc} / {CAPTCHA_ACC_PERC}\n"
                 f"**Attempts:** {self.attempts} / {MAX_CAPTCHA_ATTEMPTS}\n"
-                f"**Word History:**\n> {word_history}"
+                f"**Word History:**\n> {word_history}\n"
             ),
             error=failed,
         )
@@ -912,6 +921,8 @@ class RaceMember:
         # The test score (mongo.Score)
         self.result = None
 
+        self.word_history = None
+
         self.save_score = True
 
         self.zone = None
@@ -1031,7 +1042,9 @@ class RaceJoinView(BaseView):
 
         u_input = _get_user_input(m)
 
-        wpm, raw, _, cc, cw, _, wrong = get_test_stats(u_input, self.quote, end_time)
+        wpm, raw, _, cc, cw, word_history, wrong = get_test_stats(
+            u_input, self.quote, end_time
+        )
 
         ratio = cc / len(" ".join(self.quote))
 
@@ -1053,6 +1066,7 @@ class RaceJoinView(BaseView):
             test_type_int=int(self.is_dict),
             wrong=wrong,
         )
+        r.word_history = word_history
 
         embed = self.get_race_embed()
         embed.set_image(url=f"attachment://test.{STATIC_IMAGE_FORMAT}")
@@ -1220,10 +1234,6 @@ class RaceJoinView(BaseView):
                     user.add_words(score.cw)
                     user.add_xp(score.xp)
 
-                additional = _get_log_additional(
-                    score.wpm, score.raw, score.acc, word_display, score.xp
-                )
-
                 show_hs_captcha = False
 
                 if r.zone is not None:
@@ -1245,14 +1255,15 @@ class RaceJoinView(BaseView):
                 special_ctx.is_slash = False
                 invoke_completion(special_ctx)
 
-                await Typing.log_typing_test(
-                    special_ctx, "Race", score.wpm, additional, score.is_hs, r.user
-                )
-
-                embed = get_log_embed(
+                embed = await Typing.log_typing_test(
                     special_ctx,
-                    title="Race",
-                    additional=additional + race_size_display,
+                    "Race",
+                    score,
+                    word_display,
+                    r.word_history,
+                    additional=race_size_display,
+                    author=r.user,
+                    send=False,
                 )
 
                 embeds.append(embed)
@@ -1830,30 +1841,48 @@ class Typing(commands.Cog):
             await ctx.bot.mongo.replace_user_data(user, ctx.author)
 
         # Logging the test
-        additional = _get_log_additional(wpm, raw, acc, word_display, xp_earned)
 
-        additional += f"\n**Word History:**\n> {word_history}"
-
-        await cls.log_typing_test(ctx, "Typing Test", wpm, additional, is_hs)
+        await cls.log_typing_test(ctx, "Typing Test", score, word_display, word_history)
 
     @staticmethod
     async def log_typing_test(
-        ctx, name, wpm, additional: str, is_hs: bool, author=None
+        ctx,
+        name,
+        score,
+        word_display,
+        word_history,
+        additional=None,
+        author=None,
+        send=True,
     ):
-        test_embed = get_log_embed(
-            ctx, title=name, additional=additional, author=author
+
+        stats = (
+            f"**Wpm:** {score.wpm}\n"
+            f"**Raw:** {score.raw}\n"
+            f"**Accuracy:** {score.acc}\n"
+            f"**Word Amount:** {word_display}\n"
+            f"**XP:** {score.xp}\n"
+            f"**Word History:**\n> {word_history}"
         )
+
+        if additional is not None:
+            stats += additional
+
+        test_embed = get_log_embed(ctx, title=name, additional=stats, author=author)
 
         embeds = [test_embed]
 
-        if is_hs:
+        if score.is_hs:
             hs_embed = test_embed.copy()
             hs_embed.title = "High Score"
 
-            if wpm >= SUSPICIOUS_THRESHOLD:
+            if score.wpm >= SUSPICIOUS_THRESHOLD:
                 await ctx.bot.impt_wh.send(embed=hs_embed)
 
             embeds.append(hs_embed)
+
+        if send is False:
+            return embeds
 
         await ctx.bot.test_wh.send(embeds=embeds)
 

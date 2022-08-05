@@ -110,12 +110,11 @@ class EquipSelect(discord.ui.Select):
 
 class EquipView(ScrollView):
     def __init__(self, ctx, user):
-
-        super().__init__(ctx, iter=self.total_badges, per_page=24, row=2)
-
         self.user = user
 
         self.select_view = None
+
+        super().__init__(ctx, iter=self.user.badge_objs, per_page=24, row=2)
 
     async def update_buttons(self):
         self.update_select_view()
