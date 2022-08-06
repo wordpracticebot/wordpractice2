@@ -406,7 +406,7 @@ class Events(commands.Cog):
 
         if season_rewards != []:
             for v, r in season_rewards:
-                r.changer(new_user)
+                new_user = r.changer(new_user)
 
             new_user.last_season_value = v
 
@@ -453,7 +453,7 @@ class Events(commands.Cog):
                 description=r_overview,
                 add_footer=False,
             )
-            embed.add_footer(text=f"Equip your new badge with {ctx.prefix}equip")
+            embed.set_footer(text=f"Equip your new badge with {ctx.prefix}equip")
             embeds.append(embed)
 
         if embeds != []:
