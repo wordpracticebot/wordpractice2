@@ -266,11 +266,13 @@ class TournamentView(ScrollView):
             return None
 
         # Sorting the tournament data
-        sorted_data = sorted(self.t.rankings.keys())
+        sorted_lb = dict(
+            sorted(self.t.rankings.items(), key=lambda item: item[1], reverse=True)
+        )
 
-        placing_index = sorted_data.index(user_id)
+        placing_index = list(sorted_lb.keys()).index(user_id)
 
-        score = self.t.rankings[user_id]
+        score = sorted_lb[user_id]
 
         return placing_index, score
 
@@ -410,9 +412,9 @@ class TournamentView(ScrollView):
 
                     old_value = 0 if placing is None else placing[1]
 
-                    estimate = estimate_placing(
-                        list(self.t.rankings.values()), old_value, value
-                    )
+                    sorted_values = list(sorted(self.t.rankings.values(), reverse=True))
+
+                    estimate = estimate_placing(sorted_values, old_value, value)
 
                     if estimate is not None:
 
