@@ -289,8 +289,11 @@ class Tournament(Document):
 
     rankings = DictField(IntegerField(), IntegerField(), default={})
 
-    def get_value(self, score: Score):
-        return score.wpm
+    prizes = ListField(StringField, default=[])
+
+    @property
+    def rules(self):
+        return ""
 
     @property
     def unix_start(self):
@@ -299,6 +302,9 @@ class Tournament(Document):
     @property
     def unix_end(self):
         return datetime_to_unix(self.end_time)
+
+    def get_value(self, score: Score):
+        return score.wpm
 
     def get_ranking_prefix(self, placing: int, value: int) -> str:
         # 1 is the highest placing
@@ -310,6 +316,10 @@ class QualificationTournament(Tournament):
 
     # Amount of users allowed to qualify for the tournament
     amount = IntegerField(required=True)
+
+    @property
+    def rules(self):
+        return f"The participants with the top {self.amount} highest scores qualify."
 
     def get_ranking_prefix(self, placing: int, _) -> str:
         if placing <= self.amount:

@@ -493,6 +493,9 @@ def estimate_placing(lb: list[int], old_value: int, new_value: int) -> int:
     # Reversing because bisect only supports ascending lists
     lb.reverse()
 
+    if len(lb) == 0:
+        return 1, 1
+
     if new_value >= lb[0]:
         score_index = bisect(lb, new_value)
 

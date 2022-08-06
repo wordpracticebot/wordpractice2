@@ -416,7 +416,7 @@ class Events(commands.Cog):
 
         if user.to_mongo() == new_user.to_mongo():
             # Random chance of there being an announcement
-            if random.randint(0, 20) == 0:
+            if random.randint(0, 30) == 0:
                 announcements = await self.bot.mongo.get_announcements()
 
                 msg = random.choice(announcements)

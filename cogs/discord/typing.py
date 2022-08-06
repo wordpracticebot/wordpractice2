@@ -210,6 +210,8 @@ class TournamentView(ScrollView):
 
         self.prev_view = None
 
+        self.fetched = True
+
         # The current tournament index
         self.t_page = 0
 
@@ -258,14 +260,40 @@ class TournamentView(ScrollView):
         return sorted(sum(tournaments, []), key=lambda t: t.end_time, reverse=True)
 
     def get_placing(self, user_id: int):
-        placing = next(
-            ((i, v) for i, (u, v) in enumerate(self.lb_data) if u.id == user_id), None
-        )
+        user_id = str(user_id)
 
-        return placing
+        if user_id not in self.t.rankings:
+            return None
+
+        # Sorting the tournament data
+        sorted_data = sorted(self.t.rankings.keys())
+
+        placing_index = sorted_data.index(user_id)
+
+        score = self.t.rankings[user_id]
+
+        return placing_index, score
 
     async def do_tournament_test(self, _interaction):
         async def _test_callback(interaction):
+            # Refetching the tournament data
+            if self.fetched is False:
+
+                self.start_date = datetime.utcnow()
+
+                t_type = self.get_tournament_type(self.t)
+
+                # Checking if the tournament is still active
+                if t_type == 2:
+                    await interaction.response.send_message(
+                        "This tournament is now finished.", ephemeral=True
+                    )
+
+                raw_t_data = await self.ctx.bot.mongo.fetch_all_tournaments()
+
+                self.t_data = self.sort_t_data(raw_t_data)
+
+                self.lb_data = None
 
             if self.prev_view is not None:
                 # Disabling the buttons if they were clicked
@@ -380,30 +408,28 @@ class TournamentView(ScrollView):
 
                     placing = self.get_placing(self.ctx.author.id)
 
-                    # TODO: remove a lot of these indents
+                    old_value = 0 if placing is None else placing[1]
 
-                    if placing is not None:
+                    estimate = estimate_placing(
+                        list(self.t.rankings.values()), old_value, value
+                    )
 
-                        old_value = placing[1]
+                    if estimate is not None:
 
-                        estimate = estimate_placing(
-                            list(self.t.rankings.values()), old_value, value
-                        )
+                        potential_placing, diff = estimate
 
-                        if estimate is not None:
+                        if diff is not False:
 
-                            potential_placing, diff = estimate
+                            placing = humanize.ordinal(potential_placing)
 
-                            if diff is not False:
+                            msg = f"Your tournament placing is now **{placing}"
 
-                                placing = humanize.ordinal(potential_placing)
+                            if diff is not None:
+                                msg += f" ({icons.up_arrow}{diff})"
 
-                                msg = f"**Your tournament placing is now {placing}**"
+                            msg += "**"
 
-                                if diff is not None:
-                                    msg += f" ({icons.up_arrow}{diff})"
-
-                                await self.ctx.respond(msg, ephemeral=True)
+                            await self.ctx.respond(msg, ephemeral=True)
 
             word_display = _get_word_display(quote, raw_quote)
 
@@ -419,6 +445,8 @@ class TournamentView(ScrollView):
             )
 
             invoke_completion(self.ctx)
+
+            self.fetched = False
 
         await _test_callback(_interaction)
 
@@ -483,10 +511,23 @@ class TournamentView(ScrollView):
         else:
             page_display = ""
 
+        if self.t.prizes is None:
+            prizes = None
+
+        elif len(self.t.prizes) == 1:
+            prizes = f"**\n\nThe winner will receive {self.t.prizes [0]}.**"
+
+        else:
+            prizes = "\n\n**Prizes:**"
+
+            for i, p in enumerate(self.t.prizes):
+                prizes += f"\n{i + 1}. {p}"
+
         embed = self.ctx.embed(
             title=self.t.name,
             description=(
-                f"{self.t.description}\n\n"
+                f"{self.t.description}{prizes}\n\n"
+                f"{self.t.rules}\n\n"
                 f"{t_time}\n\n"
                 f"**Rankings: {page_display}**"
             ),
@@ -520,10 +561,10 @@ class TournamentView(ScrollView):
                     inline=False,
                 )
 
-            # Checking if the author is in the rankings
-            if str(self.ctx.author.id) in self.t.rankings:
-                # Getting the placing of the user
-                placing_index, score = self.get_placing(self.ctx.author.id)
+            placing = self.get_placing(self.ctx.author.id)
+
+            if placing is not None:
+                placing_index, score = placing
 
                 display = get_lb_display(
                     placing_index + 1, self.t.unit, self.user, score
@@ -1462,6 +1503,11 @@ class Typing(commands.Cog):
         # Fetching the tournament data
         t_data = await self.bot.mongo.fetch_all_tournaments()
 
+        if not t_data:
+            embed = ctx.error_embed(title="Sorry, no tournaments found")
+
+            return await ctx.respond(embed=embed)
+
         view = TournamentView(ctx, t_data)
 
         await view.start()
@@ -1790,7 +1836,6 @@ class Typing(commands.Cog):
         view.message = await message.reply(embed=embed, view=view, mention_author=False)
 
         # For logging
-        is_hs = False
         show_hs_captcha = False
 
         # Checking if there is a new high score
@@ -1799,24 +1844,24 @@ class Typing(commands.Cog):
 
         warning = _get_test_warning(raw, acc, result)
 
+        score = ctx.bot.mongo.Score(
+            wpm=wpm,
+            raw=raw,
+            acc=acc,
+            cw=cw,
+            tw=len(quote),
+            xp=xp_earned,
+            timestamp=datetime.utcnow(),
+            is_race=False,
+            test_type_int=int(is_dict),
+            wrong=wrong,
+        )
+
         if warning is not None:
             await ctx.respond(f"Warning: {warning}", ephemeral=True)
 
         else:
             zone, zone_range = result
-
-            score = ctx.bot.mongo.Score(
-                wpm=wpm,
-                raw=raw,
-                acc=acc,
-                cw=cw,
-                tw=len(quote),
-                xp=xp_earned,
-                timestamp=datetime.utcnow(),
-                is_race=False,
-                test_type_int=int(is_dict),
-                wrong=wrong,
-            )
 
             result = await _cheating_check(ctx, ctx.author, user, score)
 
@@ -1834,8 +1879,6 @@ class Typing(commands.Cog):
                     zone=zone,
                     zone_range=zone_range,
                 )
-
-                is_hs = score.is_hs
 
         if show_hs_captcha is False:
             await ctx.bot.mongo.replace_user_data(user, ctx.author)
