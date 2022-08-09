@@ -325,9 +325,21 @@ class QualificationTournament(Tournament):
     # Amount of users allowed to qualify for the tournament
     amount = IntegerField(required=True)
 
+    bracket_start_time = DateTimeField(required=True)
+
+    host_server = StringField(required=True)
+    host_server_invite = StringField(required=True)
+
+    @property
+    def unix_bracket_start(self):
+        return datetime_to_unix(self.bracket_start_time)
+
     @property
     def rules(self):
-        return f"The participants with the top {self.amount} highest scores qualify."
+        return (
+            f"The participants with the top {self.amount} highest scores qualify.\n\n"
+            f"A bracket will be hosted on <t:{self.unix_bracket_start}:f> on the **[{self.host_server} server](https://discord.gg/{self.host_server_invite})** to determine the winner from those that qualify. __Make sure to join the server if your participate.__"
+        )
 
     def get_ranking_prefix(self, placing: int, _) -> str:
         if placing <= self.amount:

@@ -640,7 +640,7 @@ class HighScoreCaptchaView(BaseView):
                 f"**Raw:** {raw} / {self.target}\n"
                 f"**Acc:** {acc} / {CAPTCHA_ACC_PERC}\n"
                 f"**Attempts:** {self.attempts} / {MAX_CAPTCHA_ATTEMPTS}\n"
-                f"**Word History:**\n> {word_history}\n"
+                f"**Word History:**\n> {word_history}"
             ),
             error=failed,
         )
@@ -723,12 +723,10 @@ class HighScoreCaptchaView(BaseView):
                 timeout=expire_time,
             )
         except asyncio.TimeoutError:
-            acc = None
+            raw = acc, word_history = None
             finished_test = False
 
         self.ctx.bot.active_end(self.ctx.author.id)
-
-        raw = None
 
         if finished_test:
             end_time = _get_test_time(
@@ -1258,7 +1256,7 @@ class RaceJoinView(BaseView):
 
         word_display = _get_word_display(self.quote, raw_quote)
 
-        race_size_display = f"\n**Race Size:** {len(self.racers)}"
+        race_size_display = f"**Race Size:** {len(self.racers)}"
 
         # Updating the users in the database
         for r in self.racers.values():
@@ -1911,7 +1909,7 @@ class Typing(commands.Cog):
         )
 
         if additional is not None:
-            stats += additional
+            stats += f"\n{additional}"
 
         test_embed = get_log_embed(ctx, title=name, additional=stats, author=author)
 
