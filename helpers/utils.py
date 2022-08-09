@@ -352,7 +352,7 @@ def get_bar(progress: float, *, size: int = 10, variant: int = 0, split: bool = 
 
 
 def get_xp_earned(cc: int) -> int:
-    return round(1 + (cc * 2))
+    return round(1 + cc * 2)
 
 
 def get_test_type(test_type_int: int, length: int):
@@ -497,7 +497,7 @@ def estimate_placing(lb: list[int], old_value: int, new_value: int) -> int:
         return 1, 1
 
     # Checking if the new value is in the leaderboard
-    if new_value >= lb[0]:
+    if new_value > old_value and new_value >= lb[0]:
         score_index = bisect(lb, new_value)
 
         potential_placing = len(lb) - score_index + 1

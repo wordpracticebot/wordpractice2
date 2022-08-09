@@ -35,7 +35,7 @@ from data.constants import (
     VOTING_SITES,
 )
 from helpers.ui import get_log_embed
-from helpers.user import get_expanded_24_hour_stat
+from helpers.user import get_expanded_24h_stat
 from helpers.utils import datetime_to_unix, get_test_type
 from static.badges import get_badge_from_id
 
@@ -131,8 +131,10 @@ class UserBase(Document):
     last_season_value = IntegerField(default=0)  # value of the last season completion
 
     # 24 Hour
-    last24 = ListField(ListField(IntegerField), default=[[0], [0]])  # words, xp
-    best24 = EmbeddedField(Score, default=None)  # best score in the last 24 hours
+    raw_words_24h = ListField(IntegerField, default=[])
+    raw_xp_24h = ListField(IntegerField, default=[])
+
+    last_24h_save = DateTimeField(default=datetime.min)
 
     # Daily
     test_amt = IntegerField(default=0)  # amount of tests in the last day
@@ -208,6 +210,14 @@ class User(UserBase):
         return self.username + (f" {self.status_emoji}" if self.status else "")
 
     @property
+    def words_24h(self):
+        return get_expanded_24h_stat(self.raw_words_24h, self.last_24h_save)
+
+    @property
+    def xp_24h(self):
+        return get_expanded_24h_stat(self.raw_xp_24h, self.last_24h_save)
+
+    @property
     def is_premium(self):
         if PREMIUM_LAUNCHED is False:
             return True
@@ -227,32 +237,30 @@ class User(UserBase):
     def highest_speed(self):
         return max(s.wpm for s in self.highspeed.values())
 
+    def add_24h_stats(self, xp: int = 0, words: int = 0):
+        self.raw_words_24h = self.words_24h
+        self.raw_words_24h[-1] += words
+
+        self.raw_xp_24h = self.xp_24h
+        self.raw_xp_24h[-1] += xp
+
+        self.last_24h_save = datetime.utcnow()
+
     def add_words(self, words: int):
         self.words += words
 
-        if words != 0:
-            current = get_expanded_24_hour_stat(self.last24[0])
-            current[-1] += words
-
-            self.last24[0] = current
+        self.add_24h_stats(words=words)
 
     def add_xp(self, xp: int):
         self.xp += xp
 
-        if xp != 0:
-            current = get_expanded_24_hour_stat(self.last24[1])
-            current[-1] += xp
-
-            self.last24[1] = current
+        self.add_24h_stats(xp=xp)
 
     def add_score(self, score: Score):
         if len(self.scores) >= SCORE_SAVE_AMT:
             del self.scores[: len(self.scores) - SCORE_SAVE_AMT + 1]
 
         self.scores.append(score)
-
-        if self.best24 is None or score.wpm > self.best24.wpm:
-            self.best24 = score
 
     def add_badge(self, badge_id):
         if badge_id not in self.badges:
@@ -329,7 +337,7 @@ class QualificationTournament(Tournament):
 
 
 class Mongo(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.db = AsyncIOMotorClient(DATABASE_URI, io_loop=bot.loop)[DATABASE_NAME]
 

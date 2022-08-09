@@ -174,7 +174,7 @@ class Misc(commands.Cog):
     emoji = "\N{CARD FILE BOX}"
     order = 4
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @bridge.bridge_command()

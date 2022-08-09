@@ -178,7 +178,7 @@ class Customization(commands.Cog):
     emoji = "\N{GEAR}"
     order = 3
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     # Groups

@@ -219,8 +219,8 @@ class TournamentView(ScrollView):
         super().__init__(ctx, iter=self.get_iter, per_page=10, row=1)
 
     @property
-    def max_page(self):
-        return math.ceil(len(self.t.rankings) / self.per_page)
+    def total(self):
+        return len(self.t.rankings)
 
     @property
     def t(self):
@@ -546,7 +546,7 @@ class TournamentView(ScrollView):
 
             for i, (u, v) in enumerate(self.items):
 
-                placing = i + 1
+                placing = self.start_page + i + 1
 
                 lb_display = get_lb_display(
                     placing, self.t.unit, u, v, self.ctx.author.id
@@ -1309,7 +1309,7 @@ class RaceJoinView(BaseView):
                     send=False,
                 )
 
-                embeds.append(embed)
+                embeds += embed
 
         for i in range(0, len(embeds), 10):
             show_embeds = embeds[i : i + 10]
@@ -1494,7 +1494,7 @@ class Typing(commands.Cog):
         choices=TEST_ZONES.keys(),
     )
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @bridge.bridge_command()
@@ -1944,6 +1944,7 @@ class Typing(commands.Cog):
 
             # Getting the user's placing for that zone
             c = ctx.bot.lbs[3].stats[list(TEST_ZONES.keys()).index(zone)]
+
             initial_value = c.get_initial_value(ctx)
 
             score_lb = await c.get_lb_values_from_score(max="inf", min=initial_value)

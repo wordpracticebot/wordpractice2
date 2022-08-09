@@ -20,7 +20,7 @@ class WordChallenge(Challenge):
         self.word_amt = word_amt
 
     async def progress(self, ctx, user):
-        return get_daily_stat(user.last24[0]), self.word_amt
+        return get_daily_stat(user.words_24h), self.word_amt
 
 
 class VoteChallenge(Challenge):

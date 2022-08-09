@@ -5,7 +5,7 @@ from config import REDIS_URL
 
 
 class Redis(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
         self.pool = None

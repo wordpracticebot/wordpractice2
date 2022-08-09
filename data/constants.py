@@ -27,6 +27,7 @@ AVG_AMT = 10
 # Leaderboards
 LB_LENGTH = 1000
 LB_DISPLAY_AMT = 100
+
 UPDATE_24_HOUR_INTERVAL = 10  # minutes
 
 # Achievements

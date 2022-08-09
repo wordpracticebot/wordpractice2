@@ -1,3 +1,4 @@
+import math
 import time
 from datetime import datetime
 
@@ -86,10 +87,7 @@ def get_typing_average(user, amount: int = AVG_AMT):
     return wpm, raw, acc, cw, tw, scores
 
 
-def get_daily_stat(last24_stat: list[int]):
-    """
-    last24_stat: expected to be 96 items in list
-    """
+def get_daily_stat(stat: list[int]):
     from helpers.utils import get_start_of_day
 
     # Amount of minutes left in the day
@@ -104,13 +102,21 @@ def get_daily_stat(last24_stat: list[int]):
 
     start_index = int(time_left / UPDATE_24_HOUR_INTERVAL)
 
-    return sum(last24_stat[start_index:])
+    return sum(stat[start_index:])
 
 
-def get_expanded_24_hour_stat(stat: list[int]):
-    i_len = int(24 * 60 / UPDATE_24_HOUR_INTERVAL)
+def get_expanded_24h_stat(stat: list[int], last_save: datetime):
+    # Getting the amount of minutes since the last save
+    passed = (datetime.utcnow() - last_save).total_seconds() / 60
 
-    return stat[:i_len] + [0] * (i_len - len(stat))
+    total_min = 60 * 24
+
+    if passed >= total_min:
+        return [0] * int(total_min / UPDATE_24_HOUR_INTERVAL)
+
+    intervals = math.floor(passed / UPDATE_24_HOUR_INTERVAL)
+
+    return stat[intervals:] + [0] * intervals
 
 
 def get_pacer_speed(user, zone: str):

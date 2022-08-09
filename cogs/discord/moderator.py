@@ -94,7 +94,7 @@ class Moderator(commands.Cog):
 
     hidden = True
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     async def handle_moderator_user(self, ctx, user):

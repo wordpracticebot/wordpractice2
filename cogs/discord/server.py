@@ -16,7 +16,7 @@ class Server(commands.Cog):
     emoji = "\N{CLOUD}"
     order = 5
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     def get_role_from_id(self, roles, role_id: int):

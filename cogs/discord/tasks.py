@@ -6,11 +6,11 @@ import numpy as np
 from discord.ext import commands, tasks
 
 from config import DBL_TOKEN, TESTING
-from data.constants import AVG_AMT, CHALLENGE_AMT, UPDATE_24_HOUR_INTERVAL
+from data.constants import AVG_AMT, CHALLENGE_AMT, LB_LENGTH
 
 
 class Tasks(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
         # For guild and shard count
@@ -22,51 +22,10 @@ class Tasks(commands.Cog):
             if DBL_TOKEN is not None:
                 self.post_guild_count.start()
 
-            for u in [self.update_24_hour, self.daily_restart]:
-                u.start()
+            self.daily_restart.start()
 
         for u in [self.update_percentiles, self.clear_cooldowns]:
             u.start()
-
-    @tasks.loop(minutes=UPDATE_24_HOUR_INTERVAL)
-    async def update_24_hour(self):
-        every = int(24 * 60 / UPDATE_24_HOUR_INTERVAL) - 1
-
-        all_ids = set()
-
-        for i in range(2):
-            cursor = self.bot.mongo.db.users.find(
-                {f"last24.{1}.{every}": {"$exists": True}}
-            )
-
-            user_ids = [u["_id"] async for u in cursor]
-
-            # Has to be done in two queries because of update conflict
-            await self.bot.mongo.db.users.update_many(
-                {"_id": {"$in": user_ids}},
-                {"$pop": {f"last24.{i}": -1}},
-            )
-            await self.bot.mongo.db.users.update_many(
-                {"_id": {"$in": user_ids}},
-                {"$push": {f"last24.{i}": 0}},
-            )
-
-            all_ids.update(user_ids)
-
-        # Resetting the best score in the last 24 hours
-        cursor = self.bot.mongo.db.users.find({"best24": {"$ne": None}})
-
-        user_ids = [u["_id"] async for u in cursor]
-
-        await self.bot.mongo.db.users.update_many(
-            {"_id": {"$in": user_ids}},
-            {"$set": {"best24": None}},
-        )
-
-        all_ids.update(user_ids)
-
-        if all_ids:
-            await self.bot.redis.hdel("user", *all_ids)
 
     # Updates the typing average percentile
     # Is updated infrequently because it provides an estimate
@@ -131,18 +90,8 @@ class Tasks(commands.Cog):
 
     @tasks.loop(hours=24)
     async def daily_restart(self):
-        # Removing excess items if user hasn't typed in last 24 hours
-
-        cursor = self.bot.mongo.db.users.find(
-            {"$or": [{"last24.0": [0] * 96}, {"last24.1": [0] * 96}]}
-        )
-
-        last24_ids = [u["_id"] async for u in cursor]
-
-        await self.bot.mongo.db.users.update_many(
-            {"_id": {"$in": last24_ids}},
-            {"$set": {"last24.1": [0], "test_amt": 0, "last24.0": [0]}},
-        )
+        # TODO: Removing users whose 24h stats have not been updated in the last 24h
+        ...
 
         # Resetting daily challenge completions and tests
         default = [False] * CHALLENGE_AMT
@@ -163,15 +112,33 @@ class Tasks(commands.Cog):
 
         # Updating all the leaderboards
 
-        for lb in self.bot.lbs:
-            for stat in lb.stats:
-                # Wiping the leaderboard
-                total = await self.bot.redis.zcard(stat.lb_key)
-                await self.bot.redis.zremrangebyrank(stat.lb_key, 0, total)
+        # Querying all the users and evaluating their scores
 
-                stat_pairs = await stat.update()
+        cursor = await self.bot.mongo.User.find()
 
-                await self.bot.redis.zadd(stat.lb_key, stat_pairs)
+        lbs = {}
+
+        async for u in cursor:
+            values = self.bot.get_leaderboard_values(u)
+
+            for i, lb in enumerate(values):
+                for n, stat in enumerate(lb):
+                    name = f"lb.{i}.{n}"
+                    lbs[name] = lbs.get(name, []) + (u.id, stat)
+
+        for lb, values in lbs.items():
+            # Sorting the scores and trimming to leaderboard length
+            sorted_values = sorted(values, key=lambda x: x[1], reverse=True)[LB_LENGTH:]
+
+            # Wiping the current leaderboard
+
+            total = await self.bot.redis.zcard(lb)
+
+            await self.bot.redis.zremrangebyrank(lb, 0, total)
+
+            # Saving the scores to the leaderboard
+
+            await self.bot.redis.zadd(stat.lb_key, sorted_values)
 
     # Clearing cache
     @tasks.loop(minutes=10)

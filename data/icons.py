@@ -8,6 +8,8 @@ success = "<a:success:979932746250063882>"
 danger = "<a:danger:979932746174562334>"
 caution = ":warning:"
 
+loading = "<a:loading:1006404388958515320>"
+
 # Dots
 green_dot = "<:green_dot:974116115108229120>"
 red_dot = "<:red_dot:974116115141783573>"

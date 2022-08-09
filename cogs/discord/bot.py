@@ -404,7 +404,7 @@ class ScoreView(ScrollView):
 
     async def create_page(self):
         embed = self.ctx.embed(
-            title=f"{self.user.display_name} | Recent Scores ({self.start_page + 1} - {self.end_page} of {len(self.iter)})",
+            title=f"{self.user.display_name} | Recent Scores ({self.start_page + 1} - {self.end_page} of {self.total})",
             description=" "
             if self.user.is_premium
             else f"**[Donators]({PREMIUM_LINK})** can download and save up to {SCORE_SAVE_AMT} test scores!",
@@ -494,7 +494,7 @@ class LeaderboardView(ScrollView):
         return lb[0]
 
     @property
-    def max_page(self):
+    def total(self):
         return LB_DISPLAY_AMT
 
     @property
@@ -561,7 +561,7 @@ class LeaderboardView(ScrollView):
 
         if lb_placing is None:
             return await interaction.response.send_message(
-                f"You are outside of the top {LB_DISPLAY_AMT}", ephemeral=True
+                f"You are outside of the top {self.total}", ephemeral=True
             )
 
         # Getting the page where the user is placed
@@ -739,7 +739,7 @@ class ProfileView(BaseView):
 
         fr_words = self.format_account_stat(f"{self.user.words:,}", 6 + in_between)
         fr_xp = self.format_account_stat(f"{self.user.xp:,}", 17 + in_between)
-        fr_24_xp = f"{sum(self.user.last24[1]):,}"
+        fr_24_xp = f"{sum(self.user.xp_24h):,}"
 
         if self.user.badges == []:
             badges = "User has no badges..."
@@ -975,7 +975,7 @@ class Bot(commands.Cog):
     emoji = "\N{ROBOT FACE}"
     order = 1
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @bridge.bridge_command()

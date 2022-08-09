@@ -1,3 +1,4 @@
+import asyncio
 import math
 import time
 from typing import Callable, Iterable, Union
@@ -163,6 +164,8 @@ class PageView(BaseView):
     def __init__(self, ctx):
         self.ctx = ctx
 
+        self.loading_msg = None
+
         super().__init__(ctx)
 
     async def create_page(self) -> discord.Embed:
@@ -184,15 +187,36 @@ class PageView(BaseView):
             for item in items:
                 view.add_item(item)
 
-        await interaction.response.edit_message(embed=embed, view=view)
+        if interaction.response.is_done():
+            await interaction.edit_original_message(embed=embed, view=view)
+
+            if self.loading_msg is not None:
+                self.loading_msg = await self.loading_msg.edit("**Done**")
+
+        else:
+            await interaction.response.edit_message(embed=embed, view=view)
 
         if items is not None:
             for item in items:
                 view.remove_item(item)
 
     async def update_all(self, interaction):
+        async def defer_interaction():
+            await asyncio.sleep(1.75)
+
+            content = f"**Loading {icons.loading}**"
+
+            if not interaction.response.is_done():
+                await interaction.response.defer()
+
+                if self.loading_msg is None:
+                    self.loading_msg = await self.ctx.respond(content, ephemeral=True)
+                else:
+                    self.loading_msg = await self.loading_msg.edit(content)
+
         await self.update_buttons()
-        await self.update_message(interaction)
+
+        await asyncio.gather(defer_interaction(), self.update_message(interaction))
 
     async def start(self):
         embed = await self.create_page()
@@ -224,12 +248,16 @@ class ScrollView(PageView):
         return self._iter
 
     @property
+    def total(self):
+        return len(self.iter)
+
+    @property
     def max_page(self) -> int:
-        return math.ceil(len(self.iter) / self.per_page)
+        return math.ceil(self.total / self.per_page)
 
     @property
     def compact(self):
-        return self.max_page > 7
+        return self.max_page <= 7
 
     @property
     def has_btns(self):

@@ -13,7 +13,7 @@
 
 2. Copy the content from `.env.example` into `.env` and fill it with the necessary information.
 
-3. Configure variables in `roles.py` and `icons.py` (all emojis can be found in the `emoji` directory)
+3. Configure variables in `data/roles.py` and `data/icons.py` (all emojis can be found in the `emoji` directory)
 
 # Running
 

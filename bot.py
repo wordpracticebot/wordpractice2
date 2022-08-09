@@ -34,22 +34,8 @@ from helpers.utils import get_hint, message_banned_user
 THIN_SPACE = "\N{THIN SPACE}"
 
 
-def _get_leaderboard_values(bot, user_data):
-    placings = []
-
-    for lb in bot.lbs:
-        category = []
-
-        for stat in lb.stats:
-            category.append(stat.get_stat(user_data))
-
-        placings.append(category)
-
-    return placings
-
-
 class LBCategory:
-    def __init__(self, parent_index, index, bot, name, unit, query, get_stat):
+    def __init__(self, parent_index, index, bot, name, unit, get_stat):
         self.parent_index = parent_index
         self.index = index
 
@@ -57,7 +43,6 @@ class LBCategory:
         self.name = name
         self.unit = unit
 
-        self.query = query
         self.get_stat = get_stat
 
     @property
@@ -86,22 +71,6 @@ class LBCategory:
         _, values = zip(*raw_data)
 
         return list(values)
-
-    async def update(self):
-        cursor = self.bot.mongo.db.users.aggregate(
-            [
-                {
-                    "$project": {
-                        "_id": 1,
-                        "count": self.query,
-                    }
-                },
-                {"$sort": {"count": -1}},
-                {"$limit": LB_LENGTH},
-            ]
-        )
-
-        return {i["_id"]: i["count"] async for i in cursor}
 
     @classmethod
     def new(cls, *args, **kwargs):
@@ -224,6 +193,7 @@ class WelcomeView(BaseView):
         )
 
         self.ctx.initial_user = user
+        self.ctx.add_leaderboard_values()
 
         if self.response:
             await interaction.response.edit_message(embed=embed, view=view)
@@ -307,6 +277,9 @@ class CustomContextItems:
         color = kwargs.pop("color", self.theme or PRIMARY_CLR)
         return CustomEmbed(self.bot, color=color, hint=self.hint, **kwargs)
 
+    def add_leaderboard_values(self):
+        self.initial_values = self.bot.get_leaderboard_values(self.initial_user)
+
     async def add_initial_stats(self, user):
         # Getting the initial user
         self.initial_user = await self.bot.mongo.fetch_user(user)
@@ -315,7 +288,7 @@ class CustomContextItems:
             return
 
         # Getting the initial placing for each category
-        self.initial_values = _get_leaderboard_values(self.bot, self.initial_user)
+        self.add_leaderboard_values()
 
 
 class CustomAppContext(bridge.BridgeApplicationContext, CustomContextItems):
@@ -406,14 +379,14 @@ class WordPractice(bridge.AutoShardedBot):
             Leaderboard.new(
                 title="All Time",
                 emoji="\N{EARTH GLOBE AMERICAS}",
-                stats=[LBCategory.new(self, "Words Typed", "words", "$words", lambda u: u.words)],
+                stats=[LBCategory.new(self, "Words Typed", "words", lambda u: u.words)],
                 default=0,
                 priority=1
             ),
             Leaderboard.new(
                 title="Monthly Season",
                 emoji="\N{SPORTS MEDAL}",
-                stats=[LBCategory.new(self, "Experience", "xp", "$xp", lambda u: u.xp)],
+                stats=[LBCategory.new(self, "Experience", "xp", lambda u: u.xp)],
                 default=0,
                 check=season_check,
                 priority=2
@@ -422,8 +395,8 @@ class WordPractice(bridge.AutoShardedBot):
                 title="24 Hour",
                 emoji="\N{CLOCK FACE ONE OCLOCK}",
                 stats=[
-                    LBCategory.new(self,"Experience","xp", {"$sum": {"$arrayElemAt": ["$last24", 1]}}, lambda u: sum(u.last24[1])),
-                    LBCategory.new(self, "Words Typed", "words", {"$sum": {"$arrayElemAt": ["$last24", 0]}}, lambda u: sum(u.last24[0])),
+                    LBCategory.new(self,"Experience","xp", lambda u: sum(u.xp_24h)),
+                    LBCategory.new(self, "Words Typed", "words", lambda u: sum(u.words_24h)),
                 ],
                 default=0,
             ),
@@ -431,7 +404,7 @@ class WordPractice(bridge.AutoShardedBot):
                 title="High Score",
                 emoji="\N{RUNNER}",
                 stats=[
-                    LBCategory.new(self, s.capitalize(), "wpm", f"$highspeed.{s}.wpm", get_hs(s)) for s in TEST_ZONES.keys()
+                    LBCategory.new(self, s.capitalize(), "wpm", get_hs(s)) for s in TEST_ZONES.keys()
                 ],
                 default=1,
             ),
@@ -447,6 +420,19 @@ class WordPractice(bridge.AutoShardedBot):
     def initialize_lbs(self):
         for i, lb in enumerate(self.lbs):
             self.lbs[i] = lb(i)
+
+    def get_leaderboard_values(self, user):
+        values = []
+
+        for lb in self.lbs:
+            category = []
+
+            for stat in lb.stats:
+                category.append(stat.get_stat(user))
+
+            values.append(category)
+
+        return values
 
     def active_start(self, user_id: int):
         # If the user is currently in a test

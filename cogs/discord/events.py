@@ -54,15 +54,12 @@ def _generate_achievement_image(name, icon):
 async def _update_placings(ctx, user):
     update = {}
 
-    for i, (lb, s_lb) in enumerate(zip(ctx.bot.lbs, ctx.initial_values)):
+    values = ctx.bot.get_leaderboard_values(user)
 
-        # Not updating the placing if the leaderboard isn't enabled
-        if await lb.check(ctx) is False:
-            continue
-
-        for n, (stat, s_stat) in enumerate(zip(lb.stats, s_lb)):
-            if (v := stat.get_stat(user)) != s_stat:
-                update[f"lb.{i}.{n}"] = v
+    for i, (lb, s_lb) in enumerate(zip(values, ctx.initial_values)):
+        for n, (stat, s_stat) in enumerate(zip(lb, s_lb)):
+            if stat != s_stat:
+                update[f"lb.{i}.{n}"] = stat
 
     if not update:
         return None, None
@@ -91,7 +88,7 @@ def _get_tier_index(placing) -> tuple[int, int]:
 
 
 class Events(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     async def log_interaction(self, ctx):
