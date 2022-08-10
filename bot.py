@@ -53,7 +53,7 @@ class LBCategory:
         return await self.bot.redis.zrevrank(self.lb_key, user_id)
 
     async def remove_user(self, user_id):
-        return await self.bot.redis.srem(self.lb_key, user_id)
+        return await self.bot.redis.zrem(self.lb_key, user_id)
 
     def get_initial_value(self, ctx):
         return ctx.initial_values[self.parent_index][self.index]

@@ -238,13 +238,17 @@ class User(UserBase):
         return max(s.wpm for s in self.highspeed.values())
 
     def add_24h_stats(self, xp: int = 0, words: int = 0):
-        self.raw_words_24h = self.words_24h
-        self.raw_words_24h[-1] += words
+        new_words_24h = self.words_24h
+        new_xp_24h = self.xp_24h
 
-        self.raw_xp_24h = self.xp_24h
-        self.raw_xp_24h[-1] += xp
+        if new_words_24h != self.raw_words_24h or new_xp_24h != self.raw_xp_24h:
+            self.last_24h_save = datetime.utcnow()
 
-        self.last_24h_save = datetime.utcnow()
+        new_xp_24h[-1] += xp
+        new_words_24h[-1] += words
+
+        self.raw_words_24h = new_words_24h
+        self.raw_xp_24h = new_xp_24h
 
     def add_words(self, words: int):
         self.words += words
