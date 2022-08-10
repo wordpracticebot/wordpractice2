@@ -723,7 +723,7 @@ class HighScoreCaptchaView(BaseView):
                 timeout=expire_time,
             )
         except asyncio.TimeoutError:
-            raw = acc, word_history = None
+            raw = acc = word_history = None
             finished_test = False
 
         self.ctx.bot.active_end(self.ctx.author.id)

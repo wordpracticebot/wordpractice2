@@ -111,12 +111,14 @@ def get_expanded_24h_stat(stat: list[int], last_save: datetime):
 
     total_min = 60 * 24
 
+    total_intervals = int(total_min / UPDATE_24_HOUR_INTERVAL)
+
     if passed >= total_min:
-        return [0] * int(total_min / UPDATE_24_HOUR_INTERVAL)
+        return [0] * total_intervals
 
     intervals = math.floor(passed / UPDATE_24_HOUR_INTERVAL)
 
-    return stat[intervals:] + [0] * intervals
+    return stat[intervals:] + [0] * (total_intervals - intervals)
 
 
 def get_pacer_speed(user, zone: str):
