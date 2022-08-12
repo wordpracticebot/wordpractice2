@@ -90,8 +90,15 @@ class Tasks(commands.Cog):
 
     @tasks.loop(hours=24)
     async def daily_restart(self):
-        # TODO: Removing users whose 24h stats have not been updated in the last 24h
-        ...
+        # Removing users whose 24h stats have not been updated in the last 24h
+        await self.bot.mongo.db.users.update_many(
+            {
+                "last_24h_save": {
+                    "$lt": datetime.utcnow() - timedelta(days=1),
+                },
+            },
+            {"$set": {"raw_words_24h": [], "raw_xp_24h": []}},
+        )
 
         # Resetting daily challenge completions and tests
         default = [False] * CHALLENGE_AMT
