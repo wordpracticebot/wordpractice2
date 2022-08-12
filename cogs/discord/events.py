@@ -26,7 +26,8 @@ SEASON_PLACING_TIERS = (
     (1, 1),
     (2, 2),
     (3, 3),
-    (4, 5),
+    (4, 4),
+    (5, 5),
     (6, 10),
     (11, 25),
     (26, 50),
@@ -413,7 +414,7 @@ class Events(commands.Cog):
 
         if user.to_mongo() == new_user.to_mongo():
             # Random chance of there being an announcement
-            if random.randint(0, 30) == 0:
+            if random.randint(0, 20) == 0:
                 announcements = await self.bot.mongo.get_announcements()
 
                 msg = random.choice(announcements)

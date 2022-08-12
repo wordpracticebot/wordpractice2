@@ -508,7 +508,7 @@ class TournamentView(ScrollView):
         else:
             t_time = f"Ended <t:{self.t.unix_end}:R> (<t:{self.t.unix_end}:f>)"
 
-        if self.t.rankings and self.page + 1 != self.max_page:
+        if self.t.rankings and self.max_page > 1:
             page_display = f"(Page {self.page + 1} - {self.max_page})"
         else:
             page_display = ""
@@ -969,20 +969,19 @@ class RaceMember:
         self.zone = None
 
 
-class RaceJoinButton(discord.ui.Button):
-    def __init__(self):
-        super().__init__(label="Join", style=discord.ButtonStyle.success)
+class RaceEndView(BaseView):
+    def __init__(self, ctx, callback):
+        super().__init__(ctx)
 
-    async def callback(self, interaction):
-        await self.view.add_racer(interaction)
+        self.callback = callback
 
+    @discord.ui.button(label="End Race Early", style=discord.ButtonStyle.danger)
+    async def end_race(self, button, interaction):
+        button.disabled = True
 
-class RaceLeaveButton(discord.ui.Button):
-    def __init__(self):
-        super().__init__(label="Leave", style=discord.ButtonStyle.danger)
+        await interaction.response.edit_message(view=self)
 
-    async def callback(self, interaction):
-        await self.view.remove_racer(interaction)
+        self.callback()
 
 
 class RaceJoinView(BaseView):
@@ -1006,7 +1005,17 @@ class RaceJoinView(BaseView):
             1, 6, commands.BucketType.user
         )
 
+        self.waiting_for_inputs = None
+
         self.add_author_to_race()
+
+    @discord.ui.button(label="Join", style=discord.ButtonStyle.success)
+    async def join_btn(self, button, interaction):
+        await self.add_racer(interaction)
+
+    @discord.ui.button(label="Leave", style=discord.ButtonStyle.danger)
+    async def leave_btn(self, button, interaction):
+        await self.remove_racer(interaction)
 
     def add_author_to_race(self):
         author = self.ctx.author
@@ -1074,8 +1083,19 @@ class RaceJoinView(BaseView):
 
         return embed
 
+    def end_race_early(self):
+        if self.waiting_for_inputs is not None:
+            self.waiting_for_inputs.cancel()
+
     async def handle_racer_finish(self, m):
         self.ctx.bot.active_end(m.author.id)
+
+        # Checking if it was the author who finished
+        if m.author.id == self.ctx.author.id:
+            # Prompting the author to end the test earlier
+            end_view = RaceEndView(self.ctx, callback=self.end_race_early)
+
+            await self.ctx.respond(content="", view=end_view, ephemeral=True)
 
         end_time = _get_test_time(m.created_at.timestamp(), self.start_time)
 
@@ -1158,7 +1178,10 @@ class RaceJoinView(BaseView):
         self.start_time = self.race_msg.created_at.timestamp() + lag
 
         try:
-            await asyncio.wait_for(self.wait_for_inputs(), timeout=TEST_EXPIRE_TIME)
+            await asyncio.wait_for(
+                self.wait_for_inputs(),
+                timeout=TEST_EXPIRE_TIME,
+            )
         except asyncio.TimeoutError:
             embed = self.ctx.error_embed(
                 title="Race Ended",
@@ -1183,10 +1206,17 @@ class RaceJoinView(BaseView):
 
             await self.handle_racer_finish(message)
 
-        coros = [handle_input(r) for r in self.racers]
+        tasks = [asyncio.create_task(handle_input(r)) for r in self.racers]
 
         # Preventing input handling from blocking another
-        await asyncio.gather(*coros)
+        self.waiting_for_inputs = asyncio.gather(*tasks)
+
+        try:
+            await self.waiting_for_inputs
+        except asyncio.CancelledError:
+            embed = self.ctx.error_embed(title="Race ended early by host")
+
+            await self.ctx.respond(embed=embed)
 
     async def send_race_results(self):
         embed = self.ctx.embed(
@@ -1450,12 +1480,6 @@ class RaceJoinView(BaseView):
         self.ctx.bot.active_start(self.ctx.author.id)
 
         embed = self.get_race_join_embed()
-
-        race_join_button = RaceJoinButton()
-        race_leave_button = RaceLeaveButton()
-
-        self.add_item(race_join_button)
-        self.add_item(race_leave_button)
 
         await self.ctx.respond(embed=embed, view=self)
 
