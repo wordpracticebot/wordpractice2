@@ -1267,7 +1267,7 @@ class RaceJoinView(BaseView):
 
                         if result:
                             r.result = None
-                            r.data = result
+                            await self.ctx.bot.mongo.replace_user_data(result, r.user)
 
                 embed.add_field(
                     name=f"{place_display} {r.data.display_name}",
@@ -1299,52 +1299,57 @@ class RaceJoinView(BaseView):
         for r in self.racers.values():
             score = r.result
 
-            if score is not None:
-                # Refetching user to account for state changes
-                user = await self.ctx.bot.mongo.fetch_user(r.user)
+            if score is None:
+                break
 
-                special_ctx = copy(self.ctx)
-                special_ctx.other_author = r.user
+            # Refetching user to account for state changes
+            user = await self.ctx.bot.mongo.fetch_user(r.user)
 
-                if r.save_score:
+            # Construction a context for each racer
+            special_ctx = copy(self.ctx)
+            special_ctx.other_author = r.user
+            special_ctx.initial_user = r.data
+            special_ctx.add_leaderboard_values()
 
-                    user.add_score(score)
-                    user.add_words(score.cw)
-                    user.add_xp(score.xp)
+            if r.save_score:
 
-                show_hs_captcha = False
+                user.add_score(score)
+                user.add_words(score.cw)
+                user.add_xp(score.xp)
 
-                if r.zone is not None:
-                    zone, zone_range = r.zone
+            show_hs_captcha = False
 
-                    score, show_hs_captcha = await Typing.handle_highscore_captcha(
-                        ctx=special_ctx,
-                        send=self.ctx.respond,
-                        user=user,
-                        score=score,
-                        zone=zone,
-                        zone_range=zone_range,
-                    )
+            if r.zone is not None:
+                zone, zone_range = r.zone
 
-                if show_hs_captcha is False:
-                    await self.ctx.bot.mongo.replace_user_data(user, r.user)
-
-                # Invoking comnmand completion for the user
-                special_ctx.is_slash = False
-                invoke_completion(special_ctx)
-
-                embed = await Typing.log_typing_test(
-                    special_ctx,
-                    "Race",
-                    score,
-                    word_display,
-                    r.word_history,
-                    additional=race_size_display,
-                    author=r.user,
-                    send=False,
+                score, show_hs_captcha = await Typing.handle_highscore_captcha(
+                    ctx=special_ctx,
+                    send=self.ctx.respond,
+                    user=user,
+                    score=score,
+                    zone=zone,
+                    zone_range=zone_range,
                 )
 
-                embeds += embed
+            if show_hs_captcha is False:
+                await self.ctx.bot.mongo.replace_user_data(user, r.user)
+
+            # Invoking comnmand completion for the user
+            special_ctx.is_slash = False
+            invoke_completion(special_ctx)
+
+            embed = await Typing.log_typing_test(
+                special_ctx,
+                "Race",
+                score,
+                word_display,
+                r.word_history,
+                additional=race_size_display,
+                author=r.user,
+                send=False,
+            )
+
+            embeds += embed
 
         for i in range(0, len(embeds), 10):
             show_embeds = embeds[i : i + 10]
@@ -1399,7 +1404,11 @@ class RaceJoinView(BaseView):
                     child.disabled = True
 
         else:
-            bucket = self.race_join_cooldown.get_bucket(interaction.message)
+            # the host of the race is the author of interaction.message by default
+            fake_msg = interaction.message
+            fake_msg.author = interaction.user
+
+            bucket = self.race_join_cooldown.get_bucket(fake_msg)
 
             retry_after = bucket.update_rate_limit()
 
