@@ -394,7 +394,8 @@ class TournamentView(ScrollView):
                 )
 
                 if result:
-                    user = result
+                    # Saving the user ban
+                    await self.ctx.bot.mongo.replace_user_data(user, result)
 
                 else:
                     # Getting the tournament value of the score (the value that is going to be stored)
@@ -994,7 +995,7 @@ class RaceJoinView(BaseView):
         self.quote = quote
         self.wrap_width = wrap_width
 
-        self.racers = {}  # id: user object (for preserve uniqueness)
+        self.racers = {}  # id: RaceMember (for preserve uniqueness)
 
         self.race_msg = None
         self.start_lag = None
@@ -1084,8 +1085,13 @@ class RaceJoinView(BaseView):
         return embed
 
     def end_race_early(self):
+        # Canceling the input tasks
         if self.waiting_for_inputs is not None:
             self.waiting_for_inputs.cancel()
+
+        # Removing the active test remove all members
+        for r in self.racers:
+            self.ctx.bot.active_end(r)
 
     async def handle_racer_finish(self, m):
         self.ctx.bot.active_end(m.author.id)
@@ -1261,6 +1267,7 @@ class RaceJoinView(BaseView):
 
                         if result:
                             r.result = None
+                            r.data = result
 
                 embed.add_field(
                     name=f"{place_display} {r.data.display_name}",
