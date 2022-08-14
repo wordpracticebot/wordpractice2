@@ -30,8 +30,6 @@ from helpers.errors import OnGoingTest
 from helpers.ui import BaseView, CustomEmbed, create_link_view, get_log_embed
 from helpers.utils import get_hint, message_banned_user
 
-THIN_SPACE = "\N{THIN SPACE}"
-
 
 class LBCategory:
     def __init__(self, parent_index, index, bot, name, unit, get_stat):
