@@ -42,6 +42,19 @@ class Veteran(Achievement):
         return self.get_account_days(user), self.days
 
 
+class Birthday(Achievement):
+    def __init__(self):
+        super().__init__(
+            name="Birthday",
+            desc="Use wordPractice on the day it was created (August 12)",
+        )
+
+    async def progress(self, ctx, user):
+        now = datetime.utcnow()
+
+        return int(now.month == 8 and now.day == 12), 1
+
+
 endurance = Category(
     desc="Endurance based achievements",
     challenges=[
@@ -60,6 +73,7 @@ endurance = Category(
         [
             [Veteran(days) for days in [7, 14, 30, 90, 180, 365]],
         ],
+        Birthday(),
     ],
     icon=endurance_icon,
     reward=BadgeReward("thomas"),

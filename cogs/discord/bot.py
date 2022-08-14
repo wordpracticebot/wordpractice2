@@ -953,6 +953,7 @@ class AchievementsView(ViewFromDict):
                 if c.reward is not None
                 else ""
             ),
+            add_footer=False,
         )
 
         for a in c.challenges:
@@ -965,6 +966,8 @@ class AchievementsView(ViewFromDict):
                 value=f">>> {a.desc}\n{bar_display}",
                 inline=False,
             )
+
+        embed.set_footer(text="An orange bar indicates a bonus achievement")
 
         return embed
 

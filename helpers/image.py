@@ -7,7 +7,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 from data.constants import SIDE_BORDER, SPACING, STATIC_IMAGE_FORMAT, TOP_BORDER
-from static.assets import arial
+from static.assets import achievement_base, arial, uni_sans_heavy
 
 from .utils import run_in_executor
 
@@ -204,3 +204,17 @@ def save_discord_static_img(img, name):
     buffer.seek(0)
 
     return discord.File(buffer, filename=f"{name}.{STATIC_IMAGE_FORMAT}")
+
+
+@run_in_executor
+def generate_achievement_image(name, icon):
+    img = achievement_base.copy()
+
+    if icon is not None:
+        img_icon = icon.copy().resize((95, 95))
+        img.paste(img_icon, (52, 52), img_icon)
+
+    draw = ImageDraw.Draw(img)
+    draw.text((240, 110), name, font=uni_sans_heavy)
+
+    return save_discord_static_img(img, "achievement")

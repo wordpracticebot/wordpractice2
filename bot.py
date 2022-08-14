@@ -19,7 +19,6 @@ from data.constants import (
     GITHUB_LINK,
     INFO_VIDEO,
     LB_DISPLAY_AMT,
-    LB_LENGTH,
     PERMISSONS,
     PRIMARY_CLR,
     PRIVACY_POLICY_LINK,

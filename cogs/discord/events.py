@@ -6,7 +6,6 @@ import discord
 import humanize
 from discord.ext import commands
 from discord.ext.commands import errors
-from PIL import ImageDraw
 from rapidfuzz import fuzz, process
 
 import data.icons as icons
@@ -16,11 +15,10 @@ from challenges.rewards import group_rewards
 from challenges.season import check_season_rewards
 from data.constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument, OnGoingTest
-from helpers.image import save_discord_static_img
+from helpers.image import generate_achievement_image
 from helpers.ui import create_link_view, get_log_embed
 from helpers.user import get_user_cmds_run
 from helpers.utils import filter_commands, format_command, get_command_name
-from static.assets import achievement_base, uni_sans_heavy
 
 SEASON_PLACING_TIERS = (
     (1, 1),
@@ -41,19 +39,6 @@ SEASON_PLACING_TIERS = (
     (501, 750),
     (751, 1000),
 )
-
-
-def _generate_achievement_image(name, icon):
-    img = achievement_base.copy()
-
-    if icon is not None:
-        img_icon = icon.copy().resize((95, 95))
-        img.paste(img_icon, (52, 52), img_icon)
-
-    draw = ImageDraw.Draw(img)
-    draw.text((240, 110), name, font=uni_sans_heavy)
-
-    return save_discord_static_img(img, "achievement")
 
 
 async def _update_placings(ctx, user):
@@ -281,7 +266,7 @@ class Events(commands.Cog):
     async def on_application_command(self, ctx):
         await self.log_interaction(ctx)
 
-    def get_files_from_earned(self, earned):
+    async def get_files_from_earned(self, earned):
         files = []
         extra = 0
 
@@ -294,7 +279,7 @@ class Events(commands.Cog):
                 if t is not None:
                     name += f" ({t + 1})"
 
-                image = _generate_achievement_image(name, c.icon)
+                image = await generate_achievement_image(name, c.icon)
 
                 files.append(image)
             else:
@@ -463,7 +448,7 @@ class Events(commands.Cog):
 
         # Sending a message with the achievements that have been completed
         if user.achievements != new_user.achievements:
-            files, extra = self.get_files_from_earned(a_earned)
+            files, extra = await self.get_files_from_earned(a_earned)
 
             content = ""
 

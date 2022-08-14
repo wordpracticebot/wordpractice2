@@ -1,5 +1,3 @@
-import math
-
 import discord
 from discord.ext import bridge, commands
 
