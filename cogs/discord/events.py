@@ -333,6 +333,8 @@ class Events(commands.Cog):
             if user.to_mongo() != new_user.to_mongo() or len(new_cache_cmds) >= 3:
                 new_user.cmds_run = list(set(new_user.cmds_run) | new_cache_cmds)
 
+                self.bot.cmds_run.remove(ctx.author.id)
+
             else:
                 self.bot.cmds_run[ctx.author.id] = new_cache_cmds
 
@@ -403,12 +405,13 @@ class Events(commands.Cog):
 
         if user.to_mongo() == new_user.to_mongo():
             # Random chance of there being an announcement
-            if random.randint(0, 20) == 0:
+            if random.randint(0, 25) == 0:
                 announcements = await self.bot.mongo.get_announcements()
 
-                msg = random.choice(announcements)
+                if announcements:
+                    msg = random.choice(announcements)
 
-                await ctx.respond(msg)
+                    await ctx.respond(msg)
 
             return
 

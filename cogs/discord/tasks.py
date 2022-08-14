@@ -71,7 +71,7 @@ class Tasks(commands.Cog):
 
         self.bot.avg_perc = new_perc
 
-    @tasks.loop(minutes=10)
+    @tasks.loop(minutes=15)
     async def post_guild_count(self):
         await self.bot.wait_until_ready()
 
