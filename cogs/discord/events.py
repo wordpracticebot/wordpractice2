@@ -279,7 +279,7 @@ class Events(commands.Cog):
                 if t is not None:
                     name += f" ({t + 1})"
 
-                image = await generate_achievement_image(name, c.icon)
+                image = await generate_achievement_image(self.bot, name, c.icon)
 
                 files.append(image)
             else:
