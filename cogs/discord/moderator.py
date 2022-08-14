@@ -211,7 +211,7 @@ class Moderator(commands.Cog):
         await view.start()
 
     @mod_command
-    async def status(self, ctx, text: str):
+    async def status(self, ctx, *, text: str):
         await self.bot.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching, name=f" {text}"

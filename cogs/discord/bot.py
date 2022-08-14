@@ -1070,7 +1070,7 @@ class Bot(commands.Cog):
         embed = ctx.embed(
             title="Daily Challenges",
             description=(
-                f"**Today's daily challenge restarts in** <t:{unix_timestamp}:R>\n\n"
+                f"**Today's daily challenge restarts ** <t:{unix_timestamp}:R>\n\n"
                 "Complete all the daily challenges to earn:\n"
                 f"**{reward.desc}**"
             ),

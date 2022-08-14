@@ -342,7 +342,7 @@ class WordPractice(bridge.AutoShardedBot):
             ).predicate
         )
 
-        name = f" your wpm \N{EYES} | %help"
+        name = " your wpm \N{EYES} | %help"
 
         self.activity = discord.Activity(type=discord.ActivityType.watching, name=name)
         self.session = aiohttp.ClientSession(loop=self.loop)
