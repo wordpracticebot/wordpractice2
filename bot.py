@@ -373,14 +373,13 @@ class WordPractice(bridge.AutoShardedBot):
 
             return season_data is not None and season_data["enabled"]
 
-        # fmt: off
         self.lbs = [
             Leaderboard.new(
                 title="All Time",
                 emoji="\N{EARTH GLOBE AMERICAS}",
                 stats=[LBCategory.new(self, "Words Typed", "words", lambda u: u.words)],
                 default=0,
-                priority=1
+                priority=1,
             ),
             Leaderboard.new(
                 title="Monthly Season",
@@ -388,14 +387,24 @@ class WordPractice(bridge.AutoShardedBot):
                 stats=[LBCategory.new(self, "Experience", "xp", lambda u: u.xp)],
                 default=0,
                 check=season_check,
-                priority=2
+                priority=2,
             ),
             Leaderboard.new(
                 title="24 Hour",
                 emoji="\N{CLOCK FACE ONE OCLOCK}",
                 stats=[
-                    LBCategory.new(self,"Experience","xp", lambda u: get_24h_stat(u.raw_xp_24h, datetime.utcnow())),
-                    LBCategory.new(self, "Words Typed", "words", lambda u: get_24h_stat(u.raw_words_24h, datetime.utcnow())),
+                    LBCategory.new(
+                        self,
+                        "Experience",
+                        "xp",
+                        lambda u: sum(get_24h_stat(u.raw_xp_24h, datetime.utcnow())),
+                    ),
+                    LBCategory.new(
+                        self,
+                        "Words Typed",
+                        "words",
+                        lambda u: sum(get_24h_stat(u.raw_words_24h, datetime.utcnow())),
+                    ),
                 ],
                 default=0,
             ),
@@ -403,12 +412,12 @@ class WordPractice(bridge.AutoShardedBot):
                 title="High Score",
                 emoji="\N{RUNNER}",
                 stats=[
-                    LBCategory.new(self, s.capitalize(), "wpm", get_hs(s)) for s in TEST_ZONES.keys()
+                    LBCategory.new(self, s.capitalize(), "wpm", get_hs(s))
+                    for s in TEST_ZONES.keys()
                 ],
                 default=1,
             ),
         ]
-        # fmt: on
 
         self.initialize_lbs()
 
