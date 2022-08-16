@@ -35,7 +35,7 @@ from data.constants import (
     VOTING_SITES,
 )
 from helpers.ui import get_log_embed
-from helpers.user import get_expanded_24h_stat
+from helpers.user import get_24h_stat
 from helpers.utils import datetime_to_unix, get_test_type
 from static.badges import get_badge_from_id
 
@@ -211,11 +211,11 @@ class User(UserBase):
 
     @property
     def words_24h(self):
-        return get_expanded_24h_stat(self.raw_words_24h, self.last_24h_save)
+        return get_24h_stat(self.raw_words_24h, self.last_24h_save)
 
     @property
     def xp_24h(self):
-        return get_expanded_24h_stat(self.raw_xp_24h, self.last_24h_save)
+        return get_24h_stat(self.raw_xp_24h, self.last_24h_save)
 
     @property
     def is_premium(self):

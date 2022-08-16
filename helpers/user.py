@@ -105,7 +105,7 @@ def get_daily_stat(stat: list[int]):
     return sum(stat[start_index:])
 
 
-def get_expanded_24h_stat(stat: list[int], last_save: datetime):
+def get_24h_stat(stat: list[int], last_save: datetime):
     # Getting the amount of minutes since the last save
     passed = (datetime.utcnow() - last_save).total_seconds() / 60
 

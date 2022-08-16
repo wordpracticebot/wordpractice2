@@ -5,6 +5,7 @@ import pkgutil
 import time
 import traceback
 from collections import Counter
+from datetime import datetime
 from io import BytesIO
 
 import aiohttp
@@ -28,6 +29,7 @@ from data.constants import (
 )
 from helpers.errors import OnGoingTest
 from helpers.ui import BaseView, CustomEmbed, create_link_view, get_log_embed
+from helpers.user import get_24h_stat
 from helpers.utils import get_hint, message_banned_user
 
 
@@ -392,8 +394,8 @@ class WordPractice(bridge.AutoShardedBot):
                 title="24 Hour",
                 emoji="\N{CLOCK FACE ONE OCLOCK}",
                 stats=[
-                    LBCategory.new(self,"Experience","xp", lambda u: sum(u.xp_24h)),
-                    LBCategory.new(self, "Words Typed", "words", lambda u: sum(u.words_24h)),
+                    LBCategory.new(self,"Experience","xp", lambda u: get_24h_stat(u.raw_xp_24h, datetime.utcnow())),
+                    LBCategory.new(self, "Words Typed", "words", lambda u: get_24h_stat(u.raw_words_24h, datetime.utcnow())),
                 ],
                 default=0,
             ),
