@@ -393,17 +393,9 @@ class WordPractice(bridge.AutoShardedBot):
                 title="24 Hour",
                 emoji="\N{CLOCK FACE ONE OCLOCK}",
                 stats=[
+                    LBCategory.new(self, "Experience", "xp", lambda u: sum(u.xp_24h)),
                     LBCategory.new(
-                        self,
-                        "Experience",
-                        "xp",
-                        lambda u: sum(get_24h_stat(u.raw_xp_24h, datetime.utcnow())),
-                    ),
-                    LBCategory.new(
-                        self,
-                        "Words Typed",
-                        "words",
-                        lambda u: sum(get_24h_stat(u.raw_words_24h, datetime.utcnow())),
+                        self, "Words Typed", "words", lambda u: sum(u.words_24h)
                     ),
                 ],
                 default=0,

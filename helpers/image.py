@@ -42,7 +42,7 @@ def get_width_height(word_list, wrap_width):
     )
 
 
-@run_in_executor
+@run_in_executor()
 def get_base(width, height, colours, fquote):
     img = Image.new("RGB", (width, height), color=colours[0])
     d = ImageDraw.Draw(img)
@@ -54,7 +54,7 @@ def get_base(width, height, colours, fquote):
     return img
 
 
-@run_in_executor
+@run_in_executor()
 def get_highscore_captcha_img(base_img, text_colour):
     img = np.array(base_img)
 
@@ -88,7 +88,7 @@ def get_highscore_captcha_img(base_img, text_colour):
     return img
 
 
-@run_in_executor
+@run_in_executor()
 def get_loading_img(img, text_colour):
     width, height = img.size
 
@@ -153,7 +153,7 @@ def get_vertical_pacer_rect(base, smooth, text_colour, i, y, line_spacing):
     return im
 
 
-@run_in_executor
+@run_in_executor()
 def get_pacer(base, text_colour, quote, word_list, pacer, pacer_type):
     # Removes the dithering and reduces image size
     base = _quantize_img(base)
@@ -206,7 +206,7 @@ def save_discord_static_img(img, name):
     return discord.File(buffer, filename=f"{name}.{STATIC_IMAGE_FORMAT}")
 
 
-@run_in_executor
+@run_in_executor()
 def generate_achievement_image(name, icon):
     img = achievement_base.copy()
 

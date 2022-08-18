@@ -7,6 +7,22 @@ from discord.ext import commands, tasks
 
 from config import DBL_TOKEN, TESTING
 from data.constants import AVG_AMT, CHALLENGE_AMT, LB_LENGTH
+from helpers.utils import run_in_executor
+
+
+@run_in_executor(include_bot=True)
+def _compile_lb_stats(bot, users):
+    lbs = {}
+
+    for u in users:
+        values = bot.get_leaderboard_values(u)
+
+        for i, lb in enumerate(values):
+            for n, stat in enumerate(lb):
+                name = f"lb.{i}.{n}"
+                lbs[name] = lbs.get(name, []) + [(u.id, stat)]
+
+    return lbs
 
 
 class Tasks(commands.Cog):
@@ -22,7 +38,7 @@ class Tasks(commands.Cog):
             if DBL_TOKEN is not None:
                 self.post_guild_count.start()
 
-            self.daily_restart.start()
+        self.daily_restart.start()
 
         for u in [self.update_percentiles, self.clear_cooldowns]:
             u.start()
@@ -121,21 +137,15 @@ class Tasks(commands.Cog):
 
         # Querying all the users and evaluating their scores
 
-        cursor = await self.bot.mongo.User.find()
+        cursor = self.bot.mongo.User.find()
 
-        lbs = {}
+        users = [u async for u in cursor]
 
-        async for u in cursor:
-            values = self.bot.get_leaderboard_values(u)
-
-            for i, lb in enumerate(values):
-                for n, stat in enumerate(lb):
-                    name = f"lb.{i}.{n}"
-                    lbs[name] = lbs.get(name, []) + (u.id, stat)
+        lbs = await _compile_lb_stats(self.bot, users)
 
         for lb, values in lbs.items():
             # Sorting the scores and trimming to leaderboard length
-            sorted_values = sorted(values, key=lambda x: x[1], reverse=True)[LB_LENGTH:]
+            sorted_values = sorted(values, key=lambda x: x[1], reverse=True)[:LB_LENGTH]
 
             # Wiping the current leaderboard
 
@@ -144,8 +154,7 @@ class Tasks(commands.Cog):
             await self.bot.redis.zremrangebyrank(lb, 0, total)
 
             # Saving the scores to the leaderboard
-
-            await self.bot.redis.zadd(stat.lb_key, sorted_values)
+            await self.bot.redis.zadd(lb, dict(sorted_values))
 
     # Clearing cache
     @tasks.loop(minutes=10)

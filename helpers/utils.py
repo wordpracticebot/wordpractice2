@@ -396,13 +396,20 @@ def get_test_zone_name(cw: int):
 
 
 # https://stackoverflow.com/a/64506715
-def run_in_executor(_func):
-    @functools.wraps(_func)
-    def wrapped(bot, *args, **kwargs):
-        func = functools.partial(_func, *args, **kwargs)
-        return bot.loop.run_in_executor(executor=None, func=func)
+def run_in_executor(include_bot=False):
+    def decorator(_func):
+        @functools.wraps(_func)
+        def wrapped(bot, *args, **kwargs):
+            if include_bot:
+                func = functools.partial(_func, bot, *args, **kwargs)
+            else:
+                func = functools.partial(_func, *args, **kwargs)
 
-    return wrapped
+            return bot.loop.run_in_executor(executor=None, func=func)
+
+        return wrapped
+
+    return decorator
 
 
 async def message_banned_user(ctx, user, reason):
