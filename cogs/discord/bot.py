@@ -417,7 +417,7 @@ class ScoreView(ScrollView):
                 name=f"Score {self.start_page + i + 1} ({s.test_type})",
                 value=(
                     f">>> **Wpm:** {s.wpm}\n"
-                    f"**Raw:** 108.21 {s.raw}\n"
+                    f"**Raw:** {s.raw}\n"
                     f"**Accuracy:** {s.acc}% ({s.cw} / {s.tw})\n"
                     f"**XP:** {s.xp}\n"
                     f"**Timestamp:** <t:{timestamp}:R>"
