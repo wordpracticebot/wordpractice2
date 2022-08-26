@@ -346,7 +346,7 @@ test = ["appdirs (==1.4.4)", "pytest-cov (>=2.7)", "pytest-mock (>=3.6)", "pytes
 
 [[package]]
 name = "py-cord"
-version = "2.0.1"
+version = "2.1.1"
 description = "A Python wrapper for the Discord API"
 category = "main"
 optional = false
@@ -501,7 +501,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "6ed86446335dc80595cb218df97c53d0cefdd7346c80519963430a0551f89c9f"
+content-hash = "ec553f5ad74636f3ae7ef9a8c71681d2a04d7d3cb3b9d743950fa9d56282e37b"
 
 [metadata.files]
 aiohttp = [

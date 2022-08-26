@@ -362,9 +362,7 @@ class TournamentView(ScrollView):
 
             view.next_test.callback = _test_callback
 
-            view.message = await message.reply(
-                embed=embed, view=view, mention_author=False
-            )
+            await message.reply(embed=embed, view=view, mention_author=False)
 
             # Creating the score object to manage the statistics better
             score = self.ctx.bot.mongo.Score(
@@ -789,7 +787,7 @@ class HighScoreCaptchaView(BaseView):
 
         view = RetryView(self.ctx, self.handle_captcha)
 
-        view.message = await self.ctx.respond(embed=embed, view=view)
+        await self.ctx.respond(embed=embed, view=view)
 
         await self.log_captcha_completion(raw, acc, word_history, True)
 
@@ -819,7 +817,7 @@ class HighScoreCaptchaView(BaseView):
             ),
         )
 
-        self.message = await self.ctx.respond(embed=embed, view=self)
+        await self.ctx.respond(embed=embed, view=self)
 
 
 class TestResultView(BaseView):
@@ -1873,7 +1871,7 @@ class Typing(commands.Cog):
 
         view = TypingTestResultView(ctx, user, is_dict, length, wrong, *quote_info)
 
-        view.message = await message.reply(embed=embed, view=view, mention_author=False)
+        await message.reply(embed=embed, view=view, mention_author=False)
 
         # For logging
         show_hs_captcha = False
@@ -2109,9 +2107,7 @@ class Typing(commands.Cog):
 
         view = TestResultView(ctx, user, is_dict, length)
 
-        view.message = await message.reply(
-            embed=result_embed, view=view, mention_author=False
-        )
+        await message.reply(embed=result_embed, view=view, mention_author=False)
 
         # Logging the captcha
         await ctx.bot.test_wh.send(embed=embed)

@@ -18,7 +18,7 @@ RULES_LINK = "https://wordpracticebot.github.io/privacy-policy/rules"
 INFO_VIDEO = "https://youtu.be/MkbJzndnyvs"
 GITHUB_LINK = "https://github.com/principle105"  # TODO: put the proper github link here
 
-DEFAULT_VIEW_TIMEOUT = 45  # seconds
+DEFAULT_VIEW_TIMEOUT = 5  # seconds
 DEFAULT_THEME = default["Material"]["colours"]
 AUTO_MODERATOR_NAME = "Thomas Worker 99"  # :)
 

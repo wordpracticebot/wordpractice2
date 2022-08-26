@@ -73,32 +73,8 @@ class BaseView(discord.ui.View):
         self.ctx = ctx
         self.personal = personal
 
-        # Allows regular messages to work with on_timeout
-        self.message = message
-
     async def on_timeout(self):
-        if self.children:
-            msg = self.message
-
-            if not msg:
-                if self.ctx.is_slash:
-                    msg = self.ctx.interaction.message
-
-                    if not msg:
-                        try:
-                            msg = await self.ctx.interaction.original_message()
-                        except discord.NotFound:
-                            return
-
-                else:
-                    msg = self.ctx._original_response_message
-
-            if not msg:
-                return
-
-            if not msg.components:
-                return
-
+        if self._message:
             # Not disabling any link buttons
             exclusions = [
                 c
@@ -108,7 +84,7 @@ class BaseView(discord.ui.View):
 
             self.disable_all_items(exclusions=exclusions)
 
-            await msg.edit(view=self)
+            await self._message.edit(view=self)
 
     async def interaction_check(self, interaction):
         if self.personal is False or (
