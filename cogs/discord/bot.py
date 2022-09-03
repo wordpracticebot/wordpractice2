@@ -692,6 +692,8 @@ class ProfileView(BaseView):
         if placing is None:
             return f"(> {LB_LENGTH})"
 
+        placing += 1
+
         if placing == 1:
             emoji = ":first_place:"
 
