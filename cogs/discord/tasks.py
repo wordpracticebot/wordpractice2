@@ -147,10 +147,9 @@ class Tasks(commands.Cog):
             # Sorting the scores and trimming to leaderboard length
             sorted_values = sorted(values, key=lambda x: x[1], reverse=True)[:LB_LENGTH]
 
-            # Wiping the current leaderboard
-
             total = await self.bot.redis.zcard(lb)
 
+            # Wiping the current leaderboard
             await self.bot.redis.zremrangebyrank(lb, 0, total)
 
             # Saving the scores to the leaderboard

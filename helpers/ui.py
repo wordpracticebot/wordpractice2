@@ -1,7 +1,7 @@
 import asyncio
 import math
 import time
-from typing import Callable, Iterable, Union
+from typing import Callable, Coroutine, Iterable, Union
 
 import discord
 from discord.ext import commands
@@ -166,9 +166,6 @@ class PageView(BaseView):
         if interaction.response.is_done():
             await interaction.edit_original_message(embed=embed, view=view)
 
-            if self.loading_msg is not None:
-                self.loading_msg = await self.loading_msg.edit("**Done**")
-
         else:
             await interaction.response.edit_message(embed=embed, view=view)
 
@@ -177,26 +174,33 @@ class PageView(BaseView):
                 view.remove_item(item)
 
     async def update_all(self, interaction):
-        async def defer_interaction():
-            await asyncio.sleep(1.75)
-
-            content = f"**Loading {icons.loading}**"
-
-            if not interaction.response.is_done():
-                await interaction.response.defer()
-
-                if self.loading_msg is None:
-                    self.loading_msg = await self.ctx.respond(content, ephemeral=True)
-                else:
-                    self.loading_msg = await self.loading_msg.edit(content)
-
         await self.update_buttons()
 
-        await asyncio.gather(defer_interaction(), self.update_message(interaction))
+        await self.wait_for(self.update_message(interaction), interaction)
+
+    async def defer_interaction(self, interaction=None):
+        await asyncio.sleep(1.75)
+
+        content = f"**Loading {icons.loading}**"
+
+        if not interaction.response.is_done():
+            await interaction.response.defer()
+
+            if self.loading_msg is None:
+                self.loading_msg = await self.ctx.respond(content, ephemeral=True)
+            else:
+                self.loading_msg = await self.loading_msg.edit(content)
+
+    async def wait_for(self, callback: Coroutine, interaction):
+        await asyncio.gather(self.defer_interaction(interaction), callback)
+
+        if interaction.response.is_done() and self.loading_msg is not None:
+            self.loading_msg = await self.loading_msg.edit("**Done**")
 
     async def start(self):
         embed = await self.create_page()
         await self.update_buttons()
+
         await self.ctx.respond(embed=embed, view=self)
 
 
