@@ -88,7 +88,7 @@ def _get_word_display(quote, raw_quote):
     return f"{len(quote)} ({len(raw_quote)} chars)"
 
 
-async def _cheating_check(ctx, user, user_data, score):
+async def _cheating_check(ctx, user, user_data, score, word_history):
     """Prevents blatant cheating"""
     if score.wpm >= IMPOSSIBLE_THRESHOLD:
 
@@ -106,7 +106,8 @@ async def _cheating_check(ctx, user, user_data, score):
             additional=(
                 f"**Wpm:** {score.wpm}\n"
                 f"**Raw:** {score.raw}\n"
-                f"**Accuracy:** {score.acc}"
+                f"**Accuracy:** {score.acc}\n"
+                f"**Word History:**\n> {word_history}"
             ),
             error=True,
             author=user,
@@ -388,7 +389,7 @@ class TournamentView(ScrollView):
 
             else:
                 result = await _cheating_check(
-                    self.ctx, self.ctx.author.id, user, score
+                    self.ctx, self.ctx.author.id, user, score, word_history
                 )
 
                 if result:
@@ -1261,7 +1262,9 @@ class RaceJoinView(BaseView):
                         value += f"\n{LONG_SPACE} Warning: {warning}"
 
                     else:
-                        result = await _cheating_check(self.ctx, r.user, r.data, score)
+                        result = await _cheating_check(
+                            self.ctx, r.user, r.data, score, r.word_history
+                        )
 
                         if result:
                             r.result = None
@@ -1901,7 +1904,7 @@ class Typing(commands.Cog):
         else:
             zone, zone_range = result
 
-            result = await _cheating_check(ctx, ctx.author, user, score)
+            result = await _cheating_check(ctx, ctx.author, user, score, word_history)
 
             if result:
                 user = result

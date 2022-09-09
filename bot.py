@@ -29,7 +29,6 @@ from data.constants import (
 )
 from helpers.errors import OnGoingTest
 from helpers.ui import BaseView, CustomEmbed, create_link_view, get_log_embed
-from helpers.user import get_24h_stat
 from helpers.utils import get_hint, message_banned_user
 
 
