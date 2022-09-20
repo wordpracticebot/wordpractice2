@@ -195,7 +195,7 @@ class PageView(BaseView):
         await asyncio.gather(self.defer_interaction(interaction), callback)
 
         if interaction.response.is_done() and self.loading_msg is not None:
-            self.loading_msg = await self.loading_msg.edit("**Done**")
+            self.loading_msg = await self.loading_msg.edit("**Done Loading**")
 
     async def start(self):
         embed = await self.create_page()

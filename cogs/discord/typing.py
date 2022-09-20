@@ -120,13 +120,16 @@ async def _cheating_check(ctx, user, user_data, score, word_history):
     return False
 
 
-def _get_test_warning(raw, acc, result):
-    if acc < 75:
-        if raw > 300:
+def _get_test_warning(score, elapsed_time, test_zone):
+    if score.acc < 75:
+        if score.raw > 300:
             return "Please try not to spam the test."
         return "Tests below 75% accuracy are not saved."
 
-    if result is None:
+    if elapsed_time < 1:
+        return "Tests below 1 second long are not saved."
+
+    if test_zone is None:
         return "Tests below 10 correct words are not saved."
 
     return
@@ -381,7 +384,7 @@ class TournamentView(ScrollView):
 
             test_zone = get_test_zone_name(score.cw)
 
-            warning = _get_test_warning(score.raw, score.acc, test_zone)
+            warning = _get_test_warning(score, end_time, test_zone)
 
             # Checking if there are any warnings
             if warning is not None:
@@ -962,6 +965,8 @@ class RaceMember:
         # The test score (mongo.Score)
         self.result = None
 
+        self.elapsed_time = None
+
         self.word_history = None
 
         self.save_score = True
@@ -1102,9 +1107,11 @@ class RaceJoinView(BaseView):
 
             await self.ctx.respond(content="", view=end_view, ephemeral=True)
 
+        r = self.racers[m.author.id]
+
         end_time = _get_test_time(m.created_at.timestamp(), self.start_time)
 
-        r = self.racers[m.author.id]
+        r.elapsed_time = end_time
 
         u_input = _get_user_input(m)
 
@@ -1253,7 +1260,7 @@ class RaceJoinView(BaseView):
 
                     test_zone = get_test_zone_name(score.cw)
 
-                    warning = _get_test_warning(score.raw, score.acc, test_zone)
+                    warning = _get_test_warning(score, test_zone)
 
                     r.zone = test_zone
 
@@ -1883,8 +1890,6 @@ class Typing(commands.Cog):
 
         result = get_test_zone_name(cw)
 
-        warning = _get_test_warning(raw, acc, result)
-
         score = ctx.bot.mongo.Score(
             wpm=wpm,
             raw=raw,
@@ -1897,6 +1902,8 @@ class Typing(commands.Cog):
             test_type_int=int(is_dict),
             wrong=wrong,
         )
+
+        warning = _get_test_warning(score, end_time, result)
 
         if warning is not None:
             await ctx.respond(f"Warning: {warning}", ephemeral=True)
