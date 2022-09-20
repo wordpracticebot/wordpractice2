@@ -1260,7 +1260,7 @@ class RaceJoinView(BaseView):
 
                     test_zone = get_test_zone_name(score.cw)
 
-                    warning = _get_test_warning(score, test_zone)
+                    warning = _get_test_warning(score, r.elapsed_time, test_zone)
 
                     r.zone = test_zone
 
