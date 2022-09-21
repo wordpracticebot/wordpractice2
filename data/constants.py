@@ -6,7 +6,7 @@ ERROR_CLR = 0xFF5858
 
 # General settings
 PERMISSONS = 412317248576
-SUPPORT_SERVER_INVITE = "https://discord.gg/RuAJp9Wc3w"
+SUPPORT_SERVER_INVITE = "https://discord.gg/DHnk46C"
 
 # Images
 STATIC_IMAGE_FORMAT = "png"

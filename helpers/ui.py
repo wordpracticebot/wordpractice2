@@ -65,7 +65,6 @@ class BaseView(discord.ui.View):
         self,
         ctx: commands.Context,
         timeout=DEFAULT_VIEW_TIMEOUT,
-        message=None,
         personal=True,
     ):
         super().__init__(timeout=timeout)
