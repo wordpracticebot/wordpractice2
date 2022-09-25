@@ -141,8 +141,11 @@ class HelpView(BaseView):
 
             embed.add_field(
                 name=f"{self.ctx.prefix}{cmd_name}",
-                value="\n".join(wrapper.wrap(text=cmd.description or cmd.help))
-                or "No command description",
+                value="\n".join(
+                    wrapper.wrap(
+                        text=cmd.description or cmd.help or "No command description"
+                    )
+                ),
                 inline=False,
             )
 
