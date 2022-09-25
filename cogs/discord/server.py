@@ -47,7 +47,7 @@ class Server(commands.Cog):
         if len(user.scores) == 0:
             embed = ctx.error_embed(
                 title=f"{icons.caution} User does not have any scores saved",
-                description="> Complete at least 1 typing test using `/tt` to update your roles.",
+                description=f"> Complete at least 1 typing test using `{ctx.prefix}tt` to update your roles.",
             )
             return await ctx.respond(embed=embed)
 
@@ -70,7 +70,7 @@ class Server(commands.Cog):
             higher_roles = [
                 (r, r_wpm)
                 for r in current_roles
-                if r in wpm_roles and (r_wpm := wpm_roles[r][1]) >= avg_wpm
+                if r in wpm_roles and (r_wpm := wpm_roles[r][1]) > avg_wpm
             ]
 
             if higher_roles:
