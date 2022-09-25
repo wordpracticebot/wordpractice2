@@ -480,7 +480,8 @@ async def get_users_from_lb(bot, lb: dict):
     user_data = await bot.mongo.fetch_many_users(*lb.keys())
 
     for u, v in lb.items():
-        data.append([user_data[int(u)], v])
+        if int(u) in user_data:
+            data.append([user_data[int(u)], v])
 
     return data
 
