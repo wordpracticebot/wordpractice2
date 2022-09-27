@@ -737,7 +737,7 @@ class ProfileView(BaseView):
         in_between = 35
         b = in_between * THIN_SPACE
 
-        embed.title += f"\n\nAlltime{b}Season{b}24h{b}** **"
+        embed.title += f"\n\nAll Time{b}Season{b}24h{b}** **"
 
         fr_words = self.format_account_stat(f"{self.user.words:,}", 6 + in_between)
         fr_xp = self.format_account_stat(f"{self.user.xp:,}", 17 + in_between)

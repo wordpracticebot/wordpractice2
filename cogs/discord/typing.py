@@ -2005,7 +2005,7 @@ class Typing(commands.Cog):
                 else:
                     diff_display = f" ({icons.up_arrow}{diff})"
 
-                description += f"\n\nAlltime Placing: **{humanize.ordinal(potential_placing)}{diff_display}**"
+                description += f"\n\nAll Time Placing: **{humanize.ordinal(potential_placing)}{diff_display}**"
 
             embed = ctx.embed(
                 title=f":trophy: {user.display_name} | New High Score",
