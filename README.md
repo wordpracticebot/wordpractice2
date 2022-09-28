@@ -2,7 +2,7 @@
     <img src="https://i.imgur.com/zuEi84v.png" alt="Logo" width="240" height="240">
     <h1 >wordPractice v2</h1>
     <p >Practice your typing skills while having fun, compete with typists from around the world.</p>
-    <a href="https://discord.gg/wordpractice">
+    <a href="https://discord.gg/DHnk46C">
         <img src="https://img.shields.io/discord/742960643312713738?logo=discord&style=for-the-badge"></img>
     </a>
 </div>
