@@ -4,7 +4,7 @@ from discord.ext import bridge, commands
 import data.icons as icons
 from config import MODERATORS, SUPPORT_GUILD_ID
 from helpers.checks import user_check
-from helpers.converters import user_option
+from helpers.converters import discord_user_option
 from helpers.ui import BaseView, ScrollView
 from helpers.utils import message_banned_user
 
@@ -102,7 +102,7 @@ class Moderator(commands.Cog):
         return await user_check(ctx, user)
 
     @mod_command
-    @user_option
+    @discord_user_option
     async def wipe(self, ctx, user: discord.User):
         """Wipe a user"""
         await ctx.defer()
@@ -116,7 +116,7 @@ class Moderator(commands.Cog):
         await ctx.respond(embed=embed)
 
     @mod_command
-    @user_option
+    @discord_user_option
     @discord.option(
         "reason",
         str,
@@ -159,7 +159,7 @@ class Moderator(commands.Cog):
         await ctx.respond(embed=embed)
 
     @mod_command
-    @user_option
+    @discord_user_option
     async def unban(self, ctx, user, reason):
         """Unban a user"""
         await ctx.defer()
@@ -180,7 +180,7 @@ class Moderator(commands.Cog):
         await ctx.respond(embed=embed)
 
     @mod_command
-    @user_option
+    @discord_user_option
     async def cat(self, ctx, user):
         """View the infractions of a user"""
         await ctx.defer()
@@ -192,7 +192,7 @@ class Moderator(commands.Cog):
         await view.start()
 
     @mod_command
-    @user_option
+    @discord_user_option
     async def restore(self, ctx, user):
         """Restore a user's account"""
         await ctx.defer()

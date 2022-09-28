@@ -447,7 +447,7 @@ class Customization(commands.Cog):
     @bridge.bridge_command()
     @cooldown(5, 2)
     @user_option
-    async def settings(self, ctx, user: discord.User = None):
+    async def settings(self, ctx, *, user: discord.User = None):
         """View user settings"""
         await self.handle_settings_cmd(ctx, user)
 

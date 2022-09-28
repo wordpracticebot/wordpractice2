@@ -89,10 +89,10 @@ def get_daily_challenges():
 
 CHALLENGES = [
     [VoteChallenge(), 5],
-    [WordChallenge(750), 2],
-    [WordChallenge(1000), 3],
-    [WordChallenge(1250), 3],
-    [WordChallenge(1500), 2],
+    [WordChallenge(500), 2],
+    [WordChallenge(600), 3],
+    [WordChallenge(800), 3],
+    [WordChallenge(100), 2],
     [AccuracyChallenge(3), 1],
     [AccuracyChallenge(5), 2],
     [AccuracyChallenge(8), 2],

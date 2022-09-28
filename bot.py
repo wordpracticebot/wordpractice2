@@ -5,7 +5,6 @@ import pkgutil
 import time
 import traceback
 from collections import Counter
-from datetime import datetime
 from io import BytesIO
 
 import aiohttp

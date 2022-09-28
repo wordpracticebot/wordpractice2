@@ -986,7 +986,7 @@ class Bot(commands.Cog):
     @bridge.bridge_command()
     @cooldown(7, 2)
     @user_option
-    async def profile(self, ctx, user: discord.User = None):
+    async def profile(self, ctx, *, user: discord.User = None):
         """View user statistics"""
         await self.handle_profile_cmd(ctx, user)
 
@@ -1005,7 +1005,7 @@ class Bot(commands.Cog):
     @bridge.bridge_command()
     @cooldown(5, 2)
     @user_option
-    async def graph(self, ctx, user: discord.User = None):
+    async def graph(self, ctx, *, user: discord.User = None):
         """See a graph of a user's typing scores"""
         await self.handle_graph_cmd(ctx, user)
 
@@ -1037,7 +1037,7 @@ class Bot(commands.Cog):
     @bridge.bridge_command()
     @cooldown(5, 2)
     @user_option
-    async def achievements(self, ctx, user: discord.User = None):
+    async def achievements(self, ctx, *, user: discord.User = None):
         """See all the achievements"""
         user_data = await user_check(ctx, user)
 
@@ -1136,7 +1136,7 @@ class Bot(commands.Cog):
     @bridge.bridge_command()
     @cooldown(6, 2)
     @user_option
-    async def scores(self, ctx, user: discord.User = None):
+    async def scores(self, ctx, *, user: discord.User = None):
         """View and download a user's recent typing scores"""
         user_data = await self.handle_scores(ctx, user)
 
@@ -1150,7 +1150,7 @@ class Bot(commands.Cog):
     @bridge.bridge_command()
     @cooldown(5, 2)
     @user_option
-    async def badges(self, ctx, user: discord.User = None):
+    async def badges(self, ctx, *, user: discord.User = None):
         """View a user's badges"""
         user_data = await user_check(ctx, user)
 

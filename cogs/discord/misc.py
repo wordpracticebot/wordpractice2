@@ -44,7 +44,7 @@ CREDITS = [
     [
         "Miodec",
         [],
-        "Consistency formula as well as typing words are derived from Miodec's Monkeytype. Thank you so much!",
+        "The consistency formula and word list are derived from Miodec's Monkeytype. Thank you so much!",
     ],
     [
         "Freepik",

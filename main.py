@@ -11,6 +11,7 @@ def main():
     intents.message_content = True
     intents.messages = True
     intents.guilds = True
+    intents.members = True
 
     allowed_mentions = discord.AllowedMentions(everyone=False, roles=False)
 

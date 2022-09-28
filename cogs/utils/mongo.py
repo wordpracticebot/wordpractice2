@@ -440,20 +440,45 @@ class Mongo(commands.Cog):
 
         await self.bot.redis.hmset("user", raw_fetched_users)
 
-    async def fetch_user(self, user: Union[discord.Member, int], create=False):
+    async def fetch_user(
+        self, user: Union[discord.User, int, tuple[str, str]], create=False
+    ):
+        # User id
         if isinstance(user, int):
-            user_id = user
-        else:
-            user_id = user.id
+            return await self.fetch_user_from_query({"id": user}, user_id=user)
 
-        # Checking if the user is in the cache
-        u = await self.get_user_from_cache(user_id)
+        # name#discriminator
+        elif isinstance(user, (list, tuple)):
+            return await self.fetch_user_from_query(
+                {"name": user[0], "discriminator": user[1]}
+            )
+
+        # User object
+        else:
+            return await self.fetch_user_from_query(
+                {"id": user.id}, user_id=user.id, user=user, create=create
+            )
+
+    async def fetch_user_from_query(
+        self,
+        query: dict,
+        *,
+        user_id: int = None,
+        user: discord.User = None,
+        create: bool = False,
+    ):
+
+        if user_id is None:
+            u = None
+        else:
+            # Checking if the user is in the cache
+            u = await self.get_user_from_cache(user_id)
 
         if u is None:
-            u = await self.User.find_one({"id": user_id})
+            u = await self.User.find_one(query)
 
             if u is None:
-                if not isinstance(user, int) and not user.bot:
+                if user is not None and not user.bot:
                     if create is False:
                         return u
 
@@ -474,7 +499,7 @@ class Mongo(commands.Cog):
 
         uj = u.to_mongo()
 
-        if not isinstance(user, int):
+        if user is not None:
             current = self.get_current(user)
 
             # Checking if user info needs to be updated
@@ -485,7 +510,7 @@ class Mongo(commands.Cog):
             u = self.User.build_from_mongo(uj)
 
         # Updating in cache
-        await self.bot.redis.hset("user", user_id, pickle.dumps(uj))
+        await self.bot.redis.hset("user", u.id, pickle.dumps(uj))
 
         return u
 
