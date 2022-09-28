@@ -92,7 +92,7 @@ CHALLENGES = [
     [WordChallenge(500), 2],
     [WordChallenge(600), 3],
     [WordChallenge(800), 3],
-    [WordChallenge(100), 2],
+    [WordChallenge(1000), 2],
     [AccuracyChallenge(3), 1],
     [AccuracyChallenge(5), 2],
     [AccuracyChallenge(8), 2],

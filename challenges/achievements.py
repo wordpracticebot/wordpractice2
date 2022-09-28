@@ -108,7 +108,9 @@ async def get_achievement_display(ctx, user, e):
     if is_fully_done:
         p1 = max(p1, p2)
 
-    bar = get_bar(p1 / p2, variant=variant)
+    progress = 0 if p2 == 0 else p1 / p2
+
+    bar = get_bar(progress, variant=variant)
 
     bar_display = f"{bar} `{p1}/{p2}`"
 
