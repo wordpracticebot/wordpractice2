@@ -24,6 +24,7 @@ from data.constants import (
     PRIVACY_POLICY_LINK,
     RULES_LINK,
     SUPPORT_SERVER_INVITE,
+    TEST_EXPIRE_TIME,
     TEST_ZONES,
 )
 from helpers.errors import OnGoingTest
@@ -354,7 +355,7 @@ class WordPractice(bridge.AutoShardedBot):
         self.avg_perc = []  # [wpm (33% 66%), raw, acc]
 
         # Not using MaxConcurrency because it's based on context so it doesn't work with users who join race
-        self.active_tests = []
+        self.active_tests = {}  # user_id: timestamp
 
         self.spam_control = commands.CooldownMapping.from_cooldown(
             6, 8, commands.BucketType.user  # rate, per
@@ -433,15 +434,17 @@ class WordPractice(bridge.AutoShardedBot):
         return values
 
     def active_start(self, user_id: int):
-        # If the user is currently in a test
-        if user_id in self.active_tests:
+        timestamp = self.active_tests.get(user_id, None)
+
+        # Checking if the user is in an active test and it isn't expired
+        if timestamp is not None and time.time() - timestamp < TEST_EXPIRE_TIME + 1:
             raise OnGoingTest()
 
-        self.active_tests.append(user_id)
+        self.active_tests[user_id] = time.time()
 
     def active_end(self, user_id: int):
         if user_id in self.active_tests:
-            self.active_tests.remove(user_id)
+            del self.active_tests[user_id]
 
     async def handle_after_welcome_check(self, ctx):
         # Checking if the user is banned
