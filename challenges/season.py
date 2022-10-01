@@ -8,7 +8,7 @@ async def get_season_tiers(bot):
         return
 
     for i, badge_id in enumerate(season_info["badges"]):
-        yield (i + 1) * 25000, BadgeReward(badge_id)
+        yield (i + 1) * season_info["amount"], BadgeReward(badge_id)
 
 
 async def check_season_rewards(bot, user):

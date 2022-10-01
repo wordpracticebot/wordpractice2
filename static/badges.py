@@ -3,7 +3,6 @@ The badge system has a unique identifier for each badge.
 Only the identifier is stored in the user document
 """
 
-# fmt: off
 
 default = {
     "grey": "<:grey:965483700223631420>",
@@ -82,9 +81,10 @@ default = {
     "icecube": "<:icecube:1004396760426365019>",
     "icecream": "<:icecream:1004396759033856114>",
     "rake": "<:rake:1015625201838460988>",
-    "mushroom": "<:mushroom:1015625199745499186>"
+    "mushroom": "<:mushroom:1015625199745499186>",
+    "scythe": "<:scythe:1025804697531068436>",
+    "jam": "<:jam:1025803549919162528>",
 }
-# fmt: on
 
 
 def get_badge_from_id(badge_id: str):
