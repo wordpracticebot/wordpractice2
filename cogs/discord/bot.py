@@ -207,6 +207,9 @@ class SeasonView(ViewFromDict):
                 lb_placings = []
 
                 for i in range(start - 1, end):
+                    if i >= len(self.lb_data):
+                        break
+
                     u, value = self.lb_data[i]
 
                     lb_display = get_lb_display(
@@ -215,9 +218,12 @@ class SeasonView(ViewFromDict):
 
                     lb_placings.append(lb_display)
 
-                embed.add_field(
-                    name=f"{name} {icon}", value="\n".join(lb_placings), inline=False
-                )
+                if lb_placings != []:
+                    embed.add_field(
+                        name=f"{name} {icon}",
+                        value="\n".join(lb_placings),
+                        inline=False,
+                    )
 
             if self.lb_placing is None:
                 placing = "N/A" if self.placing is None else self.placing

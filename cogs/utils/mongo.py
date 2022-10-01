@@ -406,6 +406,9 @@ class Mongo(commands.Cog):
         return [d async for d in data]
 
     async def fetch_many_users(self, *user_ids):
+        if not user_ids:
+            return {}
+
         data = {}
         not_found = set()
 
