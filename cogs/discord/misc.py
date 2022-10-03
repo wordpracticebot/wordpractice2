@@ -137,10 +137,10 @@ class HelpView(BaseView):
 
         # Displaying all the commands
         for cmd in cmds:
-            cmd_name = format_command(cmd)
+            cmd_name = format_command(self.ctx, cmd)
 
             embed.add_field(
-                name=f"{self.ctx.prefix}{cmd_name}",
+                name=cmd_name,
                 value="\n".join(
                     wrapper.wrap(
                         text=cmd.description or cmd.help or "No command description"

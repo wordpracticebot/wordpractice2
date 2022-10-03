@@ -7,8 +7,9 @@ from bisect import bisect
 from datetime import datetime, timezone
 from typing import Callable
 
+import discord
 from discord import SlashCommand, SlashCommandGroup, UserCommand
-from discord.ext import commands
+from discord.ext import bridge, commands
 
 from data.constants import SUPPORT_SERVER_INVITE, TEST_ZONES
 from data.icons import h_progress_bar, overflow_bar, v_progress_bar
@@ -27,11 +28,31 @@ def get_command_name(command):
     return command.qualified_name
 
 
-def format_command(command):
-    if isinstance(command, (SlashCommand, UserCommand)):
-        return get_command_name(command)
+def format_group(ctx, group_name, name):
+    group = ctx.bot.get_application_command(group_name, type=discord.SlashCommandGroup)
+    return f"</{group.name} {name}:{group.id}>"
 
-    return f"{command} {command.signature}"
+
+def mention_command_from_name(*, ctx, group: str = None, name: str = None):
+    if ctx.is_slash:
+        if group is not None:
+            return format_group(ctx, group, name)
+
+        return ctx.bot.get_command(name).mention
+
+    group_name = f"{group} " if group is not None else ""
+
+    return f"{ctx.prefix} {group_name}{name}"
+
+
+def format_command(ctx, command):
+    if isinstance(command, (SlashCommand, UserCommand)):
+        if command.parent:
+            return format_group(ctx, command.parent.name, command.name)
+
+        return command.mention
+
+    return f"{ctx.prefix}{command} {command.signature}"
 
 
 def filter_commands(ctx, cmds):

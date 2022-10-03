@@ -1530,13 +1530,14 @@ class Typing(commands.Cog):
     word_option = discord.option(
         name="length",
         type=int,
-        desc=f"Choose a word amount from {TEST_RANGE[0]}-{TEST_RANGE[1]}",
+        description=f"Choose a word amount from {TEST_RANGE[0]}-{TEST_RANGE[1]}",
+        default=35,
     )
 
     quote_option = discord.option(
         name="length",
         type=str,
-        desc="Choose a quote length",
+        description="Choose a quote length",
         choices=TEST_ZONES.keys(),
     )
 
@@ -1593,7 +1594,7 @@ class Typing(commands.Cog):
     @race_group.command(name="dictionary")
     @cooldown(6, 2)
     @word_option
-    async def race_dictionary(self, ctx, length: int = 35):
+    async def race_dictionary(self, ctx, length: int):
         """Take a multiplayer dictionary typing test"""
 
         quote_info = await self.handle_dictionary_input(ctx, length)

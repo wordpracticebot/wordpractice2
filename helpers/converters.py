@@ -84,5 +84,5 @@ discord_user_option = discord.option(
 
 # Colours
 colour_option = lambda name: discord.option(
-    name, HexOrRGB, desc="Enter a hex or rgb colour"
+    name, HexOrRGB, description="Enter a hex or rgb colour"
 )

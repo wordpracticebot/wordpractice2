@@ -84,11 +84,9 @@ class Events(commands.Cog):
     async def log_interaction(self, ctx):
         # Logging the interaction
 
-        command = format_command(ctx.command)
+        command = format_command(ctx, ctx.command)
 
-        embed = get_log_embed(
-            ctx, title=None, additional=f"**Command:** {ctx.prefix}{command}"
-        )
+        embed = get_log_embed(ctx, title=None, additional=f"**Command:** {command}")
 
         await self.bot.cmd_wh.send(embed=embed)
 
@@ -216,14 +214,14 @@ class Events(commands.Cog):
                 ctx, title="Invalid Argument", desc=message
             )
         elif isinstance(error, errors.MissingRequiredArgument):
-            cmd_signature = format_command(ctx.command)
+            cmd_signature = format_command(ctx, ctx.command)
 
             return await self.send_basic_error(
                 ctx,
                 title="Invalid Input",
                 desc=(
                     f"Missing required argument `{error.param.name}`\n\n"
-                    f"Correct Usage: `{ctx.prefix}{cmd_signature}`"
+                    f"Correct Usage: `{cmd_signature}`"
                 ),
             )
 
@@ -247,12 +245,12 @@ class Events(commands.Cog):
             severe=True,
         )
 
-        command = format_command(ctx.command)
+        command = format_command(ctx, ctx.command)
 
         embed = get_log_embed(
             ctx,
             title="Unexpected Error",
-            additional=f"**Command:** {ctx.prefix}{command}",
+            additional=f"**Command:** {command}",
             error=True,
         )
 
