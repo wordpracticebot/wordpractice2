@@ -571,9 +571,7 @@ class TournamentView(ScrollView):
             if placing is not None:
                 placing_index, score = placing
 
-                display = get_lb_display(
-                    placing_index + 1, self.t.unit, self.user, score
-                )
+                display = get_lb_display(placing_index + 1, self.t.unit, self.user, score)
 
                 prefix = self.t.get_ranking_prefix(placing_index + 1, v)
 
@@ -2001,7 +1999,7 @@ class Typing(commands.Cog):
             if estimate is not None:
                 potential_placing, diff = estimate
 
-                if diff is None:
+                if not diff:
                     diff_display = ""
                 else:
                     diff_display = f" ({icons.up_arrow}{diff})"

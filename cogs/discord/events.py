@@ -55,13 +55,13 @@ async def _update_placings(ctx, user):
         return None, None
 
     # Getting the current season placing of the user
-    start_placing = await ctx.bot.redis.zrevrank("lb.1.0", user.id)
+    start_placing = await ctx.bot.get_placing("lb.1.0", user.id) + 1
 
     # Updating the user's placing
     for name, value in update.items():
         await ctx.bot.redis.zadd(name, {user.id: value})
 
-    after_placing = await ctx.bot.redis.zrevrank("lb.1.0", user.id)
+    after_placing = await ctx.bot.get_placing("lb.1.0", user.id) + 1
 
     return start_placing, after_placing
 
