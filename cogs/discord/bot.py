@@ -66,7 +66,7 @@ async def _get_lb_placing(lb_data, c, user_id):
     lb_placing = placing
 
     if placing is None:
-        placing = await c.get_placing(user_id)
+        placing = await c.get_placing(user_id) + 1
 
     return placing, lb_placing
 
