@@ -231,6 +231,10 @@ class TournamentView(ScrollView):
         return self.t_data[self.t_page]
 
     @property
+    def has_btns(self):
+        return True
+
+    @property
     def t_max_page(self):
         return len(self.t_data)
 
@@ -516,8 +520,8 @@ class TournamentView(ScrollView):
         else:
             page_display = ""
 
-        if self.t.prizes is None:
-            prizes = None
+        if self.t.prizes == []:
+            prizes = ""
 
         elif len(self.t.prizes) == 1:
             prizes = f"**\n\nThe winner will receive {self.t.prizes [0]}.**"
@@ -571,7 +575,9 @@ class TournamentView(ScrollView):
             if placing is not None:
                 placing_index, score = placing
 
-                display = get_lb_display(placing_index + 1, self.t.unit, self.user, score)
+                display = get_lb_display(
+                    placing_index + 1, self.t.unit, self.user, score
+                )
 
                 prefix = self.t.get_ranking_prefix(placing_index + 1, v)
 
