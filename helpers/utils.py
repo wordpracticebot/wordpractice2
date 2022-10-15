@@ -9,9 +9,9 @@ from typing import Callable
 
 import discord
 from discord import SlashCommand, SlashCommandGroup, UserCommand
-from discord.ext import bridge, commands
+from discord.ext import commands
 
-from data.constants import SUPPORT_SERVER_INVITE, TEST_ZONES
+from data.constants import LB_LENGTH, SUPPORT_SERVER_INVITE, TEST_ZONES
 from data.icons import h_progress_bar, overflow_bar, v_progress_bar
 from helpers.ui import create_link_view
 from helpers.user import get_user_cmds_run
@@ -532,7 +532,7 @@ def estimate_placing(lb: list[int], old_value: int, new_value: int) -> int:
         potential_placing = len(lb) - score_index + 1
 
         # Checking if the user was previously on the leaderboard
-        if old_value >= lb[0]:
+        if potential_placing <= LB_LENGTH and old_value >= lb[0]:
             initial_index = bisect(lb, old_value)
 
             if initial_index != score_index:

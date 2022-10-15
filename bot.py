@@ -19,6 +19,7 @@ from data.constants import (
     GITHUB_LINK,
     INFO_VIDEO,
     LB_DISPLAY_AMT,
+    LB_LENGTH,
     PERMISSONS,
     PRIMARY_CLR,
     PRIVACY_POLICY_LINK,
@@ -48,7 +49,12 @@ class LBCategory:
         return f"lb.{self.parent_index}.{self.index}"
 
     async def get_placing(self, user_id):
-        return await self.bot.redis.zrevrank(self.lb_key, user_id)
+        placing = await self.bot.redis.zrevrank(self.lb_key, user_id)
+
+        if placing is None or placing > LB_LENGTH:
+            return None
+
+        return placing
 
     async def remove_user(self, user_id):
         return await self.bot.redis.zrem(self.lb_key, user_id)
