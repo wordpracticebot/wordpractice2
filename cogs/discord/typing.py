@@ -472,12 +472,16 @@ class TournamentView(ScrollView):
     async def next_tournament(self, button, interaction):
         if self.t_page != 0:
             self.t_page -= 1
+            self.lb_data = None
+
             await self.update_all(interaction)
 
     @discord.ui.button(label="Previous Tournament", style=discord.ButtonStyle.primary)
     async def prev_tournament(self, button, interaction):
         if self.t_page != self.t_max_page:
             self.t_page += 1
+            self.lb_data = None
+
             await self.update_all(interaction)
 
     async def update_buttons(self):
@@ -578,11 +582,6 @@ class TournamentView(ScrollView):
                 display = get_lb_display(
                     placing_index + 1, self.t.unit, self.user, score
                 )
-
-                prefix = self.t.get_ranking_prefix(placing_index + 1, v)
-
-                if prefix is not None:
-                    display = prefix + display
 
                 embed.add_field(
                     name=f"{LINE_SPACE * 13}\n{display}",
