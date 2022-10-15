@@ -472,6 +472,7 @@ class TournamentView(ScrollView):
     async def next_tournament(self, button, interaction):
         if self.t_page != 0:
             self.t_page -= 1
+            self.page = 0
             self.lb_data = None
 
             await self.update_all(interaction)
@@ -480,6 +481,7 @@ class TournamentView(ScrollView):
     async def prev_tournament(self, button, interaction):
         if self.t_page != self.t_max_page:
             self.t_page += 1
+            self.page = 0
             self.lb_data = None
 
             await self.update_all(interaction)
