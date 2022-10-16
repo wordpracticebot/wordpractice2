@@ -46,7 +46,7 @@ class CatView(ScrollView):
             timestamp = inf.unix_timestamp
 
             embed.add_field(
-                name=f"Infraction {self.max_page - (self.start_page + i) + 1} ({inf.name})",
+                name=f"Infraction {self.total - (self.start_page + i)} ({inf.name})",
                 value=(
                     f">>> Moderator: {inf.mod_name} ({inf.mod_id})\n"
                     f"Reason: {inf.reason}\n"
