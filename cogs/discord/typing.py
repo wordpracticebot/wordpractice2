@@ -342,9 +342,7 @@ class TournamentView(ScrollView):
             )
 
             # Sending the results
-            embed = self.ctx.embed(
-                title=f"{self.t.name} Tournament Test\n\n`Statistics`"
-            )
+            embed = self.ctx.embed(title=f"{self.t.name} Test\n\n`Statistics`")
 
             embed.set_author(
                 name=self.ctx.author,
