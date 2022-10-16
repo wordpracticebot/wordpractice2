@@ -13,7 +13,6 @@ from data.constants import (
     PRIVACY_POLICY_LINK,
     RULES_LINK,
     SUPPORT_SERVER_INVITE,
-    SUPPORT_SERVER_VOTE_LINK,
     VOTING_SITES,
 )
 from helpers.checks import cooldown
@@ -307,7 +306,7 @@ class Misc(commands.Cog):
         )
 
         embed.add_field(
-            name="Rewards per Vote", value=f"{icons.xp} 1000 XP", inline=False
+            name="Rewards per Vote", value=f"{icons.xp} 750 XP", inline=False
         )
 
         # Voting achievement progress
@@ -351,12 +350,8 @@ class Misc(commands.Cog):
             await ctx.respond(msg, ephemeral=True)
 
         if ctx.guild.id == SUPPORT_GUILD_ID:
-            view = create_link_view({"Server Voting Link": SUPPORT_SERVER_VOTE_LINK})
-
             await ctx.respond(
-                "Get the `Voter` role by voting for the server!",
-                view=view,
-                ephemeral=True,
+                "Get the `Voter` role by voting for the server!", ephemeral=True
             )
 
 

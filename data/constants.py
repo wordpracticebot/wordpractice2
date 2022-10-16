@@ -71,8 +71,12 @@ VOTING_SITES = {
         "time": 12,  # hours
         "link": "https://discordbotlist.com/bots/wordpractice/upvote",
     },
+    "topgg-server": {
+        "name": "Top.gg Server",
+        "time": 12,  # hours,
+        "link": "https://top.gg/servers/742960643312713738/vote",
+    },
 }
-SUPPORT_SERVER_VOTE_LINK = "https://top.gg/servers/742960643312713738/vote"
 
 # Premium
 PREMIUM_LAUNCHED = False
