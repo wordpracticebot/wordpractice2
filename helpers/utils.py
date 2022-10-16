@@ -531,8 +531,11 @@ def estimate_placing(lb: list[int], old_value: int, new_value: int) -> int:
 
         potential_placing = len(lb) - score_index + 1
 
+        if potential_placing > LB_LENGTH:
+            return None
+
         # Checking if the user was previously on the leaderboard
-        if potential_placing <= LB_LENGTH and old_value >= lb[0]:
+        if old_value >= lb[0]:
             initial_index = bisect(lb, old_value)
 
             if initial_index != score_index:
