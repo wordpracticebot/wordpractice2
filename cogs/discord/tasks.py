@@ -39,6 +39,7 @@ class Tasks(commands.Cog):
                 self.post_guild_count.start()
 
         self.daily_restart.start()
+        self.update_lbs()
 
         for u in [self.update_percentiles, self.clear_cooldowns]:
             u.start()
@@ -133,6 +134,10 @@ class Tasks(commands.Cog):
 
         await self.bot.redis.hdel("user", *a.keys())
 
+    @tasks.loop(hours=3)
+    async def update_lbs(self):
+        await self.bot.wait_until_ready()
+
         # Updating all the leaderboards
 
         # Querying all the users and evaluating their scores
@@ -147,10 +152,8 @@ class Tasks(commands.Cog):
             # Sorting the scores and trimming to leaderboard length
             sorted_values = sorted(values, key=lambda x: x[1], reverse=True)[:LB_LENGTH]
 
-            total = await self.bot.redis.zcard(lb)
-
             # Wiping the current leaderboard
-            await self.bot.redis.zremrangebyrank(lb, 0, total)
+            await self.bot.redis.zremrangebyrank(lb, 0, -1)
 
             # Saving the scores to the leaderboard
             await self.bot.redis.zadd(lb, dict(sorted_values))

@@ -120,10 +120,10 @@ class BaseView(discord.ui.View):
             description="> Please report this through our support server so we can fix it.",
         )
 
-        if inter.response.is_done():
+        try:
             await send(embed=embed, view=view, ephemeral=True)
-        else:
-            await send(embed=embed, view=view, ephemeral=True)
+        except Exception:
+            pass
 
         embed = get_log_embed(
             self.ctx,
@@ -164,7 +164,6 @@ class PageView(BaseView):
 
         if interaction.response.is_done():
             await interaction.edit_original_message(embed=embed, view=view)
-
         else:
             await interaction.response.edit_message(embed=embed, view=view)
 
@@ -178,11 +177,11 @@ class PageView(BaseView):
         await self.wait_for(self.update_message(interaction), interaction)
 
     async def defer_interaction(self, interaction=None):
-        await asyncio.sleep(1.75)
+        await asyncio.sleep(0.5)
 
         content = f"**Loading {icons.loading}**"
 
-        if not interaction.response.is_done():
+        if interaction.response.is_done() is False:
             await interaction.response.defer()
 
             if self.loading_msg is None:
