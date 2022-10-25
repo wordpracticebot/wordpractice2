@@ -39,7 +39,7 @@ class Tasks(commands.Cog):
                 self.post_guild_count.start()
 
         self.daily_restart.start()
-        self.update_lbs()
+        self.update_lbs.start()
 
         for u in [self.update_percentiles, self.clear_cooldowns]:
             u.start()
