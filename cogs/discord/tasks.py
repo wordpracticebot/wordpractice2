@@ -144,8 +144,10 @@ class Tasks(commands.Cog):
 
         await self.bot.redis.hdel("user", *a.keys())
 
-    @commands.Cog.listener()
-    async def on_update_lbs(self):
+    @tasks.loop(hours=3)
+    async def update_lbs(self):
+        await self.bot.wait_until_ready()
+
         # Querying all the users and evaluating their scores
         cursor = self.bot.mongo.db.users.find()
 
@@ -164,13 +166,6 @@ class Tasks(commands.Cog):
 
             # Saving the scores to the leaderboard
             await self.bot.redis.zadd(lb, dict(sorted_values))
-
-    @tasks.loop(hours=3)
-    async def update_lbs(self):
-        await self.bot.wait_until_ready()
-
-        # Updating all the leaderboards
-        self.bot.dispatch("update_lbs")
 
     # Clearing cache
     @tasks.loop(minutes=10)
