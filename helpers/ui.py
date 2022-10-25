@@ -162,10 +162,7 @@ class PageView(BaseView):
             for item in items:
                 view.add_item(item)
 
-        if interaction.response.is_done():
-            await interaction.edit_original_message(embed=embed, view=view)
-        else:
-            await interaction.response.edit_message(embed=embed, view=view)
+        await interaction.edit_original_message(embed=embed, view=view)
 
         if items is not None:
             for item in items:
@@ -177,7 +174,7 @@ class PageView(BaseView):
         await self.wait_for(self.update_message(interaction), interaction)
 
     async def defer_interaction(self, interaction=None):
-        await asyncio.sleep(0.5)
+        # await asyncio.sleep(0.5)
 
         content = f"**Loading {icons.loading}**"
 
