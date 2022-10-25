@@ -25,6 +25,16 @@ def _compile_lb_stats(bot, users):
     return lbs
 
 
+@run_in_executor(include_bot=True)
+def _serialize_users(bot, users):
+    serialized = []
+
+    for u in users:
+        serialized.append(bot.mongo.User.build_from_mongo(u))
+
+    return serialized
+
+
 class Tasks(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -137,9 +147,11 @@ class Tasks(commands.Cog):
     @commands.Cog.listener()
     async def on_update_lbs(self):
         # Querying all the users and evaluating their scores
-        cursor = self.bot.mongo.User.find()
+        cursor = self.bot.mongo.db.users.find()
 
-        users = [u async for u in cursor]
+        raw_users = [u async for u in cursor]
+
+        users = await _serialize_users(self.bot, raw_users)
 
         lbs = await _compile_lb_stats(self.bot, users)
 
