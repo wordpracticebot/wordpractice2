@@ -162,7 +162,10 @@ class PageView(BaseView):
             for item in items:
                 view.add_item(item)
 
-        await interaction.edit_original_message(embed=embed, view=view)
+        if interaction.response.is_done() or self.loading_msg:
+            await interaction.edit_original_message(embed=embed, view=view)
+        else:
+            await interaction.response.edit_message(embed=embed, view=view)
 
         if items is not None:
             for item in items:
@@ -174,12 +177,15 @@ class PageView(BaseView):
         await self.wait_for(self.update_message(interaction), interaction)
 
     async def defer_interaction(self, interaction=None):
-        # await asyncio.sleep(0.5)
-
-        content = f"**Loading {icons.loading}**"
+        await asyncio.sleep(0.5)
 
         if interaction.response.is_done() is False:
-            await interaction.response.defer()
+            try:
+                await interaction.response.defer()
+            except discord.InteractionResponded:
+                pass
+
+            content = f"**Loading {icons.loading}**"
 
             if self.loading_msg is None:
                 self.loading_msg = await self.ctx.respond(content, ephemeral=True)
