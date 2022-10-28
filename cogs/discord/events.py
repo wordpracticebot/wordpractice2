@@ -412,6 +412,15 @@ class Events(commands.Cog):
 
                     await ctx.respond(msg)
 
+            if not ctx.is_slash:
+                if random.randint(0, 30) == 0:
+                    await ctx.respond(
+                        "**Important Notice:**\n"
+                        "Discord is moving to slash commands.\n"
+                        "Try typing `/` to see a list of available commands.\n\n"
+                        "Support for prefix commands will be removed in the future."
+                    )
+
             return
 
         # Actually sending stuff
