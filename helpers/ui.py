@@ -162,10 +162,10 @@ class PageView(BaseView):
             for item in items:
                 view.add_item(item)
 
-        if interaction.response.is_done() or self.loading_msg:
-            await interaction.edit_original_message(embed=embed, view=view)
-        else:
+        try:
             await interaction.response.edit_message(embed=embed, view=view)
+        except discord.InteractionResponded:
+            await interaction.edit_original_message(embed=embed, view=view)
 
         if items is not None:
             for item in items:
