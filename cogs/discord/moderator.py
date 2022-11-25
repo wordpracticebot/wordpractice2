@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 from discord.ext import bridge, commands
 
@@ -85,6 +87,65 @@ class RestoreConfirm(BaseView):
         )
 
         await self.ctx.respond(embed=embed, view=self)
+
+
+class MessageModal(discord.ui.Modal):
+    def __init__(self, ctx) -> None:
+        super().__init__(
+            discord.ui.InputText(
+                label="Send To",
+                placeholder="Enter user IDs or mentions (separate with space)",
+                style=discord.InputTextStyle.long,
+            ),
+            discord.ui.InputText(
+                label="Title",
+                placeholder="Enter a title",
+            ),
+            discord.ui.InputText(
+                label="Description",
+                placeholder="Enter a description",
+                style=discord.InputTextStyle.long,
+            ),
+            discord.ui.InputText(
+                label="Thumbnail",
+                placeholder="Enter a thumbnail URL",
+                required=False,
+            ),
+            title="Send a Message",
+        )
+
+        self.ctx = ctx
+
+    async def callback(self, interaction: discord.Interaction):
+        raw_send, title, desc, thumbnail = self.children
+
+        embed = self.ctx.default_embed(title=title.value, description=desc.value)
+
+        if thumbnail.value:
+            embed.set_thumbnail(url=thumbnail.value)
+
+        await interaction.response.send_message("Sending...")
+
+        failed = []
+
+        for u in raw_send.value.split("\n"):
+            try:
+                user = await self.ctx.bot.fetch_user(int(u))
+
+                await user.send(embed=embed)
+
+            except Exception:
+                failed.append(u)
+
+            else:
+                # To prevent rate limiting
+                await asyncio.sleep(3)
+
+        failed_msg = "\n".join(failed)
+
+        await self.ctx.send(
+            f"Done!" + (f"\n\nFailed to send to: {failed_msg}" if failed_msg else "")
+        )
 
 
 class Moderator(commands.Cog):
@@ -221,6 +282,12 @@ class Moderator(commands.Cog):
         embed = ctx.default_embed(title="Changed status")
 
         await ctx.respond(embed=embed)
+
+    @mod_command
+    async def message(self, ctx):
+        modal = MessageModal(ctx)
+
+        await ctx.send_modal(modal)
 
 
 def setup(bot):
