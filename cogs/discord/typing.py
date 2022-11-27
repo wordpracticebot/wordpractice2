@@ -246,12 +246,13 @@ class TournamentView(ScrollView):
         return self.lb_data
 
     def get_tournament_type(self, t):
+        if self.start_date < t.start_time:
+            return 1
+
         if t.end_time > self.start_date:
             return 0
-        elif self.start_date < t.start_time:
-            return 1
-        else:
-            return 2
+
+        return 2
 
     def sort_t_data(self, raw_t_data):
         # Ranking order: [soonest finish - latest finish, not started, finished]
