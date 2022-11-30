@@ -343,7 +343,7 @@ class QualificationTournament(Tournament):
         invite = f"https://discord.gg/{self.host_server_invite}"
         return (
             f"The participants with the top {self.amount} highest scores qualify.\n\n"
-            f"A bracket will be hosted on <t:{self.unix_bracket_start}:f> on the **[{self.host_server} server]({invite})** to determine the winner from those that qualify.\n\n"
+            f"A bracket will be hosted on **<t:{self.unix_bracket_start}:f>** on the **[{self.host_server} server]({invite})** to determine the winner from those that qualify.\n\n"
             "**__Make sure to join the [server]({invite}) if your participate.__**"
         )
 
