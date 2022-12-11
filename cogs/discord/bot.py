@@ -778,7 +778,7 @@ class ProfileView(BaseView):
 
         embed.add_field(
             name="** **",
-            value=f"**{LINE_SPACE * 9}{s}Information{s}{LINE_SPACE * 9}**",
+            value=f"**{LINE_SPACE * 18}{s}Information{s}{LINE_SPACE * 16}**",
             inline=False,
         )
 
@@ -792,7 +792,7 @@ class ProfileView(BaseView):
         )
 
         embed.add_field(
-            name=f"{LINE_SPACE * 9}{s}Settings{s}{LINE_SPACE * 10}",
+            name=f"{LINE_SPACE * 18}{s}Settings{s}{LINE_SPACE * 19}",
             value="** **",
             inline=False,
         )
