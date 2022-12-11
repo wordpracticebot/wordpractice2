@@ -51,7 +51,7 @@ class Colours(Achievement):
 
 class OpenMinded(Achievement):
     def __init__(self):
-        super().__init__(name="Open-minded", desc="Run every single slash command")
+        super().__init__(name="Open-minded", desc="Run every single __slash command__")
 
     async def progress(self, ctx, user):
         slash_cmds = filter(

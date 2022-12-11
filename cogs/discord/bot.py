@@ -716,19 +716,25 @@ class ProfileView(BaseView):
 
     def get_thin_spacing(self, text: str, is_emoji: bool):
         if is_emoji:
-            s = 9
-        else:
-            s = 0
+            return 9
 
-            for c in text:
-                if c == ",":
-                    s += 1.5
-                elif c in ["1", "(", ")"]:
-                    s += 2
-                elif c == "h":
-                    s += 3
-                else:
-                    s += 4
+        s = 0
+
+        for c in text:
+            if c == ",":
+                s += 1.35
+            elif c == "0":
+                s += 3.1
+            elif c == "1":
+                s += 2
+            elif c in ["2", "5", "9"]:
+                s += 2.75
+            elif c in ["3", "4", "6"]:
+                s += 2.85
+            elif c == "7":
+                s += 2.25
+            else:
+                s += 2.85
 
         return math.ceil(s)
 
@@ -740,13 +746,13 @@ class ProfileView(BaseView):
     async def create_account_page(self, embed):
         embed.set_thumbnail(url="https://i.imgur.com/KrXiy9S.png")
 
-        in_between = 35
+        in_between = 23
         b = in_between * THIN_SPACE
 
         embed.title += f"\n\nAll Time{b}Season{b}24h{b}** **"
 
-        fr_words = self.format_account_stat(f"{self.user.words:,}", 6 + in_between)
-        fr_xp = self.format_account_stat(f"{self.user.xp:,}", 17 + in_between)
+        fr_words = self.format_account_stat(f"{self.user.words:,}", 9 + in_between)
+        fr_xp = self.format_account_stat(f"{self.user.xp:,}", 13 + in_between)
         fr_24_xp = f"{sum(self.user.xp_24h):,}"
 
         if self.user.badges == []:
