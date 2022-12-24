@@ -1,3 +1,4 @@
+from bot import Context
 from static.assets import badge_icon
 
 from .base import Achievement, Category
@@ -13,7 +14,7 @@ class Badges(Achievement):
 
         self.amt = amt
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return len(user.badges), self.amt
 
 
@@ -21,7 +22,7 @@ class Collector(Achievement):
     def __init__(self):
         super().__init__(name="Collector", desc="Earn every badge in a season")
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         season_info = await ctx.bot.mongo.get_season_info()
 
         if season_info["enabled"] and len(season_info["badges"]) > 0:

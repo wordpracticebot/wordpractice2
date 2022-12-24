@@ -2,6 +2,7 @@ import discord
 from discord.ext import bridge, commands
 
 import data.icons as icons
+from bot import Context, WordPractice
 from config import SUPPORT_GUILD_ID
 from data.constants import SUPPORT_SERVER_INVITE
 from data.roles import SERVER_ROLES
@@ -16,7 +17,7 @@ class Server(commands.Cog):
     emoji = "\N{CLOUD}"
     order = 5
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WordPractice):
         self.bot = bot
 
     def get_role_from_id(self, roles, role_id: int):
@@ -24,7 +25,7 @@ class Server(commands.Cog):
 
     @bridge.bridge_command(guild_ids=[SUPPORT_GUILD_ID])
     @cooldown(10, 3)
-    async def roles(self, ctx):
+    async def roles(self, ctx: Context):
         """Update your wordPractice roles on the server"""
 
         if SERVER_ROLES is False:
@@ -133,5 +134,5 @@ class Server(commands.Cog):
         await ctx.respond(embed=embed)
 
 
-def setup(bot):
+def setup(bot: WordPractice):
     bot.add_cog(Server(bot))

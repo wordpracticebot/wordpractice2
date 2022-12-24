@@ -5,13 +5,15 @@ import discord
 from discord.ext import commands
 from PIL import ImageColor
 
+from bot import Context
+
 RGB_STRING = re.compile(
     r"^\(?(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d),(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d),(0|255|25[0-4]|2[0-4]\d|1\d\d|0?\d?\d)\)?$"
 )
 
 
 class HexOrRGB(commands.Converter):
-    async def convert(self, ctx, colour: str):
+    async def convert(self, ctx: Context, colour: str):
         try:
             return ImageColor.getrgb(colour)
         except ValueError:
@@ -29,7 +31,7 @@ def rgb_to_hex(r, g, b):
 
 class DatabaseUser(commands.UserConverter):
     @classmethod
-    async def convert(cls, ctx, argument: str) -> Union[discord.User, str]:
+    async def convert(cls, ctx: Context, argument: str) -> Union[discord.User, str]:
         # Pycord: https://github.com/Pycord-Development/pycord
 
         match = cls._get_id_match(argument) or re.match(

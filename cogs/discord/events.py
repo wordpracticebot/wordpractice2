@@ -9,6 +9,7 @@ from discord.ext.commands import errors
 from rapidfuzz import fuzz, process
 
 import data.icons as icons
+from bot import Context, WordPractice
 from challenges.achievements import check_achievements, check_categories
 from challenges.daily import get_daily_challenges
 from challenges.rewards import group_rewards
@@ -41,7 +42,7 @@ SEASON_PLACING_TIERS = (
 )
 
 
-async def _update_placings(ctx, user):
+async def _update_placings(ctx: Context, user):
     update = {}
 
     values = ctx.bot.get_leaderboard_values(user)
@@ -78,10 +79,10 @@ def _get_tier_index(placing) -> tuple[int, int]:
 
 
 class Events(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WordPractice):
         self.bot = bot
 
-    async def log_interaction(self, ctx):
+    async def log_interaction(self, ctx: Context):
         # Logging the interaction
 
         command = format_command(ctx, ctx.command)
@@ -114,7 +115,7 @@ class Events(commands.Cog):
 
     @staticmethod
     async def send_basic_error(
-        ctx, *, title, desc=None, severe=False, ephemeral=False, view=None
+        ctx: Context, *, title, desc=None, severe=False, ephemeral=False, view=None
     ):
         try:
             added = f"{icons.danger} `ERROR!`" if severe else icons.caution
@@ -131,14 +132,14 @@ class Events(commands.Cog):
             pass
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(self, ctx: Context, error):
         await self.handle_error(ctx, error)
 
     @commands.Cog.listener()
-    async def on_application_command_error(self, ctx, error):
+    async def on_application_command_error(self, ctx: Context, error):
         await self.handle_error(ctx, error)
 
-    async def handle_error(self, ctx, error):
+    async def handle_error(self, ctx: Context, error):
         if isinstance(error, (discord.errors.CheckFailure, commands.CheckFailure)):
             if isinstance(error, errors.BotMissingPermissions):
                 return await self.handle_check_failure(ctx, error)
@@ -173,7 +174,7 @@ class Events(commands.Cog):
 
         await self.handle_unexpected_error(ctx, error)
 
-    async def handle_command_not_found(self, ctx):
+    async def handle_command_not_found(self, ctx: Context):
         cmds = filter_commands(ctx, ctx.bot.walk_commands())
 
         cmd_names = [get_command_name(cmd) for cmd in cmds]
@@ -191,7 +192,7 @@ class Events(commands.Cog):
             ),
         )
 
-    async def handle_check_failure(self, ctx, error):
+    async def handle_check_failure(self, ctx: Context, error):
         if isinstance(error, errors.BotMissingPermissions):
             await self.send_basic_error(
                 ctx, title="Bot Missing Permissions", severe=True
@@ -202,7 +203,7 @@ class Events(commands.Cog):
 
         return self.bot.active_end(ctx.author.id)
 
-    async def handle_user_input_error(self, ctx, error):
+    async def handle_user_input_error(self, ctx: Context, error):
         if isinstance(error, errors.BadArgument):
             message = str(error)
 
@@ -234,7 +235,7 @@ class Events(commands.Cog):
             ),
         )
 
-    async def handle_unexpected_error(self, ctx, error):
+    async def handle_unexpected_error(self, ctx: Context, error):
         view = create_link_view({"Support Server": SUPPORT_SERVER_INVITE})
 
         await self.send_basic_error(
@@ -257,11 +258,11 @@ class Events(commands.Cog):
         await self.bot.log_the_error(embed, error)
 
     @commands.Cog.listener()
-    async def on_command(self, ctx):
+    async def on_command(self, ctx: Context):
         await self.log_interaction(ctx)
 
     @commands.Cog.listener()
-    async def on_application_command(self, ctx):
+    async def on_application_command(self, ctx: Context):
         await self.log_interaction(ctx)
 
     async def get_files_from_earned(self, earned):
@@ -286,14 +287,14 @@ class Events(commands.Cog):
         return files, extra
 
     @commands.Cog.listener()
-    async def on_application_command_completion(self, ctx):
+    async def on_application_command_completion(self, ctx: Context):
         await self.handle_command_completion(ctx)
 
     @commands.Cog.listener()
-    async def on_command_completion(self, ctx):
+    async def on_command_completion(self, ctx: Context):
         await self.handle_command_completion(ctx)
 
-    async def handle_command_completion(self, ctx):
+    async def handle_command_completion(self, ctx: Context):
         if ctx.no_completion:
             return
 
@@ -533,5 +534,5 @@ class Events(commands.Cog):
         await self.bot.mongo.replace_user_data(new_user, ctx.author)
 
 
-def setup(bot):
+def setup(bot: WordPractice):
     bot.add_cog(Events(bot))

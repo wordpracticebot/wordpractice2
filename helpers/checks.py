@@ -3,19 +3,20 @@ import time
 import discord
 from discord.ext import commands
 
+from bot import Context
 from data.constants import PREMIUM_LINK
 from helpers.ui import create_link_view
 from helpers.utils import get_command_name
 
 
 def premium_command():
-    async def predicate(ctx):
+    async def predicate(ctx: Context):
         if ctx.initial_user.is_premium is False:
             view = create_link_view({"Support us by donating!": PREMIUM_LINK})
 
             embed = ctx.error_embed(
                 title="Premium Command",
-                description=f"Only **[Donators]({PREMIUM_LINK})** can use this feature!",
+                description=f"Only **[Premium Members]({PREMIUM_LINK})** can use this feature!",
             )
 
             await ctx.respond(embed=embed, view=view)
@@ -27,7 +28,7 @@ def premium_command():
 
 
 def cooldown(regular: int, premium: int):
-    async def predicate(ctx):
+    async def predicate(ctx: Context):
         # Cooldown key
         c = (ctx.author.id, get_command_name(ctx.command))
 
@@ -45,7 +46,7 @@ def cooldown(regular: int, premium: int):
                 )
 
                 if user.is_premium is False and regular > premium:
-                    embed.description += f"\n\n**[Donators]({PREMIUM_LINK})** only wait **{premium}s** instead of **{regular}s**!"
+                    embed.description += f"\n\n**[Premium Members]({PREMIUM_LINK})** only wait **{premium}s** instead of **{regular}s**!"
 
                     view = create_link_view({"Support us by donating!": PREMIUM_LINK})
                 else:
@@ -71,7 +72,7 @@ def cooldown(regular: int, premium: int):
     return commands.check(predicate)
 
 
-async def user_check(ctx, user):
+async def user_check(ctx: Context, user):
     """Handles the user inputted and fetches user"""
     if isinstance(user, (discord.User, discord.Member)) and user.bot:
         raise commands.BadArgument("`Beep boop!` That user is a bot :robot:")

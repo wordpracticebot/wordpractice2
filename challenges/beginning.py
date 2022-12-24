@@ -1,5 +1,6 @@
 from discord import SlashCommand, SlashCommandGroup
 
+from bot import Context
 from data.constants import DEFAULT_THEME
 from helpers.user import get_user_cmds_run
 from helpers.utils import get_command_name
@@ -15,7 +16,7 @@ class StartingOut(Achievement):
             name="Starting out", desc="Use wordPractice for the first time"
         )
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return int(bool(user)), 1
 
 
@@ -23,7 +24,7 @@ class Quoi(Achievement):
     def __init__(self):
         super().__init__(name="Quoi?", desc="Change your language settings")
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return int(user.language != "english"), 1
 
 
@@ -34,7 +35,7 @@ class Competition(Achievement):
             desc="Complete a race against another user",
         )
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return int(len(user.scores) > 0 and user.scores[-1].is_race), 1
 
 
@@ -45,7 +46,7 @@ class Colours(Achievement):
             desc="Change your typing test theme",
         )
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return int(bool(user.theme != DEFAULT_THEME)), 1
 
 
@@ -53,7 +54,7 @@ class OpenMinded(Achievement):
     def __init__(self):
         super().__init__(name="Open-minded", desc="Run every single __slash command__")
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         slash_cmds = filter(
             lambda c: isinstance(c, SlashCommand)
             and not isinstance(c, SlashCommandGroup)

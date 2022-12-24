@@ -5,7 +5,7 @@ import math
 import random
 from bisect import bisect
 from datetime import datetime, timezone
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import discord
 from discord import SlashCommand, SlashCommandGroup, UserCommand
@@ -16,6 +16,9 @@ from data.icons import h_progress_bar, overflow_bar, v_progress_bar
 from helpers.ui import create_link_view
 from helpers.user import get_user_cmds_run
 from static.hints import date_hints, hints, random_hints
+
+if TYPE_CHECKING:
+    from bot import Context
 
 # For the progress bars
 BARS = (h_progress_bar, overflow_bar, v_progress_bar)
@@ -28,12 +31,12 @@ def get_command_name(command):
     return command.qualified_name
 
 
-def format_group(ctx, group_name, name):
+def format_group(ctx: "Context", group_name, name):
     group = ctx.bot.get_application_command(group_name, type=discord.SlashCommandGroup)
     return f"</{group.name} {name}:{group.id}>"
 
 
-def mention_command_from_name(*, ctx, group: str = None, name: str = None):
+def mention_command_from_name(*, ctx: "Context", group: str = None, name: str = None):
     if ctx.is_slash:
         if group is not None:
             return format_group(ctx, group, name)
@@ -45,7 +48,7 @@ def mention_command_from_name(*, ctx, group: str = None, name: str = None):
     return f"{ctx.prefix} {group_name}{name}"
 
 
-def format_command(ctx, command):
+def format_command(ctx: "Context", command):
     if isinstance(command, (SlashCommand, UserCommand)):
         if command.parent:
             return format_group(ctx, command.parent.name, command.name)
@@ -55,7 +58,7 @@ def format_command(ctx, command):
     return f"{ctx.prefix}{command} {command.signature}"
 
 
-def filter_commands(ctx, cmds):
+def filter_commands(ctx: "Context", cmds):
     if ctx.is_slash:
         types = (SlashCommand, SlashCommandGroup)
     else:
@@ -72,7 +75,7 @@ def filter_commands(ctx, cmds):
     return list(all_cmds)
 
 
-def cmd_run_before(ctx, user):
+def cmd_run_before(ctx: "Context", user):
     return get_command_name(ctx.command) in get_user_cmds_run(ctx.bot, user)
 
 
@@ -433,7 +436,7 @@ def run_in_executor(include_bot=False):
     return decorator
 
 
-async def message_banned_user(ctx, user, reason):
+async def message_banned_user(ctx: "Context", user, reason):
     embed = ctx.error_embed(
         title="You were banned",
         description=(
@@ -465,8 +468,8 @@ async def invoke_slash_command(cmd, cog, ctx, *args):
 
 
 def get_hint():
-    # 1 in 100 chance of an alternative footer
-    if random.randint(0, 100) == 0:
+    # 1 in 60 chance of an alternative footer
+    if random.randint(0, 60) == 0:
         p = []
 
         # Date based footers
@@ -476,7 +479,7 @@ def get_hint():
             if [now.month, now.day] == d:
                 p += h
 
-        # VERY RARE
+        # VERY RARE 1/1500
         if random.randint(0, 25) == 0:
             p += random_hints
 
@@ -486,7 +489,7 @@ def get_hint():
     return "Hint: " + random.choice(hints)
 
 
-def invoke_completion(ctx):
+def invoke_completion(ctx: "Context"):
     ctx.no_completion = False
 
     if ctx.is_slash:

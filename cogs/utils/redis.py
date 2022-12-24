@@ -1,11 +1,12 @@
 from discord.ext import commands
 from redis import asyncio as aioredis
 
+from bot import WordPractice
 from config import REDIS_URL
 
 
 class Redis(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WordPractice):
         self.bot = bot
 
         self.pool = None
@@ -20,5 +21,5 @@ class Redis(commands.Cog):
         await self._connect_task
 
 
-def setup(bot):
+def setup(bot: WordPractice):
     bot.add_cog(Redis(bot))

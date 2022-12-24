@@ -6,6 +6,7 @@ import discord
 from discord.ext import bridge, commands
 
 import data.icons as icons
+from bot import Context, WordPractice
 from challenges.achievements import categories, get_achievement_display
 from config import SUPPORT_GUILD_ID
 from data.constants import (
@@ -176,11 +177,11 @@ class Misc(commands.Cog):
     emoji = "\N{CARD FILE BOX}"
     order = 4
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WordPractice):
         self.bot = bot
 
     @bridge.bridge_command()
-    async def ping(self, ctx):
+    async def ping(self, ctx: Context):
         """View the bot's latency"""
 
         # Discord API latency
@@ -191,7 +192,7 @@ class Misc(commands.Cog):
         await ctx.respond(embed=embed)
 
     @bridge.bridge_command()
-    async def attribution(self, ctx):
+    async def attribution(self, ctx: Context):
         """View the bot's attribution"""
         embed = ctx.embed(
             title=f"{icons.dev_badge} | Attribution",
@@ -217,7 +218,7 @@ class Misc(commands.Cog):
         await ctx.respond(embed=embed)
 
     @bridge.bridge_command(name="help")
-    async def _help(self, ctx):
+    async def _help(self, ctx: Context):
         """Help with bot usage and list of commands"""
 
         # longer timeout gives time for people to run the commands
@@ -227,7 +228,7 @@ class Misc(commands.Cog):
 
     @bridge.bridge_command()
     @cooldown(3, 1)
-    async def stats(self, ctx):
+    async def stats(self, ctx: Context):
         """Various statistics related to the bot"""
         embed = ctx.embed(title="Bot Stats")
 
@@ -248,7 +249,7 @@ class Misc(commands.Cog):
         await ctx.respond(embed=embed)
 
     @bridge.bridge_command()
-    async def privacy(self, ctx):
+    async def privacy(self, ctx: Context):
         """View the privacy policy"""
         embed = ctx.embed(
             title="Privacy Policy",
@@ -262,7 +263,7 @@ class Misc(commands.Cog):
         await ctx.respond(embed=embed, view=view)
 
     @bridge.bridge_command()
-    async def rules(self, ctx):
+    async def rules(self, ctx: Context):
         """View the rules"""
         embed = ctx.embed(
             title="Rules",
@@ -277,7 +278,7 @@ class Misc(commands.Cog):
         await ctx.respond(embed=embed, view=view)
 
     @bridge.bridge_command()
-    async def invite(self, ctx):
+    async def invite(self, ctx: Context):
         """Get the invite link for the bot"""
 
         view = create_link_view(
@@ -290,12 +291,17 @@ class Misc(commands.Cog):
         await ctx.respond("Here you go!", view=view)
 
     @bridge.bridge_command()
-    async def support(self, ctx):
+    async def premium(self, ctx: Context):
+        """Become a premium member"""
+        ...
+
+    @bridge.bridge_command()
+    async def support(self, ctx: Context):
         """Join the wordPractice Discord server"""
         await ctx.respond(SUPPORT_SERVER_INVITE)
 
     @bridge.bridge_command()
-    async def vote(self, ctx):
+    async def vote(self, ctx: Context):
         """Get the voting link for the bot"""
 
         user = ctx.initial_user
@@ -355,5 +361,5 @@ class Misc(commands.Cog):
             )
 
 
-def setup(bot):
+def setup(bot: WordPractice):
     bot.add_cog(Misc(bot))

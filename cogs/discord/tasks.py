@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import numpy as np
 from discord.ext import commands, tasks
 
+from bot import WordPractice
 from config import DBL_TOKEN, TESTING
 from data.constants import AVG_AMT, CHALLENGE_AMT, LB_LENGTH
 from helpers.utils import run_in_executor
@@ -36,7 +37,7 @@ def _serialize_users(bot, users):
 
 
 class Tasks(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WordPractice):
         self.bot = bot
 
         # For guild and shard count
@@ -189,5 +190,5 @@ class Tasks(commands.Cog):
         await asyncio.sleep((future - now).seconds)
 
 
-def setup(bot):
+def setup(bot: WordPractice):
     bot.add_cog(Tasks(bot))

@@ -4,6 +4,7 @@ Challenges are not directly related to achievements but they use almost the same
 import random
 from functools import lru_cache
 
+from bot import Context
 from data.constants import CHALLENGE_AMT
 from helpers.user import get_daily_stat
 from helpers.utils import datetime_to_unix, get_start_of_day, is_today, weighted_lottery
@@ -19,7 +20,7 @@ class WordChallenge(Challenge):
 
         self.word_amt = word_amt
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return get_daily_stat(user.words_24h), self.word_amt
 
 
@@ -27,7 +28,7 @@ class VoteChallenge(Challenge):
     def __init__(self):
         super().__init__(desc="Vote for wordPractice")
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         votes_today = any(is_today(v) for v in user.last_voted.values())
 
         return int(votes_today), 1
@@ -39,7 +40,7 @@ class AccuracyChallenge(Challenge):
 
         self.amt = amt
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return (
             get_in_row(user.scores, lambda s: s.acc == 100 and is_today(s.timestamp)),
             self.amt,
@@ -52,7 +53,7 @@ class QuoteChallenge(Challenge):
 
         self.amt = amt
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         if len(user.scores) == 0:
             progress = 0
         else:

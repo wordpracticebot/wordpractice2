@@ -1,3 +1,4 @@
+from bot import Context
 from helpers.utils import calculate_score_consistency
 from static.assets import speed_icon
 
@@ -11,7 +12,7 @@ class Speed(Achievement):
 
         self.wpm = wpm
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return user.highest_speed, self.wpm
 
 
@@ -24,7 +25,7 @@ class Perfectionist(Achievement):
 
         self.amt = amt
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return get_in_row(user.scores, lambda s: s.acc == 100), self.amt
 
 
@@ -35,7 +36,7 @@ class Consistency(Achievement):
             desc="Complete 30 typing tests with an average accuracy of 90%+",
         )
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         result = (
             0
             if len(user.scores) < 30
@@ -54,7 +55,7 @@ class BeepBoop(Achievement):
 
         self.amt = amt
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return get_in_row(user.scores, lambda s: abs(s.wpm - 60) <= 1), self.amt
 
 

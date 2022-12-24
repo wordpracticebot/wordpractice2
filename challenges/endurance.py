@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from bot import Context
 from static.assets import endurance_icon
 
 from .base import Achievement, Category
@@ -13,7 +14,7 @@ class SingleStatEndurance(Achievement):
         self.key = key
         self.value = value
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return user[self.key], self.value
 
     @classmethod
@@ -38,7 +39,7 @@ class Veteran(Achievement):
 
         return (now - user.created_at).days
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return self.get_account_days(user), self.days
 
 
@@ -49,7 +50,7 @@ class Birthday(Achievement):
             desc="Use wordPractice on the day it was created (August 12)",
         )
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         now = datetime.utcnow()
 
         return int(now.month == 8 and now.day == 12), 1

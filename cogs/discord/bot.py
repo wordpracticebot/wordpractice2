@@ -12,6 +12,7 @@ from cryptography.fernet import Fernet
 from discord.ext import bridge, commands
 
 import data.icons as icons
+from bot import Context, WordPractice
 from challenges.achievements import (
     categories,
     get_achievement_display,
@@ -105,7 +106,7 @@ def get_graph_link(*, user, amt: int, dimensions: tuple):
 
 
 class SeasonView(ViewFromDict):
-    def __init__(self, ctx):
+    def __init__(self, ctx: Context):
         categories = {
             "Trophies": self.get_season_trophy,
             "Rewards": self.get_reward_embed,
@@ -281,7 +282,7 @@ class GraphButton(DictButton):
 
 
 class GraphView(ViewFromDict):
-    def __init__(self, ctx, user):
+    def __init__(self, ctx: Context, user):
         test_amts = [10, 25, 50, 100, 200]
 
         super().__init__(ctx, {f"{i} Tests": i for i in test_amts})
@@ -333,7 +334,9 @@ class GraphView(ViewFromDict):
             self.link_cache[total] = url
 
         if self.user.is_premium is False:
-            embed.set_footer(text=f"Donators can save up to {SCORE_SAVE_AMT} tests")
+            embed.set_footer(
+                text=f"Premium Members can save up to {SCORE_SAVE_AMT} tests"
+            )
 
         embed.set_image(url=url)
 
@@ -341,7 +344,7 @@ class GraphView(ViewFromDict):
 
 
 class ScoreView(ScrollView):
-    def __init__(self, ctx, user):
+    def __init__(self, ctx: Context, user):
         self.user = user
 
         iter = self.get_user_scores()
@@ -413,7 +416,7 @@ class ScoreView(ScrollView):
             title=f"{self.user.display_name} | Recent Scores ({self.start_page + 1} - {self.end_page} of {self.total})",
             description=" "
             if self.user.is_premium
-            else f"**[Donators]({PREMIUM_LINK})** can download and save up to {SCORE_SAVE_AMT} test scores!",
+            else f"**[Premium Members]({PREMIUM_LINK})** can download and save up to {SCORE_SAVE_AMT} test scores!",
         )
 
         for i, s in enumerate(self.items):
@@ -481,7 +484,7 @@ class LeaderboardButton(discord.ui.Button):
 
 
 class LeaderboardView(ScrollView):
-    def __init__(self, ctx):
+    def __init__(self, ctx: Context):
         super().__init__(ctx, iter=self.get_iter, per_page=10, row=2)
 
         self.timeout = 60
@@ -654,7 +657,7 @@ class LeaderboardView(ScrollView):
 
 
 class ProfileView(BaseView):
-    def __init__(self, ctx, user):
+    def __init__(self, ctx: Context, user):
         super().__init__(ctx)
 
         self.user = user
@@ -948,7 +951,7 @@ class AchievementsButton(DictButton):
 
 
 class AchievementsView(ViewFromDict):
-    def __init__(self, ctx, user):
+    def __init__(self, ctx: Context, user):
         super().__init__(ctx, categories)
 
         self.user = user  # user data
@@ -992,22 +995,22 @@ class Bot(commands.Cog):
     emoji = "\N{ROBOT FACE}"
     order = 1
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WordPractice):
         self.bot = bot
 
     @bridge.bridge_command()
     @cooldown(7, 2)
     @user_option
-    async def profile(self, ctx, *, user: discord.User = None):
+    async def profile(self, ctx: Context, *, user: discord.User = None):
         """View user statistics"""
         await self.handle_profile_cmd(ctx, user)
 
     @commands.user_command(name="Typing Profile")
     @cooldown(7, 2)
-    async def profile_user(self, ctx, member: discord.Member):
+    async def profile_user(self, ctx: Context, member: discord.Member):
         await self.handle_profile_cmd(ctx, member)
 
-    async def handle_profile_cmd(self, ctx, user):
+    async def handle_profile_cmd(self, ctx: Context, user):
         user = await user_check(ctx, user)
 
         view = ProfileView(ctx, user)
@@ -1017,16 +1020,16 @@ class Bot(commands.Cog):
     @bridge.bridge_command()
     @cooldown(5, 2)
     @user_option
-    async def graph(self, ctx, *, user: discord.User = None):
+    async def graph(self, ctx: Context, *, user: discord.User = None):
         """See a graph of a user's typing scores"""
         await self.handle_graph_cmd(ctx, user)
 
     @commands.user_command(name="Typing Graph")
     @cooldown(5, 2)
-    async def graph_user(self, ctx, member: discord.Member):
+    async def graph_user(self, ctx: Context, member: discord.Member):
         await self.handle_graph_cmd(ctx, member)
 
-    async def handle_graph_cmd(self, ctx, user):
+    async def handle_graph_cmd(self, ctx: Context, user):
         user_data = await self.handle_scores(ctx, user)
 
         if user_data is None:
@@ -1037,7 +1040,7 @@ class Bot(commands.Cog):
 
     @bridge.bridge_command()
     @cooldown(10, 5)
-    async def leaderboard(self, ctx):
+    async def leaderboard(self, ctx: Context):
         """See the top users in any category"""
 
         await ctx.defer()
@@ -1049,7 +1052,7 @@ class Bot(commands.Cog):
     @bridge.bridge_command()
     @cooldown(5, 2)
     @user_option
-    async def achievements(self, ctx, *, user: discord.User = None):
+    async def achievements(self, ctx: Context, *, user: discord.User = None):
         """See all the achievements"""
         user_data = await user_check(ctx, user)
 
@@ -1059,7 +1062,7 @@ class Bot(commands.Cog):
 
     @bridge.bridge_command()
     @cooldown(5, 2)
-    async def challenges(self, ctx):
+    async def challenges(self, ctx: Context):
         """View the daily challenges and your progress on them"""
 
         user = ctx.initial_user
@@ -1127,12 +1130,12 @@ class Bot(commands.Cog):
 
     @bridge.bridge_command()
     @cooldown(6, 2)
-    async def season(self, ctx):
+    async def season(self, ctx: Context):
         """Information about the monthly season and your progress in it"""
         view = SeasonView(ctx)
         await view.start()
 
-    async def handle_scores(self, ctx, user):
+    async def handle_scores(self, ctx: Context, user):
         user_data = await user_check(ctx, user)
 
         if len(user_data.scores) == 0:
@@ -1148,7 +1151,7 @@ class Bot(commands.Cog):
     @bridge.bridge_command()
     @cooldown(6, 2)
     @user_option
-    async def scores(self, ctx, *, user: discord.User = None):
+    async def scores(self, ctx: Context, *, user: discord.User = None):
         """View and download a user's recent typing scores"""
         user_data = await self.handle_scores(ctx, user)
 
@@ -1162,7 +1165,7 @@ class Bot(commands.Cog):
     @bridge.bridge_command()
     @cooldown(5, 2)
     @user_option
-    async def badges(self, ctx, *, user: discord.User = None):
+    async def badges(self, ctx: Context, *, user: discord.User = None):
         """View a user's badges"""
         user_data = await user_check(ctx, user)
 
@@ -1181,5 +1184,5 @@ class Bot(commands.Cog):
         await ctx.respond(embed=embed)
 
 
-def setup(bot):
+def setup(bot: WordPractice):
     bot.add_cog(Bot(bot))

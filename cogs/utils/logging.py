@@ -3,9 +3,11 @@ import sys
 
 from discord.ext import commands
 
+from bot import WordPractice
+
 
 class Logging(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WordPractice):
         self.bot = bot
 
         logging.getLogger("discord").setLevel(logging.INFO)
@@ -26,5 +28,5 @@ class Logging(commands.Cog):
         self.log.addHandler(handler)
 
 
-def setup(bot):
+def setup(bot: WordPractice):
     bot.add_cog(Logging(bot))

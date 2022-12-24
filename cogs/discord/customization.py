@@ -6,6 +6,7 @@ from discord.ext import bridge, commands
 
 import data.icons as icons
 import word_list
+from bot import Context, WordPractice
 from data.constants import (
     DEFAULT_WRAP,
     MIN_PACER_SPEED,
@@ -63,7 +64,7 @@ def _get_difficulty_choices(name):
 
 
 class EquipSelect(discord.ui.Select):
-    def __init__(self, ctx, badges):
+    def __init__(self, ctx: Context, badges):
         none_option = discord.SelectOption(label="None", value="no")
 
         super().__init__(
@@ -109,7 +110,7 @@ class EquipSelect(discord.ui.Select):
 
 
 class EquipView(ScrollView):
-    def __init__(self, ctx, user):
+    def __init__(self, ctx: Context, user):
         self.user = user
 
         self.select_view = None
@@ -129,7 +130,7 @@ class EquipView(ScrollView):
 
 
 class ThemeSelect(discord.ui.Select):
-    def __init__(self, ctx):
+    def __init__(self, ctx: Context):
         super().__init__(
             placeholder="Select a theme...",
             min_values=1,
@@ -178,7 +179,7 @@ class Customization(commands.Cog):
     emoji = "\N{GEAR}"
     order = 3
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WordPractice):
         self.bot = bot
 
     # Groups
@@ -204,7 +205,7 @@ class Customization(commands.Cog):
     @cooldown(8, 3)
     @colour_option("background")
     @colour_option("text")
-    async def theme_custom(self, ctx, background, text):
+    async def theme_custom(self, ctx: Context, background, text):
         """Create a custom theme for your typing test"""
 
         distance = _get_colour_perceptual_distance(background, text)
@@ -242,7 +243,7 @@ class Customization(commands.Cog):
 
     @theme_group.command()
     @cooldown(8, 3)
-    async def premade(self, ctx):
+    async def premade(self, ctx: Context):
         """Choose a premade theme for your typing test"""
 
         await self.handle_premade_theme(ctx)
@@ -256,14 +257,14 @@ class Customization(commands.Cog):
     @commands.group(hidden=True, invoke_without_command=True)
     @cooldown(8, 3)
     @copy_doc(premade)
-    async def theme(self, ctx):
+    async def theme(self, ctx: Context):
         await invoke_slash_command(self.premade, self, ctx)
 
     @theme.command(name="custom")
     @cooldown(8, 3)
     @premium_command()
     @copy_doc(theme_custom)
-    async def _theme_custom(self, ctx, background, text):
+    async def _theme_custom(self, ctx: Context, background, text):
         converter = HexOrRGB()
 
         background = await converter.convert(ctx, background)
@@ -274,14 +275,14 @@ class Customization(commands.Cog):
     @theme.command(name="premade")
     @cooldown(8, 3)
     @copy_doc(premade)
-    async def _premade(self, ctx):
+    async def _premade(self, ctx: Context):
         await invoke_slash_command(self.premade, self, ctx)
 
     @bridge.bridge_command()
     @cooldown(8, 3)
     @difficulty_option
     @language_option
-    async def language(self, ctx, name: str, difficulty: str):
+    async def language(self, ctx: Context, name: str, difficulty: str):
         """Choose a language for your typing test"""
 
         # Checking if difficulty is valid
@@ -304,7 +305,7 @@ class Customization(commands.Cog):
 
         await self.bot.mongo.replace_user_data(user, ctx.author)
 
-    async def handle_update_pacer_speed(self, ctx, name, value):
+    async def handle_update_pacer_speed(self, ctx: Context, name, value):
         embed = ctx.embed(
             title=f"{icons.success} Updated pacer speed to {name}", add_footer=False
         )
@@ -320,7 +321,7 @@ class Customization(commands.Cog):
     @cooldown(8, 3)
     async def style(
         self,
-        ctx,
+        ctx: Context,
         plane: Option(
             str,
             "Pick a style for your pacer",
@@ -346,19 +347,19 @@ class Customization(commands.Cog):
 
     @pacer_group.command()
     @cooldown(8, 3)
-    async def pb(self, ctx):
+    async def pb(self, ctx: Context):
         """Set your typing test pacer to your personal best"""
         await self.handle_update_pacer_speed(ctx, "Personal Best", "pb")
 
     @pacer_group.command()
     @cooldown(8, 3)
-    async def average(self, ctx):
+    async def average(self, ctx: Context):
         """Set your typing test pacer to your average speed"""
         await self.handle_update_pacer_speed(ctx, "Average", "avg")
 
     @pacer_group.command()
     @cooldown(8, 3)
-    async def off(self, ctx):
+    async def off(self, ctx: Context):
         """Turn off your typing test pacer"""
         await self.handle_update_pacer_speed(ctx, "Off", "")
 
@@ -366,7 +367,7 @@ class Customization(commands.Cog):
     @cooldown(8, 3)
     async def pacer_custom(
         self,
-        ctx,
+        ctx: Context,
         speed: Option(
             int,
             f"Choose a pacer speed from {MIN_PACER_SPEED}-300",
@@ -383,19 +384,19 @@ class Customization(commands.Cog):
 
     @commands.group(hidden=True, case_insensitive=True, invoke_without_command=True)
     @cooldown(8, 3)
-    async def pacer(self, ctx, speed: int):
+    async def pacer(self, ctx: Context, speed: int):
         await invoke_slash_command(self.pacer_custom, self, ctx, speed)
 
     @pacer.command(name="custom")
     @cooldown(8, 3)
     @copy_doc(pacer_custom)
-    async def _pacer_custom(self, ctx, speed: int):
+    async def _pacer_custom(self, ctx: Context, speed: int):
         await invoke_slash_command(self.pacer_custom, self, ctx, speed)
 
     @pacer.command(name="style")
     @cooldown(8, 3)
     @copy_doc(style)
-    async def _style(self, ctx, plane: str):
+    async def _style(self, ctx: Context, plane: str):
 
         if plane.lower() not in PACER_PLANES:
             raise commands.BadArgument(
@@ -407,24 +408,24 @@ class Customization(commands.Cog):
     @pacer.command(name="pb")
     @cooldown(8, 3)
     @copy_doc(pb)
-    async def _pb(self, ctx):
+    async def _pb(self, ctx: Context):
         await invoke_slash_command(self.pb, self, ctx)
 
     @pacer.command(name="average")
     @cooldown(8, 3)
     @copy_doc(average)
-    async def _average(self, ctx):
+    async def _average(self, ctx: Context):
         await invoke_slash_command(self.average, self, ctx)
 
     @pacer.command(name="off")
     @cooldown(8, 3)
     @copy_doc(off)
-    async def _off(self, ctx):
+    async def _off(self, ctx: Context):
         await invoke_slash_command(self.off, self, ctx)
 
     @bridge.bridge_command()
     @cooldown(8, 3)
-    async def equip(self, ctx):
+    async def equip(self, ctx: Context):
         """Equip a badge that you own"""
         user = ctx.initial_user
 
@@ -441,13 +442,13 @@ class Customization(commands.Cog):
 
     @commands.user_command(name="Typing Settings")
     @cooldown(5, 2)
-    async def settings_user(self, ctx, member: discord.Member):
+    async def settings_user(self, ctx: Context, member: discord.Member):
         await self.handle_settings_cmd(ctx, member)
 
     @bridge.bridge_command()
     @cooldown(5, 2)
     @user_option
-    async def settings(self, ctx, *, user: discord.User = None):
+    async def settings(self, ctx: Context, *, user: discord.User = None):
         """View user settings"""
         await self.handle_settings_cmd(ctx, user)
 
@@ -469,7 +470,7 @@ class Customization(commands.Cog):
             + (
                 ""
                 if ctx.initial_user.is_premium
-                else f"\n**[Donators]({PREMIUM_LINK})** can unlock custom themes!"
+                else f"\n**[Premium Members]({PREMIUM_LINK})** can unlock custom themes!"
             ),
             inline=False,
         )
@@ -489,5 +490,5 @@ class Customization(commands.Cog):
         await ctx.respond(embed=embed)
 
 
-def setup(bot):
+def setup(bot: WordPractice):
     bot.add_cog(Customization(bot))

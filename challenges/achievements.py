@@ -1,4 +1,5 @@
 import data.icons as icons
+from bot import Context
 from helpers.utils import get_bar
 
 from .badges import badges
@@ -20,7 +21,7 @@ def user_has_complete(all_names, i, name, user):
     return a_count <= len(user.achievements.get(name, []))
 
 
-async def check_achievements(ctx, user: dict):
+async def check_achievements(ctx: Context, user: dict):
     for iii, cv in enumerate(categories.values()):
         for ii, c in enumerate(cv.challenges):
             a = sum(c, []) if isinstance(c, list) else [c]
@@ -93,7 +94,7 @@ def get_achievement_tier(user, names: set):
     return sum([len(user.achievements[x]) for x in unique])
 
 
-async def get_achievement_display(ctx, user, e):
+async def get_achievement_display(ctx: Context, user, e):
     is_done, is_fully_done, tier, total, a = is_a_done(e, user)
 
     if tier is not None:

@@ -18,6 +18,7 @@ from humanfriendly import format_timespan
 
 import data.icons as icons
 import word_list
+from bot import Context, WordPractice
 from data.constants import (
     CAPTCHA_ACC_PERC,
     CAPTCHA_INTERVAL,
@@ -80,7 +81,7 @@ def _load_test_file(name):
     return data["words"], data.get("wrap", DEFAULT_WRAP)
 
 
-def _author_is_user(ctx):
+def _author_is_user(ctx: Context):
     return lambda m: m.author.id == ctx.author.id
 
 
@@ -88,7 +89,7 @@ def _get_word_display(quote, raw_quote):
     return f"{len(quote)} ({len(raw_quote)} chars)"
 
 
-async def _cheating_check(ctx, user, user_data, score, word_history):
+async def _cheating_check(ctx: Context, user, user_data, score, word_history):
     """Prevents blatant cheating"""
     if score.wpm >= IMPOSSIBLE_THRESHOLD:
 
@@ -203,7 +204,7 @@ def _add_test_settings_to_embed(embed, language, pacer_name, word_display):
 
 
 class TournamentView(ScrollView):
-    def __init__(self, ctx, raw_t_data):
+    def __init__(self, ctx: Context, raw_t_data):
 
         self.start_date = datetime.utcnow()
 
@@ -599,7 +600,7 @@ class TournamentView(ScrollView):
 
 
 class RetryView(BaseView):
-    def __init__(self, ctx, captcha_callback):
+    def __init__(self, ctx: Context, captcha_callback):
         super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT)
 
         self.captcha_callback = captcha_callback
@@ -615,7 +616,7 @@ class RetryView(BaseView):
 
 
 class HighScoreCaptchaView(BaseView):
-    def __init__(self, ctx, user, original_wpm):
+    def __init__(self, ctx: Context, user, original_wpm):
         super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT)
 
         self.user = user
@@ -829,7 +830,7 @@ class HighScoreCaptchaView(BaseView):
 
 
 class TestResultView(BaseView):
-    def __init__(self, ctx, user, is_dict, length):
+    def __init__(self, ctx: Context, user, is_dict, length):
         super().__init__(ctx)
 
         # Adding link buttons because they can't be added with a decorator
@@ -878,7 +879,7 @@ class TestResultView(BaseView):
 
 
 class TypingTestResultView(TestResultView):
-    def __init__(self, ctx, user, is_dict, length, wrong, quote, wrap_width):
+    def __init__(self, ctx: Context, user, is_dict, length, wrong, quote, wrap_width):
         super().__init__(ctx, user, is_dict, length)
 
         self.wrong = wrong
@@ -979,7 +980,7 @@ class RaceMember:
 
 
 class RaceEndView(BaseView):
-    def __init__(self, ctx, callback):
+    def __init__(self, ctx: Context, callback):
         super().__init__(ctx)
 
         self.callback = callback
@@ -994,7 +995,7 @@ class RaceEndView(BaseView):
 
 
 class RaceJoinView(BaseView):
-    def __init__(self, ctx, user, is_dict, quote, wrap_width):
+    def __init__(self, ctx: Context, user, is_dict, quote, wrap_width):
         super().__init__(ctx, timeout=None, personal=False)
 
         self.user = user
@@ -1545,12 +1546,12 @@ class Typing(commands.Cog):
         choices=TEST_ZONES.keys(),
     )
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WordPractice):
         self.bot = bot
 
     @bridge.bridge_command()
     @cooldown(10, 3)
-    async def tournaments(self, ctx):
+    async def tournaments(self, ctx: Context):
         """Typing tournaments"""
 
         # Fetching the tournament data
@@ -1568,7 +1569,7 @@ class Typing(commands.Cog):
     @tt_group.command(name="dictionary")
     @cooldown(5, 1)
     @word_option
-    async def tt_dictionary(self, ctx, length: int):
+    async def tt_dictionary(self, ctx: Context, length: int):
         """Take a dictionary typing test"""
         quote_info = await self.handle_dictionary_input(ctx, length)
 
@@ -1577,7 +1578,7 @@ class Typing(commands.Cog):
     @tt_group.command(name="quote")
     @cooldown(5, 1)
     @quote_option
-    async def tt_quote(self, ctx, length: str):
+    async def tt_quote(self, ctx: Context, length: str):
         """Take a quote typing test"""
         quote_info = await self.handle_quote_input(length)
 
@@ -1586,19 +1587,19 @@ class Typing(commands.Cog):
     @commands.group(usage="[length]", invoke_without_command=True)
     @cooldown(5, 1)
     @copy_doc(tt_dictionary)
-    async def tt(self, ctx, length: int = 35):
+    async def tt(self, ctx: Context, length: int = 35):
         await invoke_slash_command(self.tt_dictionary, self, ctx, length)
 
     @tt.command(usage="[length]", name="quote")
     @cooldown(5, 1)
     @copy_doc(tt_quote)
-    async def _tt_quote(self, ctx, length: str):
+    async def _tt_quote(self, ctx: Context, length: str):
         await invoke_slash_command(self.tt_quote, self, ctx, length)
 
     @race_group.command(name="dictionary")
     @cooldown(6, 2)
     @word_option
-    async def race_dictionary(self, ctx, length: int):
+    async def race_dictionary(self, ctx: Context, length: int):
         """Take a multiplayer dictionary typing test"""
 
         quote_info = await self.handle_dictionary_input(ctx, length)
@@ -1608,7 +1609,7 @@ class Typing(commands.Cog):
     @race_group.command(name="quote")
     @cooldown(6, 2)
     @quote_option
-    async def race_quote(self, ctx, length: str):
+    async def race_quote(self, ctx: Context, length: str):
         """Take a multiplayer quote typing test"""
 
         quote_info = await self.handle_quote_input(length)
@@ -1618,17 +1619,17 @@ class Typing(commands.Cog):
     @commands.group(usage="[length]", invoke_without_command=True)
     @cooldown(6, 2)
     @copy_doc(race_dictionary)
-    async def race(self, ctx, length: int):
+    async def race(self, ctx: Context, length: int):
         await invoke_slash_command(self.race_dictionary, self, ctx, length)
 
     @race.command(usage="[length]", name="quote")
     @cooldown(6, 2)
     @copy_doc(race_quote)
-    async def _race_quote(self, ctx, length: str):
+    async def _race_quote(self, ctx: Context, length: str):
         await invoke_slash_command(self.race_quote, self, ctx, length)
 
     @staticmethod
-    async def handle_dictionary_input(ctx, length: int):
+    async def handle_dictionary_input(ctx: Context, length: int):
         if length not in range(TEST_RANGE[0], TEST_RANGE[1] + 1):
             raise commands.BadArgument(
                 f"The typing test must be between {TEST_RANGE[0]} and {TEST_RANGE[1]} words"
@@ -1672,7 +1673,7 @@ class Typing(commands.Cog):
         return joined, wrap
 
     @staticmethod
-    async def show_race_start(ctx, is_dict, quote_info):
+    async def show_race_start(ctx: Context, is_dict, quote_info):
         # Storing is_dict and quote in RaceJoinView because do_race method will be called inside it
         view = RaceJoinView(ctx, ctx.initial_user, is_dict, *quote_info)
         await view.start()
@@ -1684,7 +1685,7 @@ class Typing(commands.Cog):
             await ctx.respond("Start the race by joining it", ephemeral=True)
 
     @staticmethod
-    async def personal_test_input(user, ctx, test_type_int, quote_info, send):
+    async def personal_test_input(user, ctx: Context, test_type_int, quote_info, send):
         ctx.bot.active_start(ctx.author.id)
 
         quote, wrap_width = quote_info
@@ -1815,7 +1816,7 @@ class Typing(commands.Cog):
             ctx.bot.active_end(ctx.author.id)
 
     @classmethod
-    async def do_typing_test(cls, ctx, is_dict, quote_info, length, send):
+    async def do_typing_test(cls, ctx: Context, is_dict, quote_info, length, send):
         quote = quote_info[0]
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
@@ -1942,7 +1943,7 @@ class Typing(commands.Cog):
 
     @staticmethod
     async def log_typing_test(
-        ctx,
+        ctx: Context,
         name,
         score,
         word_display,
@@ -1983,7 +1984,9 @@ class Typing(commands.Cog):
         await ctx.bot.test_wh.send(embeds=embeds)
 
     @staticmethod
-    async def handle_highscore_captcha(ctx, send, user, score, zone, zone_range):
+    async def handle_highscore_captcha(
+        ctx: Context, send, user, score, zone, zone_range
+    ):
         if score.wpm > user.highspeed[zone].wpm:
             prev_hs = user.highest_speed
 
@@ -2037,7 +2040,7 @@ class Typing(commands.Cog):
         return score, False
 
     @classmethod
-    async def handle_interval_captcha(cls, ctx, user, is_dict, length, send):
+    async def handle_interval_captcha(cls, ctx: Context, user, is_dict, length, send):
         ctx.bot.active_start(ctx.author.id)
 
         # Getting the quote for the captcha
@@ -2132,5 +2135,5 @@ class Typing(commands.Cog):
             await ctx.bot.impt_wh.send(embed=flag_embed)
 
 
-def setup(bot):
+def setup(bot: WordPractice):
     bot.add_cog(Typing(bot))

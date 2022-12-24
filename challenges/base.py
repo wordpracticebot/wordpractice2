@@ -1,3 +1,5 @@
+from bot import Context
+
 """
 Challenges:
 [[a,b,c], a, b] 
@@ -12,12 +14,12 @@ class Challenge:
     def __init__(self, *, desc: str):
         self.desc = desc
 
-    async def is_completed(self, ctx, user):
+    async def is_completed(self, ctx: Context, user):
         a, b = await self.progress(ctx, user)
 
         return a >= b
 
-    async def progress(ctx, user):
+    async def progress(ctx: Context, user):
         ...
 
 
@@ -30,7 +32,7 @@ class Achievement(Challenge):
     def in_achievements(self, user):
         return self.name in user.achievements
 
-    async def progress(self, ctx, user):
+    async def progress(self, ctx: Context, user):
         return int(self.in_achievements(user)), 1
 
 

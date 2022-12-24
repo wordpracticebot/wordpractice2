@@ -1,15 +1,17 @@
 import asyncio
 import math
 import time
-from typing import Callable, Coroutine, Iterable, Union
+from typing import TYPE_CHECKING, Callable, Coroutine, Iterable, Union
 
 import discord
-from discord.ext import commands
 from discord.utils import escape_markdown
 
 import data.icons as icons
 from data.constants import DEFAULT_VIEW_TIMEOUT, SUPPORT_SERVER_INVITE
 from helpers.errors import OnGoingTest
+
+if TYPE_CHECKING:
+    from bot import Context
 
 
 def create_link_view(links: dict[str, str]):
@@ -24,7 +26,7 @@ def create_link_view(links: dict[str, str]):
     return view
 
 
-def get_log_embed(ctx, title, additional: str, error=False, author=None):
+def get_log_embed(ctx: "Context", title, additional: str, error=False, author=None):
     if author is None:
         author = ctx.author
 
@@ -63,7 +65,7 @@ class CustomEmbed(discord.Embed):
 class BaseView(discord.ui.View):
     def __init__(
         self,
-        ctx: commands.Context,
+        ctx: "Context",
         timeout=DEFAULT_VIEW_TIMEOUT,
         personal=True,
     ):
@@ -136,7 +138,7 @@ class BaseView(discord.ui.View):
 
 
 class PageView(BaseView):
-    def __init__(self, ctx):
+    def __init__(self, ctx: "Context"):
         self.ctx = ctx
 
         self.loading_msg = None
@@ -207,7 +209,12 @@ class PageView(BaseView):
 
 class ScrollView(PageView):
     def __init__(
-        self, ctx, *, iter: Union[Iterable, Callable], per_page: int = 1, row=0
+        self,
+        ctx: "Context",
+        *,
+        iter: Union[Iterable, Callable],
+        per_page: int = 1,
+        row=0,
     ):
         super().__init__(ctx)
 
@@ -347,7 +354,7 @@ class DictButton(discord.ui.Button):
 
 
 class ViewFromDict(PageView):
-    def __init__(self, ctx, the_dict, row=0):
+    def __init__(self, ctx: "Context", the_dict, row=0):
         super().__init__(ctx)
 
         self.the_dict = the_dict

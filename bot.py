@@ -6,6 +6,7 @@ import time
 import traceback
 from collections import Counter
 from io import BytesIO
+from typing import TYPE_CHECKING, Union
 
 import aiohttp
 import discord
@@ -31,6 +32,9 @@ from data.constants import (
 from helpers.errors import OnGoingTest
 from helpers.ui import BaseView, CustomEmbed, create_link_view, get_log_embed
 from helpers.utils import get_hint, message_banned_user
+
+if TYPE_CHECKING:
+    from cogs.utils.mongo import User
 
 
 class LBCategory:
@@ -59,7 +63,7 @@ class LBCategory:
     async def remove_user(self, user_id):
         return await self.bot.redis.zrem(self.lb_key, user_id)
 
-    def get_initial_value(self, ctx):
+    def get_initial_value(self, ctx: "Context"):
         return ctx.initial_values[self.parent_index][self.index]
 
     async def get_lb_data(self, end=LB_DISPLAY_AMT):
@@ -121,7 +125,7 @@ class Leaderboard:
     def desc(self):
         return ", ".join(s.name for s in self.stats)
 
-    async def check(self, ctx):
+    async def check(self, ctx: "Context"):
         if self._check is None:
             return True
 
@@ -159,7 +163,7 @@ def get_exts():
 
 
 class WelcomeView(BaseView):
-    def __init__(self, ctx, callback, response):
+    def __init__(self, ctx: "Context", callback, response):
         super().__init__(ctx, timeout=12)
 
         self.callback = callback
@@ -238,14 +242,10 @@ class WelcomeView(BaseView):
         await self.ctx.respond(embed=embed, view=self, ephemeral=True)
 
 
-def get_embed_theme(user):
-    return int(user.theme[1].replace("#", "0x"), 16) if user else None
-
-
 class CustomContextItems:
     def __init__(self):
         # Initial stats
-        self.initial_user = None
+        self.initial_user: User = None
         self.initial_values = []
 
         self.achievements_completed = []  # list of additional achievements completed
@@ -263,7 +263,11 @@ class CustomContextItems:
 
     @property
     def theme(self):
-        return get_embed_theme(self.initial_user)
+        return (
+            int(self.initial_user.theme[1].replace("#", "0x"), 16)
+            if self.initial_user
+            else None
+        )
 
     @property
     def error_embed(self):
@@ -330,6 +334,9 @@ class CustomPrefixContext(bridge.BridgeExtContext, CustomContextItems):
         return await super()._respond(*args, **kwargs)
 
 
+Context = Union[CustomPrefixContext, CustomAppContext]
+
+
 class WordPractice(bridge.AutoShardedBot):
     def __init__(self, **kwargs):
 
@@ -373,7 +380,7 @@ class WordPractice(bridge.AutoShardedBot):
         def get_hs(s):
             return lambda u: u.highspeed[s].wpm
 
-        async def season_check(ctx):
+        async def season_check(ctx: Context):
             season_data = await ctx.bot.mongo.get_season_info()
 
             return season_data is not None and season_data["enabled"]
@@ -452,7 +459,7 @@ class WordPractice(bridge.AutoShardedBot):
         if user_id in self.active_tests:
             del self.active_tests[user_id]
 
-    async def handle_after_welcome_check(self, ctx):
+    async def handle_after_welcome_check(self, ctx: Context):
         # Checking if the user is banned
         if ctx.initial_user.banned:
             embed = ctx.error_embed(
@@ -549,7 +556,7 @@ class WordPractice(bridge.AutoShardedBot):
 
         self.log.warning(msg)
 
-    async def handle_new_user(self, ctx, callback=None, response=True):
+    async def handle_new_user(self, ctx: Context, callback=None, response=True):
         view = WelcomeView(ctx, callback, response)
         await view.start()
 

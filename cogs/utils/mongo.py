@@ -23,6 +23,7 @@ from umongo.fields import (
 from umongo.frameworks import MotorAsyncIOInstance
 
 import data.icons as icons
+from bot import Context, WordPractice
 from challenges.rewards import BadgeReward
 from config import DATABASE_NAME, DATABASE_URI
 from data.constants import (
@@ -355,7 +356,7 @@ class QualificationTournament(Tournament):
 
 
 class Mongo(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WordPractice):
         self.bot = bot
         self.db = AsyncIOMotorClient(DATABASE_URI, io_loop=bot.loop)[DATABASE_NAME]
 
@@ -643,7 +644,7 @@ class Mongo(commands.Cog):
         return raw_data["data"]
 
     async def add_inf(
-        self, ctx, user, user_data, reason, mod=None, is_ban: bool = True
+        self, ctx: Context, user, user_data, reason, mod=None, is_ban: bool = True
     ):
         """Doesn't update in the database"""
 
@@ -674,5 +675,5 @@ class Mongo(commands.Cog):
         return user_data
 
 
-def setup(bot):
+def setup(bot: WordPractice):
     bot.add_cog(Mongo(bot))

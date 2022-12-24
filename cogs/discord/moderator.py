@@ -4,6 +4,7 @@ import discord
 from discord.ext import bridge, commands
 
 import data.icons as icons
+from bot import Context, WordPractice
 from config import MODERATORS, SUPPORT_GUILD_ID
 from helpers.checks import user_check
 from helpers.converters import discord_user_option
@@ -21,7 +22,7 @@ BAN_AUTOCOMPLETE = [
 ]
 
 
-async def cog_check(ctx):
+async def cog_check(ctx: Context):
     return ctx.author.id in MODERATORS
 
 
@@ -32,7 +33,7 @@ mod_command = bridge.bridge_command(
 
 
 class CatView(ScrollView):
-    def __init__(self, ctx, user):
+    def __init__(self, ctx: Context, user):
         super().__init__(ctx, iter=user.infractions, per_page=INFRACTIONS_PER_PAGE)
 
         self.user = user
@@ -61,7 +62,7 @@ class CatView(ScrollView):
 
 
 class RestoreConfirm(BaseView):
-    def __init__(self, ctx, user, backup):
+    def __init__(self, ctx: Context, user, backup):
         super().__init__(ctx)
 
         self.user = user
@@ -90,7 +91,7 @@ class RestoreConfirm(BaseView):
 
 
 class MessageModal(discord.ui.Modal):
-    def __init__(self, ctx) -> None:
+    def __init__(self, ctx: Context) -> None:
         super().__init__(
             discord.ui.InputText(
                 label="Send To",
@@ -153,10 +154,10 @@ class Moderator(commands.Cog):
 
     hidden = True
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: WordPractice):
         self.bot = bot
 
-    async def handle_moderator_user(self, ctx, user):
+    async def handle_moderator_user(self, ctx: Context, user):
         if user.id == ctx.author.id:
             raise commands.BadArgument("You cannot perform this action on yourself")
 
@@ -164,7 +165,7 @@ class Moderator(commands.Cog):
 
     @mod_command
     @discord_user_option
-    async def wipe(self, ctx, user: discord.User):
+    async def wipe(self, ctx: Context, user: discord.User):
         """Wipe a user"""
         await ctx.defer()
 
@@ -187,7 +188,7 @@ class Moderator(commands.Cog):
     @discord.option(
         "wipe", bool, description="Whether the user's account should be wiped"
     )
-    async def ban(self, ctx, user: discord.User, reason: str, wipe: bool):
+    async def ban(self, ctx: Context, user: discord.User, reason: str, wipe: bool):
         """Ban a user"""
         await ctx.defer()
 
@@ -221,7 +222,7 @@ class Moderator(commands.Cog):
 
     @mod_command
     @discord_user_option
-    async def unban(self, ctx, user, reason):
+    async def unban(self, ctx: Context, user, reason):
         """Unban a user"""
         await ctx.defer()
 
@@ -242,7 +243,7 @@ class Moderator(commands.Cog):
 
     @mod_command
     @discord_user_option
-    async def cat(self, ctx, user):
+    async def cat(self, ctx: Context, user):
         """View the infractions of a user"""
         await ctx.defer()
 
@@ -254,7 +255,7 @@ class Moderator(commands.Cog):
 
     @mod_command
     @discord_user_option
-    async def restore(self, ctx, user):
+    async def restore(self, ctx: Context, user):
         """Restore a user's account"""
         await ctx.defer()
 
@@ -272,7 +273,7 @@ class Moderator(commands.Cog):
         await view.start()
 
     @mod_command
-    async def status(self, ctx, *, text: str):
+    async def status(self, ctx: Context, *, text: str):
         await self.bot.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching, name=f" {text}"
@@ -284,11 +285,11 @@ class Moderator(commands.Cog):
         await ctx.respond(embed=embed)
 
     @mod_command
-    async def message(self, ctx):
+    async def message(self, ctx: Context):
         modal = MessageModal(ctx)
 
         await ctx.send_modal(modal)
 
 
-def setup(bot):
+def setup(bot: WordPractice):
     bot.add_cog(Moderator(bot))
