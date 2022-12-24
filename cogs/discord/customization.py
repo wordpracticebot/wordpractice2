@@ -190,12 +190,13 @@ class Customization(commands.Cog):
     difficulty_option = discord.option(
         "difficulty",
         str,
+        description="Choose a language difficulty",
         autocomplete=discord.utils.basic_autocomplete(
             lambda ctx: _get_difficulty_choices(ctx.options.get("name"))
         ),
     )
     language_option = discord.option(
-        "name", str, desc="Choose a language", choices=word_list.languages.keys()
+        "name", str, description="Choose a language", choices=word_list.languages.keys()
     )
 
     formatted_pacer_planes = [p.capitalize() for p in PACER_PLANES]
