@@ -80,7 +80,7 @@ VOTING_SITES = {
 
 # Premium
 PREMIUM_LAUNCHED = False
-PREMIUM_LINK = "https://www.google.com"  # TODO: add the correct premium link
+PREMIUM_LINK = "https://ko-fi.com/wordpractice"  # TODO: add the correct premium link
 
 # Score saving
 SCORE_SAVE_AMT = 200

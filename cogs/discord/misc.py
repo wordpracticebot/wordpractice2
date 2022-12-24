@@ -11,6 +11,7 @@ from challenges.achievements import categories, get_achievement_display
 from config import SUPPORT_GUILD_ID
 from data.constants import (
     INFO_VIDEO,
+    PREMIUM_LINK,
     PRIVACY_POLICY_LINK,
     RULES_LINK,
     SUPPORT_SERVER_INVITE,
@@ -51,6 +52,16 @@ CREDITS = [
         [icons.artist_badge],
         "Thank you to freepik for the awesome free assets!",
     ],
+]
+
+PREMIUM_PERKS = [
+    "Exclusive ribbon on your profile",
+    "Save and view up to 200 tests",
+    "Custom test pacers",
+    "Create custom typing test themes",
+    "Accuracy heat map",
+    "Reduced command cooldowns",
+    "Role on our Discord server",
 ]
 
 
@@ -293,7 +304,26 @@ class Misc(commands.Cog):
     @bridge.bridge_command()
     async def premium(self, ctx: Context):
         """Become a premium member"""
-        ...
+        embed = ctx.custom_embed(
+            title="Premium Membership",
+            description=(
+                "Upgrade to access exclusive features and support\n"
+                "the continued development of wordPractice!"
+            ),
+            color=0xF1C40F,
+            add_footer=False,
+        )
+
+        embed.add_field(
+            name="Features",
+            value=icons.green_dot + f"\n {icons.green_dot}".join(PREMIUM_PERKS),
+        )
+
+        embed.set_thumbnail(url="https://i.imgur.com/eeNvUUI.png")
+
+        view = create_link_view({"Upgrade": PREMIUM_LINK})
+
+        await ctx.respond(embed=embed, view=view)
 
     @bridge.bridge_command()
     async def support(self, ctx: Context):

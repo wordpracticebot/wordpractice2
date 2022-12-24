@@ -243,7 +243,9 @@ class WelcomeView(BaseView):
 
 
 class CustomContextItems:
-    def __init__(self):
+    def __init__(self, bot: "WordPractice" = None):
+        self.bot = bot
+
         # Initial stats
         self.initial_user: User = None
         self.initial_values = []
@@ -303,7 +305,7 @@ class CustomAppContext(bridge.BridgeApplicationContext, CustomContextItems):
     def __init__(self, *args, **kwargs):
 
         bridge.BridgeApplicationContext.__init__(self, *args, **kwargs)
-        CustomContextItems.__init__(self)
+        CustomContextItems.__init__(self, self.bot)
 
         self.prefix = "/"
         self.is_slash = True
@@ -318,7 +320,7 @@ class CustomAppContext(bridge.BridgeApplicationContext, CustomContextItems):
 class CustomPrefixContext(bridge.BridgeExtContext, CustomContextItems):
     def __init__(self, *args, **kwargs):
         bridge.BridgeExtContext.__init__(self, *args, **kwargs)
-        CustomContextItems.__init__(self)
+        CustomContextItems.__init__(self, self.bot)
 
         self.is_slash = False
 
