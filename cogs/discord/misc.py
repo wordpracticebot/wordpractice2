@@ -126,7 +126,7 @@ class HelpView(BaseView):
                 name="Support",
                 value=(
                     "If you need any help or just want to talk about typing,\n"
-                    f"join our community discord server at\n{SUPPORT_SERVER_INVITE}"
+                    f"join our community Discord server at\n{SUPPORT_SERVER_INVITE}"
                 ),
                 inline=False,
             )
@@ -317,6 +317,10 @@ class Misc(commands.Cog):
         embed.add_field(
             name="Features",
             value=icons.green_dot + f"\n {icons.green_dot}".join(PREMIUM_PERKS),
+        )
+
+        embed.set_footer(
+            text="Perks only apply to monthly subscriptions, not one-time donations."
         )
 
         embed.set_thumbnail(url="https://i.imgur.com/eeNvUUI.png")

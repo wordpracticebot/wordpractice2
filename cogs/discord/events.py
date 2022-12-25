@@ -403,40 +403,38 @@ class Events(commands.Cog):
 
         # ----- Done evaluating stuff ------
 
-        if user.to_mongo() == new_user.to_mongo():
-            # Random chance of there being an announcement
-            if random.randint(0, 25) == 0:
-                announcements = await self.bot.mongo.get_announcements()
-
-                if announcements:
-                    msg = random.choice(announcements)
-
-                    await ctx.respond(msg)
-
-            if not ctx.is_slash:
-                if random.randint(0, 30) == 0:
-                    await ctx.respond(
-                        "**Important Notice:**\n"
-                        "Discord is moving to slash commands.\n"
-                        "Try typing `/` to see a list of available commands.\n\n"
-                        "Support for prefix commands will be removed in the future."
-                    )
-
-            return
-
         # Actually sending stuff
 
+        sent_msgs = False
         embeds = []
+
+        total_challenges = len(new_user.daily_completion)
+        desc = None if daily_reward is None else f"**Reward:** {daily_reward.desc}"
 
         # Sending a message if the daily challenge has been completed
         if new_daily_completion:
-
-            desc = None if daily_reward is None else f"**Reward:** {daily_reward.desc}"
-
             embed = ctx.embed(
-                title=":tada: Daily Challenge Complete",
+                title=f":gift: Daily Challenge Complete ({total_challenges}/{total_challenges})",
                 description=desc,
                 add_footer=False,
+            )
+            embeds.append(embed)
+
+        elif user.daily_completion != new_user.daily_completion:
+            total_completed = sum(new_user.daily_completion)
+
+            embed = ctx.embed(
+                title=f":tada: Daily Challenge Progress ({total_completed}/{total_challenges})",
+                description="\n".join(
+                    f"{icons.green_dot if f else icons.red_dot} {c.desc}"
+                    for f, c in zip(new_user.daily_completion, challenges)
+                )
+                + f"\n\n{desc}",
+                add_footer=False,
+            )
+
+            embed.set_footer(
+                text=f"View your progress on the challenges with {ctx.prefix}challenges"
             )
             embeds.append(embed)
 
@@ -457,6 +455,7 @@ class Events(commands.Cog):
 
         if embeds != []:
             await ctx.respond(embeds=embeds, ephemeral=True)
+            sent_msgs = True
 
         # Sending a message with the achievements that have been completed
         if user.achievements != new_user.achievements:
@@ -478,6 +477,7 @@ class Events(commands.Cog):
             content += f"\n\nCheck all your achievements with `{ctx.prefix}achievements`\n** **"
 
             await ctx.respond(content=content, files=files, ephemeral=True)
+            sent_msgs = True
 
         embeds = []
 
@@ -529,6 +529,29 @@ class Events(commands.Cog):
 
         if embeds != []:
             await ctx.respond(embeds=embeds, ephemeral=True)
+            sent_msgs = True
+
+        if sent_msgs is False:
+            # Random chance of there being an announcement
+            if random.randint(0, 25) == 0:
+                announcements = await self.bot.mongo.get_announcements()
+
+                if announcements:
+                    msg = random.choice(announcements)
+
+                    await ctx.respond(msg)
+
+            if not ctx.is_slash:
+                if random.randint(0, 25) == 0:
+                    await ctx.respond(
+                        "**Important Notice:**\n"
+                        "Discord is moving to slash commands.\n"
+                        "Try typing `/` to see a list of available commands.\n\n"
+                        "Support for prefix commands will be removed in the future."
+                    )
+
+        if user.to_mongo() == new_user.to_mongo():
+            return
 
         # Replacing the user data with the new state
         await self.bot.mongo.replace_user_data(new_user, ctx.author)

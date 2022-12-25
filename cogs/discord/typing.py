@@ -89,6 +89,10 @@ def _get_word_display(quote, raw_quote):
     return f"{len(quote)} ({len(raw_quote)} chars)"
 
 
+def _get_lag_from_start_time(start_time: float):
+    return min(time.time() - start_time, 1.25)
+
+
 async def _cheating_check(ctx: Context, user, user_data, score, word_history):
     """Prevents blatant cheating"""
     if score.wpm >= IMPOSSIBLE_THRESHOLD:
@@ -715,7 +719,7 @@ class HighScoreCaptchaView(BaseView):
 
         start_msg = await self.ctx.respond(embed=embed, file=file)
 
-        lag = time.time() - start_lag
+        lag = _get_lag_from_start_time(start_lag)
 
         tc = len(raw_quote)
 
@@ -1190,7 +1194,7 @@ class RaceJoinView(BaseView):
 
         self.race_msg = await self.ctx.respond(embed=embed, file=file)
 
-        lag = time.time() - self.start_lag
+        lag = _get_lag_from_start_time(self.start_lag)
 
         self.start_time = self.race_msg.created_at.timestamp() + lag
 
@@ -1781,7 +1785,7 @@ class Typing(commands.Cog):
 
         send_msg = await ctx.respond(embed=embed, file=file)
 
-        lag = time.time() - start_lag
+        lag = _get_lag_from_start_time(start_lag)
 
         if not cmd_run_before(ctx, user):
             await ctx.respond("Type the text above!", ephemeral=True)
@@ -1848,7 +1852,7 @@ class Typing(commands.Cog):
         # Sending the results
         # Spacing in title keeps same spacing if word history is short
         embed = ctx.embed(
-            title=f"Typing Test Results{ts*110}\n\n`Statistics`",
+            title=f"Typing Test Results{ts*70}\n\n`Statistics`",
         )
 
         embed.set_author(

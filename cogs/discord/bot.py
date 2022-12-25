@@ -819,7 +819,6 @@ class ProfileView(BaseView):
         return embed
 
     async def create_typing_page(self, embed):
-        embed.title += f"{THIN_SPACE*115}** **"
         embed.set_thumbnail(url="https://i.imgur.com/BZzMGjc.png")
         embed.add_field(
             name="High Scores",
@@ -833,11 +832,11 @@ class ProfileView(BaseView):
         placing = await self.get_placing_display(self.user, 3, 0)
 
         embed.add_field(
-            name=f"Range:{THIN_SPACE*26}10-20:",
+            name=f"Range:{THIN_SPACE*23}10-20:",
             value=(
-                f"Wpm:{THIN_SPACE*28}{hs1.wpm}\n"
-                f"Accuracy:{THIN_SPACE*17}{hs1.acc}%\n"
-                f"Placing:{THIN_SPACE*23}**{placing}**"
+                f"Wpm:{THIN_SPACE*26}{hs1.wpm}\n"
+                f"Accuracy:{THIN_SPACE*15}{hs1.acc}%\n"
+                f"Placing:{THIN_SPACE*19}**{placing}**"
             ),
         )
 
