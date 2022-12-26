@@ -7,7 +7,7 @@ from discord.ext import commands, tasks
 
 from bot import WordPractice
 from config import DBL_TOKEN, TESTING
-from data.constants import AVG_AMT, CHALLENGE_AMT, LB_LENGTH
+from data.constants import AVG_AMT, CHALLENGE_AMT, LB_LENGTH, TEST_EXPIRE_TIME
 from helpers.utils import run_in_executor
 
 
@@ -51,7 +51,7 @@ class Tasks(commands.Cog):
         self.daily_restart.start()
         self.update_lbs.start()
         self.update_percentiles.start()
-        self.clear_cooldowns.start()()
+        self.clear_cooldowns.start()
 
     # Updates the typing average percentile
     # Is updated infrequently because it provides an estimate
@@ -173,6 +173,11 @@ class Tasks(commands.Cog):
         for c in self.bot.cooldowns.copy():
             if time.time() > self.bot.cooldowns[c]:
                 del self.bot.cooldowns[c]
+
+        # Removing active tests that should have been removed
+        for m in self.bot.active_tests.copy():
+            if time.time() > self.bot.active_tests[m] + TEST_EXPIRE_TIME:
+                del self.bot.active_tests[m]
 
     # Makes sure that the task only gets executed at the end of the day
     @daily_restart.before_loop
