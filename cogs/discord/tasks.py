@@ -45,15 +45,13 @@ class Tasks(commands.Cog):
             "Authorization": DBL_TOKEN,
         }
 
-        if TESTING is False:
-            if DBL_TOKEN is not None:
-                self.post_guild_count.start()
+        if TESTING is False and DBL_TOKEN is not None:
+            self.post_guild_count.start()
 
         self.daily_restart.start()
         self.update_lbs.start()
-
-        for u in [self.update_percentiles, self.clear_cooldowns]:
-            u.start()
+        self.update_percentiles.start()
+        self.clear_cooldowns.start()()
 
     # Updates the typing average percentile
     # Is updated infrequently because it provides an estimate
@@ -99,7 +97,7 @@ class Tasks(commands.Cog):
 
         self.bot.avg_perc = new_perc
 
-    @tasks.loop(minutes=15)
+    @tasks.loop(minutes=30)
     async def post_guild_count(self):
         await self.bot.wait_until_ready()
 
