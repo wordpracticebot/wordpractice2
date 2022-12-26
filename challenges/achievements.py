@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 import data.icons as icons
 from bot import Context
 from helpers.utils import get_bar
@@ -7,6 +9,9 @@ from .beginning import beginning
 from .endurance import endurance
 from .typing import typing
 
+if TYPE_CHECKING:
+    from cogs.utils.mongo import User
+
 categories = {
     "Beginning": beginning,
     "Typing": typing,
@@ -15,13 +20,13 @@ categories = {
 }
 
 
-def user_has_complete(all_names, i, name, user):
+def user_has_complete(all_names, i, name, user: "User"):
     a_count = all_names[: i + 1].count(name)
 
     return a_count <= len(user.achievements.get(name, []))
 
 
-async def check_achievements(ctx: Context, user: dict):
+async def check_achievements(ctx: Context, user: "User"):
     for iii, cv in enumerate(categories.values()):
         for ii, c in enumerate(cv.challenges):
             a = sum(c, []) if isinstance(c, list) else [c]
@@ -44,7 +49,7 @@ async def check_achievements(ctx: Context, user: dict):
                 continue
 
 
-def is_a_done(a, user):
+def is_a_done(a, user: "User"):
     # is_done, is_fully_done, tier, total, a
 
     if isinstance(a, list):
@@ -66,7 +71,7 @@ def is_a_done(a, user):
         return is_done, is_done, None, 1, a
 
 
-def is_category_complete(c, user):
+def is_category_complete(c, user: "User"):
     for a in c.challenges:
         is_done, *_ = is_a_done(a, user)
 
@@ -76,7 +81,7 @@ def is_category_complete(c, user):
     return True
 
 
-def check_categories(user: dict, user_old: dict):
+def check_categories(user: "User", user_old: dict):
     for n, c in categories.items():
 
         if is_category_complete(c, user) and is_category_complete(c, user_old) is False:
@@ -85,7 +90,7 @@ def check_categories(user: dict, user_old: dict):
         continue
 
 
-def get_achievement_tier(user, names: set):
+def get_achievement_tier(user: "User", names: set):
     user_a = set(user.achievements)
 
     # getting the amount of achievements that the user has in that tier
@@ -94,7 +99,7 @@ def get_achievement_tier(user, names: set):
     return sum([len(user.achievements[x]) for x in unique])
 
 
-async def get_achievement_display(ctx: Context, user, e):
+async def get_achievement_display(ctx: Context, user: "User", e):
     is_done, is_fully_done, tier, total, a = is_a_done(e, user)
 
     if tier is not None:

@@ -5,6 +5,7 @@ import time
 import zlib
 from datetime import datetime, timezone
 from io import BytesIO, StringIO
+from typing import TYPE_CHECKING
 
 import discord
 import humanize
@@ -42,6 +43,9 @@ from helpers.utils import (
     get_lb_display,
     get_users_from_lb,
 )
+
+if TYPE_CHECKING:
+    from cogs.utils.mongo import User
 
 # Spacing characters
 THIN_SPACE = "\N{THIN SPACE}"
@@ -657,7 +661,7 @@ class LeaderboardView(ScrollView):
 
 
 class ProfileView(BaseView):
-    def __init__(self, ctx: Context, user):
+    def __init__(self, ctx: Context, user: "User"):
         super().__init__(ctx)
 
         self.user = user

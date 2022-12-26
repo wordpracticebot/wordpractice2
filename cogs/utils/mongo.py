@@ -472,7 +472,7 @@ class Mongo(commands.Cog):
         user_id: int = None,
         user: discord.User = None,
         create: bool = False,
-    ):
+    ) -> User | None:
 
         if user_id is None:
             u = None

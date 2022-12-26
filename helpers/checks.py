@@ -1,4 +1,5 @@
 import time
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
@@ -7,6 +8,9 @@ from bot import Context
 from data.constants import PREMIUM_LINK
 from helpers.ui import create_link_view
 from helpers.utils import get_command_name
+
+if TYPE_CHECKING:
+    from cogs.utils.mongo import User
 
 
 def premium_command():
@@ -72,7 +76,7 @@ def cooldown(regular: int, premium: int):
     return commands.check(predicate)
 
 
-async def user_check(ctx: Context, user):
+async def user_check(ctx: Context, user: "User"):
     """Handles the user inputted and fetches user"""
     if isinstance(user, (discord.User, discord.Member)) and user.bot:
         raise commands.BadArgument("`Beep boop!` That user is a bot :robot:")

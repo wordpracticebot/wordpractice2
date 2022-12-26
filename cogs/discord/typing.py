@@ -7,6 +7,7 @@ import time
 from copy import copy
 from datetime import datetime
 from itertools import chain, groupby
+from typing import TYPE_CHECKING
 
 import discord
 import humanize
@@ -64,6 +65,9 @@ from helpers.utils import (
     invoke_slash_command,
     message_banned_user,
 )
+
+if TYPE_CHECKING:
+    from cogs.utils.mongo import User
 
 # Spacing
 THIN_SPACE = "\N{THIN SPACE}"
@@ -620,7 +624,7 @@ class RetryView(BaseView):
 
 
 class HighScoreCaptchaView(BaseView):
-    def __init__(self, ctx: Context, user, original_wpm):
+    def __init__(self, ctx: Context, user: "User", original_wpm):
         super().__init__(ctx, timeout=HIGH_SCORE_CAPTCHA_TIMEOUT)
 
         self.user = user
@@ -834,7 +838,7 @@ class HighScoreCaptchaView(BaseView):
 
 
 class TestResultView(BaseView):
-    def __init__(self, ctx: Context, user, is_dict, length):
+    def __init__(self, ctx: Context, user: "User", is_dict, length):
         super().__init__(ctx)
 
         # Adding link buttons because they can't be added with a decorator
@@ -999,7 +1003,7 @@ class RaceEndView(BaseView):
 
 
 class RaceJoinView(BaseView):
-    def __init__(self, ctx: Context, user, is_dict, quote, wrap_width):
+    def __init__(self, ctx: Context, user: "User", is_dict, quote, wrap_width):
         super().__init__(ctx, timeout=None, personal=False)
 
         self.user = user

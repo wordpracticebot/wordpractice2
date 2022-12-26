@@ -34,7 +34,9 @@ from helpers.ui import BaseView, CustomEmbed, create_link_view, get_log_embed
 from helpers.utils import get_hint, message_banned_user
 
 if TYPE_CHECKING:
-    from cogs.utils.mongo import User
+    from cogs.utils.logging import Logging
+    from cogs.utils.mongo import Mongo, User
+    from cogs.utils.redis import Redis
 
 
 class LBCategory:
@@ -247,7 +249,7 @@ class CustomContextItems:
         self.bot = bot
 
         # Initial stats
-        self.initial_user: User = None
+        self.initial_user: "User" = None
         self.initial_values = []
 
         self.achievements_completed = []  # list of additional achievements completed
@@ -477,15 +479,15 @@ class WordPractice(bridge.AutoShardedBot):
         return False
 
     @property
-    def mongo(self):
+    def mongo(self) -> "Mongo":
         return self.get_cog("Mongo")
 
     @property
-    def redis(self):
+    def redis(self) -> "Redis":
         return self.get_cog("Redis").pool
 
     @property
-    def log(self):
+    def log(self) -> "Logging":
         return self.get_cog("Logging").log
 
     def error_embed(self, **kwargs):

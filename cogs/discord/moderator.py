@@ -1,4 +1,5 @@
 import asyncio
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import bridge, commands
@@ -10,6 +11,9 @@ from helpers.checks import user_check
 from helpers.converters import discord_user_option
 from helpers.ui import BaseView, ScrollView
 from helpers.utils import message_banned_user
+
+if TYPE_CHECKING:
+    from cogs.utils.mongo import User
 
 INFRACTIONS_PER_PAGE = 3
 
@@ -62,7 +66,7 @@ class CatView(ScrollView):
 
 
 class RestoreConfirm(BaseView):
-    def __init__(self, ctx: Context, user, backup):
+    def __init__(self, ctx: Context, user: "User", backup):
         super().__init__(ctx)
 
         self.user = user

@@ -1,5 +1,6 @@
 import copy
 import random
+import time
 from datetime import datetime
 
 import discord
@@ -17,7 +18,7 @@ from challenges.season import check_season_rewards
 from data.constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument, OnGoingTest
 from helpers.image import generate_achievement_image
-from helpers.ui import create_link_view, get_log_embed
+from helpers.ui import BaseView, create_link_view, get_log_embed
 from helpers.user import get_user_cmds_run
 from helpers.utils import filter_commands, format_command, get_command_name
 
@@ -78,9 +79,55 @@ def _get_tier_index(placing) -> tuple[int, int]:
     )
 
 
+class FeedbackView(BaseView):
+    @discord.ui.button(label="Give Feedback", style=discord.ButtonStyle.primary)
+    async def feedback(
+        self, button: discord.ui.Button, interaction: discord.Interaction
+    ):
+        modal = MessageModal(self.ctx)
+
+        await interaction.response.send_modal(modal)
+
+
+class MessageModal(discord.ui.Modal):
+    def __init__(self, ctx: Context) -> None:
+        super().__init__(
+            discord.ui.InputText(
+                label="Feedback",
+                placeholder="Talk about your likes, dislikes, and suggested features",
+                style=discord.InputTextStyle.long,
+            ),
+            title="Feedback",
+        )
+
+        self.ctx = ctx
+
+    async def callback(self, interaction: discord.Interaction):
+        (feedback,) = self.children
+
+        await interaction.response.send_message(
+            "Thank you for your feedback", ephemeral=True
+        )
+
+        # Logging the feedback in a channel
+        embed = self.ctx.default_embed(
+            title="Feedback",
+            description=(
+                f"**User:** {self.ctx.author} ({self.ctx.author.id})\n"
+                f"```{feedback.value}```"
+            ),
+        )
+
+        await self.ctx.bot.impt_wh.send(embed=embed)
+
+
 class Events(commands.Cog):
     def __init__(self, bot: WordPractice):
         self.bot = bot
+
+        self.feedback_cd = commands.CooldownMapping.from_cooldown(
+            1, 1800, commands.BucketType.user
+        )
 
     async def log_interaction(self, ctx: Context):
         # Logging the interaction
@@ -533,7 +580,9 @@ class Events(commands.Cog):
 
         if sent_msgs is False:
             # Random chance of there being an announcement
-            if random.randint(0, 25) == 0:
+            chance = random.randint(0, 25)
+
+            if chance == 0:
                 announcements = await self.bot.mongo.get_announcements()
 
                 if announcements:
@@ -541,13 +590,28 @@ class Events(commands.Cog):
 
                     await ctx.respond(msg)
 
-            if not ctx.is_slash:
-                if random.randint(0, 25) == 0:
+            elif not ctx.is_slash and chance == 2:
+                # Random chance of showing notice about slash commands
+                await ctx.respond(
+                    "**Important Notice:**\n"
+                    "Discord is moving to slash commands.\n"
+                    "Try typing `/` to see a list of available commands.\n\n"
+                    "Support for prefix commands will be removed in the future."
+                )
+
+            elif chance == 3:
+                bucket = self.feedback_cd.get_bucket(ctx.message or ctx)
+
+                retry_after = bucket.update_rate_limit(time.time())
+
+                if not retry_after:
+                    # Random chance of asking for feedback
+                    view = FeedbackView(ctx)
+
                     await ctx.respond(
-                        "**Important Notice:**\n"
-                        "Discord is moving to slash commands.\n"
-                        "Try typing `/` to see a list of available commands.\n\n"
-                        "Support for prefix commands will be removed in the future."
+                        "How are you enjoying the bot so far?",
+                        view=view,
+                        ephemeral=True,
                     )
 
         if user.to_mongo() == new_user.to_mongo():
