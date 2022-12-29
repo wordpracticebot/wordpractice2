@@ -59,7 +59,7 @@ PREMIUM_PERKS = [
     "Save and view up to 200 tests",
     "Custom test pacers",
     "Create custom typing test themes",
-    "Accuracy heat map",
+    "Export your test scores as CSV and JSON files",
     "Reduced command cooldowns",
     "Role on our Discord server",
 ]

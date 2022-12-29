@@ -68,7 +68,7 @@ endurance = Category(
         SingleStatEndurance.generate(
             "Democracy!",
             "votes",
-            ((1, 5, 10, 25, 50, 100, 200, 350), (500, 750)),
+            ((1, 5, 10, 25, 50, 100, 200, 300), (500, 750)),
             "Vote for wordPractice {} time{}",
         ),
         [

@@ -45,13 +45,36 @@ class Tasks(commands.Cog):
             "Authorization": DBL_TOKEN,
         }
 
-        if TESTING is False and DBL_TOKEN is not None:
-            self.post_guild_count.start()
+        task_list = self.get_tasks()
 
-        self.daily_restart.start()
-        self.update_lbs.start()
-        self.update_percentiles.start()
-        self.clear_cooldowns.start()
+        for task in task_list:
+            task.start()
+
+        self.ensure_tasks.start()
+
+    def get_tasks(self):
+        task_list = [
+            self.daily_restart,
+            self.update_lbs,
+            self.update_percentiles,
+            self.clear_cooldowns,
+        ]
+
+        if TESTING is False and DBL_TOKEN is not None:
+            task_list.append(self.post_guild_count)
+
+        return task_list
+
+    def cog_unload(self):
+        for task in self.get_tasks():
+            task.cancel()
+
+    @tasks.loop(minutes=10)
+    async def ensure_tasks(self):
+        # Ensures that all tasks are running
+        for task in self.get_tasks():
+            if task.is_running() is False:
+                task.start()
 
     # Updates the typing average percentile
     # Is updated infrequently because it provides an estimate

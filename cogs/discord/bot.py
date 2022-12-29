@@ -721,9 +721,9 @@ class ProfileView(BaseView):
 
         return emoji
 
-    def get_thin_spacing(self, text: str, is_emoji: bool):
-        if is_emoji:
-            return 9
+    def get_thin_spacing(self, text: str):
+        if ":" in text:
+            return 7
 
         s = 0
 
@@ -732,40 +732,66 @@ class ProfileView(BaseView):
                 s += 1.35
             elif c == "0":
                 s += 3.1
-            elif c == "1":
+            elif c == ["1", "r"]:
                 s += 2
             elif c in ["2", "5", "9"]:
                 s += 2.75
-            elif c in ["3", "4", "6"]:
+            elif c in ["3", "4", "6", "h"]:
                 s += 2.85
             elif c == "7":
                 s += 2.25
+            elif c in ["(", ")"]:
+                s += 1.65
+            elif c == ">":
+                s += 2.55
+            elif c == " ":
+                s += 1
+            elif c == "t":
+                s += 1.75
+            elif c in ["d", "n"]:
+                s += 2.9
             else:
                 s += 2.85
 
         return math.ceil(s)
 
     def format_account_stat(self, num: str, intended: int):
-        num_spacing = intended - self.get_thin_spacing(num, False)
+        num_spacing = intended - self.get_thin_spacing(num)
 
         return f"{num}{num_spacing * THIN_SPACE}"
 
     async def create_account_page(self, embed):
         embed.set_thumbnail(url="https://i.imgur.com/KrXiy9S.png")
 
-        in_between = 23
+        word_placing = await self.get_placing_display(self.user, 0, 0)
+        season_placing = await self.get_placing_display(self.user, 1, 0)
+        last_24_placing = await self.get_placing_display(self.user, 2, 0)
+
+        sp_words = self.get_thin_spacing(word_placing)
+        sp_xp = self.get_thin_spacing(season_placing)
+
+        in_between = 6 + max(int((35 - sp_words - sp_xp) / 2), 0)
         b = in_between * THIN_SPACE
 
-        embed.title += f"\n\nAll Time{b}Season{b}24h{b}** **"
+        embed.title += f"\n\nAll Time {word_placing}{b}Season {season_placing}{b}24h {last_24_placing}{b}** **"
 
-        fr_words = self.format_account_stat(f"{self.user.words:,}", 9 + in_between)
-        fr_xp = self.format_account_stat(f"{self.user.xp:,}", 13 + in_between)
+        fr_words = self.format_account_stat(
+            f"{self.user.words:,}", 9 + in_between + sp_words
+        )
+        fr_xp = self.format_account_stat(f"{self.user.xp:,}", 14 + in_between + sp_xp)
         fr_24_xp = f"{sum(self.user.xp_24h):,}"
 
         if self.user.badges == []:
             badges = "User has no badges..."
         else:
-            badges = " ".join(b.raw for b in self.user.badge_objs)
+            space = THIN_SPACE * 2
+
+            badges = " ".join(
+                f"{space}**[{space}{b.raw}{space}]**{space}"
+                if b.badge_id == self.user.status
+                else b.raw
+                for b in self.user.badge_objs
+            )
 
         embed.description = (
             f"**Words:** {fr_words}**XP:** {fr_xp}**XP:** {fr_24_xp}\n\n"
@@ -775,8 +801,8 @@ class ProfileView(BaseView):
 
         embed.add_field(
             name=f"Trophies ({sum(self.user.trophies)})",
-            value=f"{THIN_SPACE*6}".join(
-                f"{icons.trophies[i]} x{t}" for i, t in enumerate(self.user.trophies)
+            value=f"{THIN_SPACE*7}".join(
+                f"{icons.trophies[i]} `x{t}`" for i, t in enumerate(self.user.trophies)
             ),
             inline=False,
         )
@@ -785,7 +811,7 @@ class ProfileView(BaseView):
 
         embed.add_field(
             name="** **",
-            value=f"**{LINE_SPACE * 18}{s}Information{s}{LINE_SPACE * 16}**",
+            value=f"**{LINE_SPACE * 17}{s}Information{s}{LINE_SPACE * 16}**",
             inline=False,
         )
 
@@ -799,7 +825,7 @@ class ProfileView(BaseView):
         )
 
         embed.add_field(
-            name=f"{LINE_SPACE * 18}{s}Settings{s}{LINE_SPACE * 19}",
+            name=f"{LINE_SPACE * 17}{s}Settings{s}{LINE_SPACE * 19}",
             value="** **",
             inline=False,
         )
@@ -849,14 +875,14 @@ class ProfileView(BaseView):
 
         embed.add_field(
             name="21-50:",
-            value=(f"{hs2.wpm}\n{hs2.acc}%\n**{placing}**"),
+            value=f"{hs2.wpm}\n{hs2.acc}%\n**{placing}**",
         )
 
         placing = await self.get_placing_display(self.user, 3, 2)
 
         embed.add_field(
             name="51-100:",
-            value=(f"{hs3.wpm}\n{hs3.acc}%\n**{placing}**"),
+            value=f"{hs3.wpm}\n{hs3.acc}%\n**{placing}**",
         )
 
         wpm, raw, acc, cw, tw, scores = get_typing_average(self.user)
