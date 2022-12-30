@@ -524,7 +524,8 @@ class LeaderboardView(ScrollView):
 
     async def create_page(self):
         embed = self.ctx.embed(
-            title=f"{self.lb.title} Leaderboard | Page {self.page + 1}"
+            title=f"{self.lb.title} Leaderboard | Page {self.page + 1}",
+            description=f"View another user's profile with `{self.ctx.prefix}profile name#discrim`",
         )
 
         # Checking if the leaderboard data was cached
@@ -723,7 +724,7 @@ class ProfileView(BaseView):
 
     def get_thin_spacing(self, text: str):
         if ":" in text:
-            return 7
+            return 8
 
         s = 0
 
@@ -787,10 +788,10 @@ class ProfileView(BaseView):
             space = THIN_SPACE * 2
 
             badges = " ".join(
-                f"{space}**[{space}{b.raw}{space}]**{space}"
+                f"{space if i else ''}**[{space}{b.raw}{space}]**{space}"
                 if b.badge_id == self.user.status
                 else b.raw
-                for b in self.user.badge_objs
+                for i, b in enumerate(self.user.badge_objs)
             )
 
         embed.description = (

@@ -175,7 +175,7 @@ class Events(commands.Cog):
             else:
                 await ctx.respond(embed=embed, ephemeral=ephemeral, view=view)
 
-        except discord.errors.Forbidden:
+        except Exception:
             pass
 
     @commands.Cog.listener()
@@ -546,7 +546,11 @@ class Events(commands.Cog):
             start_placing_index = _get_tier_index(start_placing)
             after_placing_index = _get_tier_index(after_placing)
 
-            if start_placing_index != after_placing_index:
+            if (
+                start_placing_index is not None
+                and after_placing_index is not None
+                and start_placing_index != after_placing_index
+            ):
 
                 after_ordinal_placing = humanize.ordinal(after_placing + 1)
 
