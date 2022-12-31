@@ -179,12 +179,12 @@ class PageView(BaseView):
         await self.wait_for(self.update_message(interaction), interaction)
 
     async def defer_interaction(self, interaction=None):
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.3)
 
         if interaction.response.is_done() is False:
             try:
                 await interaction.response.defer()
-            except discord.InteractionResponded:
+            except (discord.InteractionResponded, discord.NotFound):
                 pass
 
             content = f"**Loading {icons.loading}**"
