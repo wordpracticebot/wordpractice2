@@ -113,7 +113,8 @@ class MessageModal(discord.ui.Modal):
         embed = self.ctx.default_embed(
             title="Feedback",
             description=(
-                f"**User:** {self.ctx.author} ({self.ctx.author.id})\n"
+                f"**User:** {self.ctx.author}\n"
+                f"**User ID:** {self.ctx.author.id}\n"
                 f"```{feedback.value}```"
             ),
         )

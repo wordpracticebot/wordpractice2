@@ -535,7 +535,8 @@ class Mongo(commands.Cog):
         embed = self.bot.error_embed(
             title="Account Wiped",
             description=(
-                f"**User:** {user.username} ({user.id})\n"
+                f"**User:** {user.username}\n"
+                f"**User ID:** {user.id}\n"
                 f"**Moderator:** {mod} ({mod_id})\n"
                 f"**Timestamp:** <t:{timestamp}:R>"
             ),

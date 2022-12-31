@@ -40,7 +40,8 @@ def get_log_embed(ctx: "Context", title, additional: str, error=False, author=No
     embed = embed_gen(
         title=title,
         description=(
-            f"**User:** {name} ({author.id})\n"
+            f"**User:** {name}\n"
+            f"**User ID:** {author.id}\n"
             f"**Server:** {guild} ({ctx.guild.id})\n"
             f"{additional}\n"
             f"**Timestamp:** <t:{timestamp}:R>"
