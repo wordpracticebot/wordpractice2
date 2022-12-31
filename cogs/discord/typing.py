@@ -1523,6 +1523,10 @@ class RaceJoinView(BaseView):
         self.timeout_race.start()
 
 
+dict_range_string = f"{TEST_RANGE[0]}-{TEST_RANGE[1]}"
+quote_range_string = ", ".join(TEST_ZONES)
+
+
 class Typing(commands.Cog):
     """Typing test related commands"""
 
@@ -1557,37 +1561,23 @@ class Typing(commands.Cog):
     def __init__(self, bot: WordPractice):
         self.bot = bot
 
-    @bridge.bridge_command()
-    @cooldown(10, 3)
-    async def tournaments(self, ctx: Context):
-        """Typing tournaments"""
-
-        # Fetching the tournament data
-        t_data = await self.bot.mongo.fetch_all_tournaments()
-
-        if not t_data:
-            embed = ctx.error_embed(title="Sorry, no tournaments found")
-
-            return await ctx.respond(embed=embed)
-
-        view = TournamentView(ctx, t_data)
-
-        await view.start()
-
-    @tt_group.command(name="dictionary")
+    @tt_group.command(
+        name="dictionary",
+        description=f"Take a dictionary typing test ({dict_range_string} words)",
+    )
     @cooldown(5, 1)
     @word_option
     async def tt_dictionary(self, ctx: Context, length: int):
-        """Take a dictionary typing test"""
         quote_info = await self.handle_dictionary_input(ctx, length)
 
         await self.do_typing_test(ctx, True, quote_info, length, ctx.respond)
 
-    @tt_group.command(name="quote")
+    @tt_group.command(
+        name="quote", description=f"Take a quote typing test ({quote_range_string})"
+    )
     @cooldown(5, 1)
     @quote_option
     async def tt_quote(self, ctx: Context, length: str):
-        """Take a quote typing test"""
         quote_info = await self.handle_quote_input(length)
 
         await self.do_typing_test(ctx, False, quote_info, length, ctx.respond)
@@ -1604,22 +1594,24 @@ class Typing(commands.Cog):
     async def _tt_quote(self, ctx: Context, length: str):
         await invoke_slash_command(self.tt_quote, self, ctx, length)
 
-    @race_group.command(name="dictionary")
+    @race_group.command(
+        name="dictionary",
+        description=f"Take a multiplayer dictionary typing test ({dict_range_string} words)",
+    )
     @cooldown(6, 2)
     @word_option
     async def race_dictionary(self, ctx: Context, length: int):
-        """Take a multiplayer dictionary typing test"""
-
         quote_info = await self.handle_dictionary_input(ctx, length)
 
         await self.show_race_start(ctx, True, quote_info)
 
-    @race_group.command(name="quote")
+    @race_group.command(
+        name="quote",
+        description=f"Take a multiplayer quote typing test ({quote_range_string})",
+    )
     @cooldown(6, 2)
     @quote_option
     async def race_quote(self, ctx: Context, length: str):
-        """Take a multiplayer quote typing test"""
-
         quote_info = await self.handle_quote_input(length)
 
         await self.show_race_start(ctx, False, quote_info)
@@ -2141,6 +2133,23 @@ class Typing(commands.Cog):
         # Logging suspicious amount of fails
         if flag_embed is not None:
             await ctx.bot.impt_wh.send(embed=flag_embed)
+
+    @bridge.bridge_command()
+    @cooldown(10, 3)
+    async def tournaments(self, ctx: Context):
+        """Typing tournaments"""
+
+        # Fetching the tournament data
+        t_data = await self.bot.mongo.fetch_all_tournaments()
+
+        if not t_data:
+            embed = ctx.error_embed(title="Sorry, no tournaments found")
+
+            return await ctx.respond(embed=embed)
+
+        view = TournamentView(ctx, t_data)
+
+        await view.start()
 
 
 def setup(bot: WordPractice):
