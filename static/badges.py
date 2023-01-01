@@ -89,6 +89,9 @@ default = {
     "snowglobe": "<:snowglobe:1048800456232665191>",
     "bell": "<:bell:1048799866547089499>",
     "candle": "<:candle:1048799867943796746>",
+    "igloo": "<:igloo:1059186500375425165>",
+    "skate": "<:skate:1059177653032202270>",
+    "hockeystick": "<:hockeystick:1059179413457084486>",
 }
 
 
