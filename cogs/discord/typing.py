@@ -1594,24 +1594,20 @@ class Typing(commands.Cog):
     async def _tt_quote(self, ctx: Context, length: str):
         await invoke_slash_command(self.tt_quote, self, ctx, length)
 
-    @race_group.command(
-        name="dictionary",
-        description=f"Take a multiplayer dictionary typing test ({dict_range_string} words)",
-    )
+    @race_group.command(name="dictionary")
     @cooldown(6, 2)
     @word_option
     async def race_dictionary(self, ctx: Context, length: int):
+        """Take a multiplayer dictionary typing test"""
         quote_info = await self.handle_dictionary_input(ctx, length)
 
         await self.show_race_start(ctx, True, quote_info)
 
-    @race_group.command(
-        name="quote",
-        description=f"Take a multiplayer quote typing test ({quote_range_string})",
-    )
+    @race_group.command(name="quote")
     @cooldown(6, 2)
     @quote_option
     async def race_quote(self, ctx: Context, length: str):
+        """Take a multiplayer quote typing test"""
         quote_info = await self.handle_quote_input(length)
 
         await self.show_race_start(ctx, False, quote_info)
