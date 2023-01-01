@@ -94,7 +94,7 @@ class MessageModal(discord.ui.Modal):
         super().__init__(
             discord.ui.InputText(
                 label="Feedback",
-                placeholder="Talk about your likes, dislikes, and suggested features",
+                placeholder="Give constructive feedback; talk about your likes, dislikes, and suggested features",
                 style=discord.InputTextStyle.long,
             ),
             title="Feedback",
