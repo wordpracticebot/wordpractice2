@@ -92,6 +92,7 @@ default = {
     "igloo": "<:igloo:1059476659801178202>",
     "skate": "<:skate:1059177653032202270>",
     "hockeystick": "<:hockeystick:1059179413457084486>",
+    "pallet": "<:pallet:1059525146253201478>",
 }
 
 
