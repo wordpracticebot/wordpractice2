@@ -866,7 +866,7 @@ class TestResultView(BaseView):
         self.ctx.initial_user = await self.ctx.bot.mongo.fetch_user(self.user.id)
 
     @discord.ui.button(label="Next Test", style=discord.ButtonStyle.success)
-    async def next_test(self, button, interaction):
+    async def next_test(self, button, interaction: discord.Interaction):
         await self.disable_btn(button)
 
         await self.get_user()
@@ -878,13 +878,7 @@ class TestResultView(BaseView):
 
         await interaction.response.defer()
 
-        await Typing.do_typing_test(
-            self.ctx,
-            self.is_dict,
-            quote,
-            self.length,
-            interaction.response.send_message,
-        )
+        await Typing.do_typing_test(self.ctx, self.is_dict, quote, self.length)
         invoke_completion(self.ctx)
 
 
@@ -1574,7 +1568,7 @@ class Typing(commands.Cog):
 
         await ctx.defer()
 
-        await self.do_typing_test(ctx, True, quote_info, length, ctx.respond)
+        await self.do_typing_test(ctx, True, quote_info, length)
 
     @tt_group.command(
         name="quote", description=f"Take a quote typing test ({quote_range_string})"
@@ -1586,7 +1580,7 @@ class Typing(commands.Cog):
 
         await ctx.defer()
 
-        await self.do_typing_test(ctx, False, quote_info, length, ctx.respond)
+        await self.do_typing_test(ctx, False, quote_info, length)
 
     @commands.group(usage="[length]", invoke_without_command=True)
     @cooldown(5, 1)
@@ -1687,7 +1681,7 @@ class Typing(commands.Cog):
             await ctx.respond("Start the race by joining it", ephemeral=True)
 
     @staticmethod
-    async def personal_test_input(user, ctx: Context, test_type_int, quote_info, send):
+    async def personal_test_input(user, ctx: Context, test_type_int, quote_info):
         ctx.bot.active_start(ctx.author.id)
 
         quote, wrap_width = quote_info
@@ -1740,7 +1734,7 @@ class Typing(commands.Cog):
         embed.set_image(url=f"attachment://loading.{STATIC_IMAGE_FORMAT}")
         embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")
 
-        await send(embed=embed, file=file, delete_after=TEST_LOAD_TIME)
+        await ctx.respond(embed=embed, file=file, delete_after=TEST_LOAD_TIME)
 
         load_start = time.time()
 
@@ -1818,18 +1812,16 @@ class Typing(commands.Cog):
             ctx.bot.active_end(ctx.author.id)
 
     @classmethod
-    async def do_typing_test(cls, ctx: Context, is_dict, quote_info, length, send):
+    async def do_typing_test(cls, ctx: Context, is_dict, quote_info, length):
         quote = quote_info[0]
 
         user = await ctx.bot.mongo.fetch_user(ctx.author)
 
         # Prompting a captcha at intervals to prevent automated accounts
         if (user.test_amt + 1) % CAPTCHA_INTERVAL == 0:
-            return await cls.handle_interval_captcha(ctx, user, is_dict, length, send)
+            return await cls.handle_interval_captcha(ctx, user, is_dict, length)
 
-        result = await cls.personal_test_input(
-            user, ctx, int(is_dict), quote_info, send
-        )
+        result = await cls.personal_test_input(user, ctx, int(is_dict), quote_info)
 
         if result is None:
             return
@@ -2042,7 +2034,7 @@ class Typing(commands.Cog):
         return score, False
 
     @classmethod
-    async def handle_interval_captcha(cls, ctx: Context, user, is_dict, length, send):
+    async def handle_interval_captcha(cls, ctx: Context, user, is_dict, length):
         ctx.bot.active_start(ctx.author.id)
 
         # Getting the quote for the captcha
@@ -2062,7 +2054,7 @@ class Typing(commands.Cog):
 
         embed.set_image(url=f"attachment://captcha.{STATIC_IMAGE_FORMAT}")
 
-        await send(embed=embed, file=file)
+        await ctx.respond(embed=embed, file=file)
 
         # Waiting for user input
         try:
