@@ -43,7 +43,7 @@ def get_width_height(word_list, wrap_width):
 
 
 @run_in_executor()
-def get_base(width, height, colours, fquote):
+def get_base(width: int, height: int, colours: list[str, str], fquote: list[str]):
     img = Image.new("RGB", (width, height), color=colours[0])
     d = ImageDraw.Draw(img)
 
@@ -199,6 +199,9 @@ def get_pacer(base, text_colour, quote, word_list, pacer, pacer_type):
 
 def save_discord_static_img(img, name):
     buffer = BytesIO()
+
+    # Decreases the image size a lot :)
+    img = img.quantize(colors=256, method=Image.MAXCOVERAGE)
 
     img.save(buffer, STATIC_IMAGE_FORMAT)
     buffer.seek(0)
