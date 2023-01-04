@@ -876,7 +876,7 @@ class TestResultView(BaseView):
         else:
             quote = await Typing.handle_quote_input(self.length)
 
-        await interaction.defer()
+        await interaction.response.defer()
 
         await Typing.do_typing_test(
             self.ctx,
