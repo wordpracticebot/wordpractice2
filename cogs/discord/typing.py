@@ -690,7 +690,7 @@ class HighScoreCaptchaView(BaseView):
             self.ctx.bot, captcha_img, self.user.theme[1]
         )
 
-        file = save_discord_static_img(captcha_loading_img, "captcha")
+        file = save_discord_static_img(captcha_loading_img, "captcha", optimize=False)
 
         # Generating the loading embed
 
@@ -875,6 +875,8 @@ class TestResultView(BaseView):
             quote = await Typing.handle_dictionary_input(self.ctx, self.length)
         else:
             quote = await Typing.handle_quote_input(self.length)
+
+        await interaction.defer()
 
         await Typing.do_typing_test(
             self.ctx,
@@ -1171,7 +1173,7 @@ class RaceJoinView(BaseView):
 
         loading_img = await get_loading_img(self.ctx.bot, base_img, author_theme[1])
 
-        file = save_discord_static_img(loading_img, "loading")
+        file = save_discord_static_img(loading_img, "loading", optimize=False)
 
         embed = self.get_race_embed()
 
@@ -1570,6 +1572,8 @@ class Typing(commands.Cog):
     async def tt_dictionary(self, ctx: Context, length: int):
         quote_info = await self.handle_dictionary_input(ctx, length)
 
+        await ctx.defer()
+
         await self.do_typing_test(ctx, True, quote_info, length, ctx.respond)
 
     @tt_group.command(
@@ -1579,6 +1583,8 @@ class Typing(commands.Cog):
     @quote_option
     async def tt_quote(self, ctx: Context, length: str):
         quote_info = await self.handle_quote_input(length)
+
+        await ctx.defer()
 
         await self.do_typing_test(ctx, False, quote_info, length, ctx.respond)
 
@@ -1729,7 +1735,7 @@ class Typing(commands.Cog):
 
         loading_img = await get_loading_img(ctx.bot, base_img, user.theme[1])
 
-        file = save_discord_static_img(loading_img, "loading")
+        file = save_discord_static_img(loading_img, "loading", optimize=False)
 
         embed.set_image(url=f"attachment://loading.{STATIC_IMAGE_FORMAT}")
         embed.set_thumbnail(url="https://i.imgur.com/ZRfx4yz.gif")

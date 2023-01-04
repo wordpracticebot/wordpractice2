@@ -20,10 +20,6 @@ def _wrap_text(text, wrap_width):
     return word_list, joined
 
 
-def _quantize_img(img):
-    return img.quantize(method=Image.NONE)
-
-
 def get_width_height(word_list, wrap_width):
     largest_item = max(word_list, key=lambda x: arial.getsize(x)[0])
 
@@ -156,7 +152,7 @@ def get_vertical_pacer_rect(base, smooth, text_colour, i, y, line_spacing):
 @run_in_executor()
 def get_pacer(base, text_colour, quote, word_list, pacer, pacer_type):
     # Removes the dithering and reduces image size
-    base = _quantize_img(base)
+    base = base.quantize(colors=3, method=Image.MAXCOVERAGE)
 
     # Scales the frame rate of the pacer so that slow pacers don't take forever to load
     smooth = round(-0.02 * pacer + 14, 2)
@@ -189,7 +185,8 @@ def get_pacer(base, text_colour, quote, word_list, pacer, pacer_type):
         save_all=True,
         append_images=images[1:],
         duration=t,
-        optimize=False,
+        optimize=True,
+        quality=10,
     )
 
     buffer.seek(0)
@@ -197,13 +194,13 @@ def get_pacer(base, text_colour, quote, word_list, pacer, pacer_type):
     return buffer
 
 
-def save_discord_static_img(img, name):
+def save_discord_static_img(img, name, optimize=True):
     buffer = BytesIO()
 
     # Decreases the image size a lot :)
-    img = img.quantize(colors=256, method=Image.MAXCOVERAGE)
+    img = img.quantize(colors=6 if optimize else 30, method=Image.MAXCOVERAGE)
 
-    img.save(buffer, STATIC_IMAGE_FORMAT)
+    img.save(buffer, STATIC_IMAGE_FORMAT, optimize=True)
     buffer.seek(0)
 
     return discord.File(buffer, filename=f"{name}.{STATIC_IMAGE_FORMAT}")

@@ -25,7 +25,7 @@ from static import themes
 
 
 async def _get_theme_preview_file(bot, theme):
-    raw_quote = "This is a preview of your theme. Thomas the chatbot was walking down the street with an ice cream cone. He dropped the cone on the ground and was sad. The End."
+    raw_quote = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet consectetur adipiscing. Id cursus metus aliquam eleifend mi in nulla posuere."
 
     base_img = await get_base_img(bot, raw_quote, DEFAULT_WRAP, theme)
 
