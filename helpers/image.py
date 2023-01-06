@@ -194,11 +194,12 @@ def get_pacer(base, text_colour, quote, word_list, pacer, pacer_type):
     return buffer
 
 
-def save_discord_static_img(img, name, optimize=True):
+def save_discord_static_img(img, name, quantize=True, optimize=True):
     buffer = BytesIO()
 
-    # Decreases the image size a lot :)
-    img = img.quantize(colors=6 if optimize else 30, method=Image.MAXCOVERAGE)
+    if quantize:
+        # Decreases the image size a lot :)
+        img = img.quantize(colors=6 if optimize else 30, method=Image.MAXCOVERAGE)
 
     img.save(buffer, STATIC_IMAGE_FORMAT, optimize=True)
     buffer.seek(0)
@@ -217,4 +218,4 @@ def generate_achievement_image(name, icon):
     draw = ImageDraw.Draw(img)
     draw.text((240, 110), name, font=uni_sans_heavy)
 
-    return save_discord_static_img(img, "achievement")
+    return save_discord_static_img(img, "achievement", quantize=False)
