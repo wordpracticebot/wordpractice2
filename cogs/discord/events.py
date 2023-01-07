@@ -127,7 +127,7 @@ class Events(commands.Cog):
         self.bot = bot
 
         self.feedback_cd = commands.CooldownMapping.from_cooldown(
-            1, 1800, commands.BucketType.user
+            1, 60 * 6, commands.BucketType.user
         )
 
     async def log_interaction(self, ctx: Context):
@@ -585,7 +585,7 @@ class Events(commands.Cog):
 
         if sent_msgs is False:
             # Random chance of there being an announcement
-            chance = random.randint(0, 25)
+            chance = random.randint(0, 50)
 
             if chance == 0:
                 announcements = await self.bot.mongo.get_announcements()
