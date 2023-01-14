@@ -106,7 +106,7 @@ def get_graph_link(*, user, amt: int, dimensions: tuple):
         "until": int(time.time() + GRAPH_EXPIRE_TIME),
         "y_values": y_values,
         "colours": user.theme + ["#ffffff"],
-        "amount": len(scores),
+        "amount": total,
     }
 
     # Encrypting the data
@@ -291,13 +291,13 @@ class GraphButton(DictButton):
         super().__init__(**kwargs)
 
     def toggle_eligible(self, value):
-        if self.is_premium is False and value >= self.save_amt:
+        if value >= self.save_amt:
             self.disabled = True
 
 
 class GraphView(ViewFromDict):
     def __init__(self, ctx: Context, user):
-        test_amts = [10, 25, 50, 100, 250]
+        test_amts = [10, 25, 50, 100, 200, 500, 1000, 2500]
 
         super().__init__(ctx, {f"{i} Tests": i for i in test_amts})
 

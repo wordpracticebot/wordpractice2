@@ -385,7 +385,7 @@ class ViewFromDict(PageView):
         start_index = 0
         # Generating the buttons
         for i, name in enumerate(self.order):
-            btn = self.button(label=name, row=self.row)
+            btn = self.button(label=name, row=self.row + i // 5)
 
             if i == start_index:
                 self.page = name
