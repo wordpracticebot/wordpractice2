@@ -67,6 +67,6 @@ artist_badge = "<:artist_badge:979447783465553970>"
 idea_badge = "<:idea_badge:979447783478145054>"
 
 # Premium Icons
-light_sub = "<:idea_badge:979447783478145054>"
-premium_sub = "<:idea_badge:979447783478145054>"
-premium_plus_sub = "<:idea_badge:979447783478145054>"
+light_sub = "<:light:1063806573958402048>"
+premium_sub = "<:premium:1063806575799713822>"
+premium_plus_sub = "<:premiumplus:1063806577175441469>"
