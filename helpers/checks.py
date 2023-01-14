@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 def premium_command():
     async def predicate(ctx: Context):
         if ctx.initial_user.is_premium is False:
-            view = create_link_view({"Support us by donating!": PREMIUM_LINK})
+            view = create_link_view({"Upgrade": PREMIUM_LINK})
 
             embed = ctx.error_embed(
                 title="Premium Command",
@@ -52,7 +52,7 @@ def cooldown(regular: int, premium: int):
                 if user.is_premium is False and regular > premium:
                     embed.description += f"\n\n**[Premium Members]({PREMIUM_LINK})** only wait **{premium}s** instead of **{regular}s**!"
 
-                    view = create_link_view({"Support us by donating!": PREMIUM_LINK})
+                    view = create_link_view({"Upgrade": PREMIUM_LINK})
                 else:
                     view = None
 

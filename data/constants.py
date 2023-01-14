@@ -79,12 +79,14 @@ VOTING_SITES = {
 }
 
 # Premium
-PREMIUM_LAUNCHED = False
-PREMIUM_LINK = "https://ko-fi.com/wordpractice"  # TODO: add the correct premium link
+PREMIUM_LAUNCHED = True
+PREMIUM_LINK = "https://wordpractice.principle.sh/#/premium"
 
 # Score saving
 SCORE_SAVE_AMT = 200
-REGULAR_SCORE_LIMIT = 50
+LIGHT_SAVE_AMT = 500
+PREMIUM_SAVE_AMT = 1000
+PREMIUM_PLUS_SAVE_AMT = 2500
 
 # Daily challenges
 CHALLENGE_AMT = 2

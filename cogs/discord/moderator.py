@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING
 
 import discord
@@ -94,7 +95,7 @@ class RestoreConfirm(BaseView):
         await self.ctx.respond(embed=embed, view=self)
 
 
-class MessageModal(discord.ui.Modal):
+class SendMessageModal(discord.ui.Modal):
     def __init__(self, ctx: Context) -> None:
         super().__init__(
             discord.ui.InputText(
@@ -151,6 +152,304 @@ class MessageModal(discord.ui.Modal):
         await self.ctx.send(
             f"Done!" + (f"\n\nFailed to send to: {failed_msg}" if failed_msg else "")
         )
+
+
+class CreateTournamentFormat(discord.ui.Modal):
+    def __init__(
+        self,
+        ctx: Context,
+        title: str,
+        options: dict[str, list[str, str, bool]],
+        tournament_cls,
+        data: dict,
+    ):
+        super().__init__(
+            title=title,
+            *(
+                discord.ui.InputText(
+                    label=l,
+                    placeholder=p,
+                    style=discord.InputTextStyle.long
+                    if s
+                    else discord.InputTextStyle.short,
+                )
+                for l, p, s in options.values()
+            ),
+        )
+
+        self.ctx = ctx
+        self.data = data
+        self.options = options
+        self.tournament_cls = tournament_cls
+
+    async def calculate_other_fields(self, bot: WordPractice):
+        return None
+
+    async def callback(self, interaction: discord.Interaction):
+        for i, f in enumerate(self.options):
+            self.data[f] = self.children[i].value
+
+        other_fields = await self.calculate_other_fields(self.ctx.bot)
+
+        if other_fields:
+            self.data.update(other_fields)
+
+        # Creating the tournament
+        t = self.tournament_cls(**self.data)
+
+        await t.commit()
+
+        await interaction.response.send_message("Tournament Created!", ephemeral=True)
+
+
+class CreateQualificationTournament(CreateTournamentFormat):
+    def __init__(self, ctx: Context, data: dict):
+        super().__init__(
+            ctx=ctx,
+            title="Create Qualification Tournament",
+            options={
+                "amount": ["Amount of Qualifiers", "Enter an integer", False],
+                "bracket_start_time": [
+                    "Bracket Start Time Offset",
+                    "Enter how many minutes the bracket starts after the qualifiers end",
+                    True,
+                ],
+                "host_server": ["Host Server", "Enter the host server name", False],
+                "host_server_invite": [
+                    "Host Server Invite",
+                    "Enter the invite link to the host server",
+                    False,
+                ],
+            },
+            tournament_cls=ctx.bot.mongo.QualificationTournament,
+            data=data,
+        )
+
+    async def calculate_other_fields(self, bot: WordPractice):
+        return {
+            "bracket_start_time": self.data["start_time"]
+            + timedelta(minutes=int(self.data["bracket_start_time"]))
+        }
+
+
+class CreateActivityTournament(CreateTournamentFormat):
+    def __init__(self, ctx: Context, data: dict):
+        super().__init__(
+            ctx=ctx,
+            title="Create Activity Tournament",
+            options={
+                "category": ["Leaderboard Category", "Enter an integer", False],
+                "stat": ["Leaderboard Stat", "Enter an integer", False],
+                "winners": ["Amount of Winners", "Enter an integer", False],
+                "lb_size": ["Leaderboard Size", "Enter an integer", False],
+            },
+            tournament_cls=ctx.bot.mongo.ActivityTournament,
+            data=data,
+        )
+
+    async def calculate_other_fields(self, bot: WordPractice):
+        category = int(self.data["category"])
+        stat = int(self.data["stat"])
+
+        raw_lb = await bot.lbs[category].stats[stat].get_lb_data(end=-1)
+
+        lb = {str(k): v for k, v in raw_lb.items()}
+
+        return {"initial_rankings": lb, "category": category, "stat": stat}
+
+
+TOURNAMENT_FORMAT_MAPPING = {
+    "Qualification": CreateQualificationTournament,
+    "Activity": CreateActivityTournament,
+}
+
+MONTHS = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
+
+
+class TournamentFormatPicker(BaseView):
+    def __init__(self, ctx: Context, data: dict) -> None:
+        super().__init__(ctx)
+
+        self.data = data
+
+    @discord.ui.select(
+        placeholder="Select a tournament format",
+        options=[discord.SelectOption(label=t) for t in TOURNAMENT_FORMAT_MAPPING],
+    )
+    async def select_format(
+        self, select: discord.ui.Select, interaction: discord.Interaction
+    ):
+        option = select.values[0]
+
+        modal = TOURNAMENT_FORMAT_MAPPING[option](self.ctx, self.data)
+
+        await interaction.response.send_modal(modal)
+
+
+class DateSelector(discord.ui.Select):
+    def __init__(self, placeholder, options):
+        super().__init__(
+            placeholder=str(placeholder),
+            options=[
+                discord.SelectOption(label=str(o), value=str(i))
+                for i, o in enumerate(options)
+            ],
+            row=0,
+        )
+
+    async def callback(self, interaction):
+        choice = int(self.values[0])
+
+        self.view.date[self.view.date_index] = choice
+
+        await interaction.response.defer()
+
+
+class TournamentTimePicker(BaseView):
+    def __init__(self, ctx: Context, data: dict) -> None:
+        super().__init__(ctx)
+
+        self.data = data
+
+        self.date = [None, None, None, None]  # month, day, hour, minute
+        self.date_index = 0
+
+        self.select = None
+
+        self.add_select()
+
+    def add_select(self):
+        if self.select is not None:
+            self.remove_item(self.select)
+
+        self.select = DateSelector(*self.values)
+        self.add_item(self.select)
+
+    @property
+    def values(self):
+        if self.date_index == 0:
+            return "Select a month", MONTHS
+
+        if self.date_index == 1:
+            return "Select a day", range(1, 32, 2)
+
+        if self.date_index == 2:
+            return "Select an hour", range(1, 25)
+
+        if self.date_index == 3:
+            return "Select a minute", range(0, 46, 15)
+
+    def get_timestamp(self):
+        now = datetime.utcnow()
+
+        return datetime(
+            year=now.year,
+            month=self.date[0],
+            day=self.date[1],
+            hour=self.date[2],
+            minute=self.date[3],
+            tzinfo=timezone.utc,
+        )
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.grey, row=3)
+    async def next(self, button, interaction):
+        if self.date[self.date_index] is None:
+            await interaction.response.send_message(self.values[0], ephemeral=True)
+            return
+
+        if self.date_index == len(self.date) - 1:
+            await self.next_callback(interaction)
+            return
+
+        self.date_index += 1
+
+        self.add_select()
+
+        await interaction.response.edit_message(view=self)
+
+    async def next_callback(self, interaction):
+        ...
+
+
+class StartTimePicker(TournamentTimePicker):
+    async def next_callback(self, interaction: discord.Interaction):
+        self.data["start_time"] = self.get_timestamp()
+
+        view = EndTimePicker(self.ctx, self.data)
+
+        await interaction.response.send_message("Select the end time", view=view)
+
+
+class EndTimePicker(TournamentTimePicker):
+    async def next_callback(self, interaction: discord.Interaction):
+        self.data["end_time"] = self.get_timestamp()
+
+        view = TournamentFormatPicker(self.ctx, self.data)
+
+        await interaction.response.send_message(view=view)
+
+
+class CreateTournamentModal(discord.ui.Modal):
+    def __init__(self, ctx: Context) -> None:
+        super().__init__(
+            discord.ui.InputText(
+                label="Name",
+                placeholder="Enter the name of the tournament",
+                style=discord.InputTextStyle.short,
+            ),
+            discord.ui.InputText(
+                label="Description",
+                placeholder="Enter the tournament description",
+                style=discord.InputTextStyle.long,
+            ),
+            discord.ui.InputText(
+                label="Link",
+                placeholder="Enter the tournament link",
+                style=discord.InputTextStyle.short,
+            ),
+            discord.ui.InputText(
+                label="Thumbnail",
+                placeholder="Enter a thumbnail URL",
+                style=discord.InputTextStyle.short,
+            ),
+            discord.ui.InputText(
+                label="Prizes",
+                placeholder="Enter the tournament prizes",
+                style=discord.InputTextStyle.long,
+            ),
+            title="Basic Tournament Info",
+        )
+
+        self.ctx = ctx
+
+    async def callback(self, interaction: discord.Interaction):
+        name, desc, link, thumbnail, prizes = self.children
+
+        data = {
+            "name": name.value,
+            "description": desc.value,
+            "link": link.value,
+            "icon": thumbnail.value,
+            "prizes": prizes.value.split("\n"),
+        }
+
+        # Prompting to selecting start and end time
+        view = StartTimePicker(self.ctx, data)
+
+        await interaction.response.send_message("Select a start time", view=view)
 
 
 class Moderator(commands.Cog):
@@ -278,6 +577,7 @@ class Moderator(commands.Cog):
 
     @mod_command
     async def status(self, ctx: Context, *, text: str):
+        """Change the bot's status"""
         await self.bot.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching, name=f" {text}"
@@ -290,7 +590,15 @@ class Moderator(commands.Cog):
 
     @mod_command
     async def message(self, ctx: Context):
-        modal = MessageModal(ctx)
+        """Send a message to users"""
+        modal = SendMessageModal(ctx)
+
+        await ctx.send_modal(modal)
+
+    @mod_command
+    async def create(self, ctx: Context):
+        """Create a tournament"""
+        modal = CreateTournamentModal(ctx)
 
         await ctx.send_modal(modal)
 

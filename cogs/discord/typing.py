@@ -233,7 +233,7 @@ class TournamentView(ScrollView):
 
     @property
     def total(self):
-        return len(self.t.rankings)
+        return self.t.ranking_size
 
     @property
     def t(self):
@@ -277,15 +277,15 @@ class TournamentView(ScrollView):
         # Grouping and sorting the tournaments by end time
         return sorted(sum(tournaments, []), key=lambda t: t.end_time, reverse=True)
 
-    def get_placing(self, user_id: int):
+    def get_placing(self, user_id: int, rankings: dict[str, float]):
         user_id = str(user_id)
 
-        if user_id not in self.t.rankings:
+        if user_id not in rankings:
             return None
 
         # Sorting the tournament data
         sorted_lb = dict(
-            sorted(self.t.rankings.items(), key=lambda item: item[1], reverse=True)
+            sorted(rankings.items(), key=lambda item: item[1], reverse=True)
         )
 
         placing_index = list(sorted_lb.keys()).index(user_id)
@@ -294,7 +294,17 @@ class TournamentView(ScrollView):
 
         return placing_index, score
 
-    async def do_tournament_test(self, _interaction):
+    async def do_normal_test(self, interaction: discord.Interaction):
+        length = 50
+
+        quote = await Typing.handle_dictionary_input(self.ctx, length)
+
+        await interaction.response.defer()
+
+        await Typing.do_typing_test(self.ctx, True, quote, length)
+        invoke_completion(self.ctx)
+
+    async def do_integrated_tournament_test(self, _interaction):
         async def _test_callback(interaction):
             # Refetching the tournament data
             if self.fetched is False:
@@ -332,12 +342,10 @@ class TournamentView(ScrollView):
 
             is_dict = True
 
+            await interaction.response.defer()
+
             result = await Typing.personal_test_input(
-                user,
-                self.ctx,
-                int(is_dict),
-                quote_info,
-                interaction.response.send_message,
+                user, self.ctx, int(is_dict), quote_info
             )
 
             if result is None:
@@ -423,7 +431,7 @@ class TournamentView(ScrollView):
 
                     # Estimating the new placing of the user in the tournament
 
-                    placing = self.get_placing(self.ctx.author.id)
+                    placing = self.get_placing(self.ctx.author.id, self.t.rankings)
 
                     old_value = 0 if placing is None else placing[1]
 
@@ -474,7 +482,10 @@ class TournamentView(ScrollView):
 
         await interaction.message.edit(view=self)
 
-        await self.do_tournament_test(interaction)
+        if self.t.normal_test:
+            await self.do_normal_test(interaction)
+        else:
+            await self.do_integrated_tournament_test(interaction)
 
     @discord.ui.button(label="Next Tournament", style=discord.ButtonStyle.primary)
     async def next_tournament(self, button, interaction):
@@ -521,6 +532,7 @@ class TournamentView(ScrollView):
 
     async def create_page(self):
         t_type = self.get_tournament_type(self.t)
+        rankings = await self.t.get_rankings(self.ctx.bot)
 
         if t_type == 0:
             t_time = f"Ends in <t:{self.t.unix_end}:R> (<t:{self.t.unix_end}:f>)"
@@ -529,7 +541,7 @@ class TournamentView(ScrollView):
         else:
             t_time = f"Ended <t:{self.t.unix_end}:R> (<t:{self.t.unix_end}:f>)"
 
-        if self.t.rankings and self.max_page > 1:
+        if rankings and self.max_page > 1:
             page_display = f"(Page {self.page + 1} - {self.max_page})"
         else:
             page_display = ""
@@ -558,10 +570,10 @@ class TournamentView(ScrollView):
         )
 
         # Displaying the rankings of the tournament
-        if self.t.rankings:
+        if rankings:
 
             if self.lb_data is None:
-                data = await get_users_from_lb(self.ctx.bot, self.t.rankings)
+                data = await get_users_from_lb(self.ctx.bot, rankings)
 
                 self.lb_data = sorted(data, key=lambda x: x[1], reverse=True)
 
@@ -584,14 +596,18 @@ class TournamentView(ScrollView):
                     inline=False,
                 )
 
-            placing = self.get_placing(self.ctx.author.id)
+            placing = self.get_placing(self.ctx.author.id, rankings)
 
             if placing is not None:
                 placing_index, score = placing
+                placing_index += 1
 
-                display = get_lb_display(
-                    placing_index + 1, self.t.unit, self.user, score
-                )
+            else:
+                placing_index = "N/A"
+                score = await self.t.get_score(self.ctx.bot, self.ctx.author.id)
+
+            if score:
+                display = get_lb_display(placing_index, self.t.unit, self.user, score)
 
                 embed.add_field(
                     name=f"{LINE_SPACE * 13}\n{display}",
@@ -915,9 +931,9 @@ class TypingTestResultView(TestResultView):
 
         test_info = (quote, self.wrap_width)
 
-        result = await Typing.personal_test_input(
-            self.user, self.ctx, 2, test_info, interaction.response.send_message
-        )
+        await interaction.response.defer()
+
+        result = await Typing.personal_test_input(self.user, self.ctx, 2, test_info)
 
         if result is None:
             return

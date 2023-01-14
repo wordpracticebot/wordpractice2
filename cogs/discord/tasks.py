@@ -58,6 +58,7 @@ class Tasks(commands.Cog):
             self.update_lbs,
             self.update_percentiles,
             self.clear_cooldowns,
+            self.remove_expired_subscriptions,
         ]
 
         if TESTING is False and DBL_TOKEN is not None:
@@ -75,6 +76,44 @@ class Tasks(commands.Cog):
         for task in self.get_tasks():
             if task.is_running() is False:
                 task.start()
+
+    @tasks.loop(hours=12)
+    async def remove_expired_subscriptions(self):
+        await self.bot.wait_until_ready()
+
+        now = int(time.time())
+
+        cursor = self.bot.mongo.db.subscriptions.find(
+            {"expired": False, "expire_time": {"$lt": now}}
+        )
+
+        expired_subs = [u async for u in cursor]
+        expired_sub_ids = [u["_id"] for u in expired_subs]
+
+        if not expired_sub_ids:
+            return
+
+        # Setting subscriptions to expired
+        await self.bot.mongo.db.subscriptions.update_many(
+            {"_id": {"$in": expired_sub_ids}},
+            {"$set": {"expired": True}},
+        )
+
+        active_subs = [
+            int(user_id) for u in expired_subs if (user_id := u["activated_by"])
+        ]
+
+        if not active_subs:
+            return
+
+        # Removing premium from users who actived it
+        await self.bot.mongo.db.users.update_many(
+            {"_id": {"$in": active_subs}},
+            {"$set": {"premium": None}},
+        )
+
+        # Removing users from the cache
+        await self.bot.redis.hdel("user", *active_subs)
 
     # Updates the typing average percentile
     # Is updated infrequently because it provides an estimate

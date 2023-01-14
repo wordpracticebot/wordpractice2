@@ -12,6 +12,7 @@ from config import SUPPORT_GUILD_ID
 from data.constants import (
     INFO_VIDEO,
     PREMIUM_LINK,
+    PREMIUM_PLUS_SAVE_AMT,
     PRIVACY_POLICY_LINK,
     RULES_LINK,
     SUPPORT_SERVER_INVITE,
@@ -55,12 +56,12 @@ CREDITS = [
 ]
 
 PREMIUM_PERKS = [
-    "Exclusive ribbon on your profile",
-    "Save and view up to 200 tests",
-    "Custom test pacers",
+    "Premium icon on your profile",
+    f"Save and view up to {PREMIUM_PLUS_SAVE_AMT} tests",
     "Create custom typing test themes",
-    "Export your test scores as CSV and JSON files",
+    "Export test scores as CSV or JSON files",
     "Reduced command cooldowns",
+    "Heat map of typing accuracy",
     "Role on our Discord server",
 ]
 
@@ -301,33 +302,33 @@ class Misc(commands.Cog):
 
         await ctx.respond("Here you go!", view=view)
 
-    # @bridge.bridge_command()
-    # async def premium(self, ctx: Context):
-    #     """Become a premium member"""
-    #     embed = ctx.custom_embed(
-    #         title="Premium Membership",
-    #         description=(
-    #             "Upgrade to access exclusive features and support\n"
-    #             "the continued development of wordPractice!"
-    #         ),
-    #         color=0xF1C40F,
-    #         add_footer=False,
-    #     )
+    @bridge.bridge_command()
+    async def premium(self, ctx: Context):
+        """Become a premium member"""
+        embed = ctx.custom_embed(
+            title="Premium Membership",
+            description=(
+                "Upgrade to access exclusive features and support\n"
+                "the continued development of wordPractice!"
+            ),
+            color=0xF1C40F,
+            add_footer=False,
+        )
 
-    #     embed.add_field(
-    #         name="Features",
-    #         value=icons.green_dot + f"\n {icons.green_dot}".join(PREMIUM_PERKS),
-    #     )
+        embed.add_field(
+            name="Features",
+            value=icons.green_dot + f"\n {icons.green_dot}".join(PREMIUM_PERKS),
+        )
 
-    #     embed.set_footer(
-    #         text="Perks only apply to monthly subscriptions, not one-time donations."
-    #     )
+        embed.set_footer(
+            text="Perks only apply to monthly subscriptions, not one-time donations."
+        )
 
-    #     embed.set_thumbnail(url="https://i.imgur.com/eeNvUUI.png")
+        embed.set_thumbnail(url="https://i.imgur.com/eeNvUUI.png")
 
-    #     view = create_link_view({"Upgrade": PREMIUM_LINK})
+        view = create_link_view({"Upgrade": PREMIUM_LINK})
 
-    #     await ctx.respond(embed=embed, view=view)
+        await ctx.respond(embed=embed, view=view)
 
     @bridge.bridge_command()
     async def support(self, ctx: Context):

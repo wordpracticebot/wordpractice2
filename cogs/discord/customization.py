@@ -18,7 +18,7 @@ from helpers.checks import cooldown, premium_command, user_check
 from helpers.converters import HexOrRGB, colour_option, rgb_to_hex, user_option
 from helpers.errors import ImproperArgument
 from helpers.image import get_base_img, save_discord_static_img
-from helpers.ui import BaseView, ScrollView
+from helpers.ui import BaseView, ScrollView, create_link_view
 from helpers.user import get_pacer_display, get_theme_display
 from helpers.utils import copy_doc, invoke_completion, invoke_slash_command
 from static import themes
@@ -376,6 +376,7 @@ class Customization(commands.Cog):
         ),
     ):
         """Set your typing test pacer to a custom speed"""
+
         if speed not in range(MIN_PACER_SPEED, 301):
             raise commands.BadArgument(
                 f"Pacer speed must be between {MIN_PACER_SPEED} and 300"

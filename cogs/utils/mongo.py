@@ -30,7 +30,10 @@ from data.constants import (
     AUTO_MODERATOR_NAME,
     CHALLENGE_AMT,
     DEFAULT_THEME,
+    LIGHT_SAVE_AMT,
     PREMIUM_LAUNCHED,
+    PREMIUM_PLUS_SAVE_AMT,
+    PREMIUM_SAVE_AMT,
     SCORE_SAVE_AMT,
     TEST_ZONES,
     VOTING_SITES,
@@ -105,6 +108,65 @@ class Score(EmbeddedDocument):
         return f"{test_prefix} {test_suffix}"
 
 
+class PremiumMembership(EmbeddedDocument):
+    expire_date = DateTimeField(required=True)
+    name = StringField(required=True)
+
+    @property
+    def is_expired(self):
+        return self.expire_date < datetime.now()
+
+    @property
+    def int_id(self):
+        return (
+            1
+            if self.name == "Light"
+            else 2
+            if self.name == "Premium"
+            else 3
+            if self.name == "Premium+"
+            else 0
+        )
+
+    @property
+    def save_amt(self):
+        if self.int_id == 1:
+            return LIGHT_SAVE_AMT
+
+        if self.int_id == 2:
+            return PREMIUM_SAVE_AMT
+
+        if self.int_id == 3:
+            return PREMIUM_PLUS_SAVE_AMT
+
+        return SCORE_SAVE_AMT
+
+    @property
+    def icon(self):
+        if self.int_id == 1:
+            return icons.light_sub
+
+        if self.int_id == 2:
+            return icons.premium_sub
+
+        if self.int_id == 3:
+            return icons.premium_plus_sub
+
+        return ""
+
+    @property
+    def export_scores(self):
+        return self.int_id in [2, 3]
+
+    @property
+    def reduced_cooldowns(self):
+        return self.int_id in [2, 3]
+
+    @property
+    def view_heat_map(self):
+        return self.int_id == 3
+
+
 class UserBase(Document):
     class Meta:
         abstract = True
@@ -115,7 +177,7 @@ class UserBase(Document):
     discriminator = IntegerField(required=True)
     avatar = StringField(default=None)
     created_at = DateTimeField(required=True)
-    premium = DateTimeField(default=None)
+    premium = EmbeddedField(PremiumMembership, default=None)
 
     # list of commands that the user has run before (for context tutorials)
     # includes subcommands from groups
@@ -208,7 +270,10 @@ class User(UserBase):
 
     @property
     def display_name(self):
-        return self.username + (f" {self.status_emoji}" if self.status else "")
+        icon_display = f"{self.icon} " if self.icon else ""
+        status_display = f" {self.status_emoji}" if self.status else ""
+
+        return f"{icon_display}{self.username}{status_display}"
 
     @property
     def words_24h(self):
@@ -221,12 +286,29 @@ class User(UserBase):
     @property
     def is_premium(self):
         if PREMIUM_LAUNCHED is False:
+            return False
+
+        if self.premium is not None and not self.premium.is_expired:
             return True
 
-        if self.premium is not None:
-            return True
+        return False
 
-        # TODO: check if the membership has expired
+    @property
+    def save_amt(self):
+        return self.premium.save_amt if self.is_premium else SCORE_SAVE_AMT
+
+    @property
+    def icon(self):
+        return self.premium.icon if self.is_premium else ""
+
+    @property
+    def export_scores(self):
+        return self.premium.export_scores if self.is_premium else False
+
+    @property
+    def view_heat_map(self):
+        if self.is_premium:
+            return self.premium.view_heat_map
 
         return False
 
@@ -262,8 +344,8 @@ class User(UserBase):
         self.add_24h_stats(xp=xp)
 
     def add_score(self, score: Score):
-        if len(self.scores) >= SCORE_SAVE_AMT:
-            del self.scores[: len(self.scores) - SCORE_SAVE_AMT + 1]
+        if len(self.scores) >= self.save_amt:
+            del self.scores[: len(self.scores) - self.save_amt + 1]
 
         self.scores.append(score)
 
@@ -300,13 +382,23 @@ class Tournament(Document):
 
     unit = StringField(required=True)
 
-    rankings = DictField(IntegerField(), IntegerField(), default={})
-
     prizes = ListField(StringField, default=[])
+
+    normal_test = BooleanField(required=True)
+
+    async def get_rankings(self, bot: WordPractice):
+        ...
+
+    async def get_score(self, bot: WordPractice, user_id: int):
+        ...
+
+    @property
+    def ranking_size(self) -> int:
+        ...
 
     @property
     def rules(self):
-        return ""
+        ...
 
     @property
     def unix_start(self):
@@ -321,11 +413,12 @@ class Tournament(Document):
 
     def get_ranking_prefix(self, placing: int, value: int) -> str:
         # 1 is the highest placing
-        return
+        ...
 
 
 class QualificationTournament(Tournament):
-    unit = "wpm"
+    unit = StringField(default="wpm")
+    normal_test = BooleanField(default=False)
 
     # Amount of users allowed to qualify for the tournament
     amount = IntegerField(required=True)
@@ -334,6 +427,18 @@ class QualificationTournament(Tournament):
 
     host_server = StringField(required=True)
     host_server_invite = StringField(required=True)
+
+    rankings = DictField(IntegerField(), IntegerField(), default={})
+
+    async def get_rankings(self, bot: WordPractice):
+        return self.rankings
+
+    async def get_score(self, bot: WordPractice, user_id: int):
+        return self.rankings.get(str(user_id), None)
+
+    @property
+    def ranking_size(self) -> int:
+        return len(self.rankings)
 
     @property
     def unix_bracket_start(self):
@@ -355,6 +460,55 @@ class QualificationTournament(Tournament):
         return icons.red_dot
 
 
+class ActivityTournament(Tournament):
+    unit = StringField(default="xp")
+    normal_test = BooleanField(default=True)
+
+    category = IntegerField(required=True)
+    stat = IntegerField(required=True)
+
+    winners = IntegerField(required=True)
+
+    lb_size = IntegerField(required=True)
+
+    initial_rankings = DictField(StringField(), IntegerField(), default={})
+    final_rankings = DictField(StringField(), IntegerField(), default={})
+
+    async def get_rankings(self, bot: WordPractice):
+        if self.final_rankings:
+            lb = self.final_rankings
+        else:
+            lb = (
+                await bot.lbs[self.category]
+                .stats[self.stat]
+                .get_lb_data(end=self.lb_size)
+            )
+
+        return {key: lb[key] - self.initial_rankings.get(str(key), 0) for key in lb}
+
+    async def get_score(self, bot: WordPractice, user_id: int):
+        score = await bot.redis.zscore(f"lb.{self.category}.{self.stat}", user_id)
+
+        if not score:
+            return None
+
+        return score - self.initial_rankings.get(str(user_id), 0)
+
+    @property
+    def ranking_size(self) -> int:
+        return self.lb_size
+
+    def get_ranking_prefix(self, placing: int, _) -> str:
+        if placing <= self.winners:
+            return icons.green_dot
+
+        return icons.red_dot
+
+    @property
+    def rules(self):
+        return "Earn as much XP as you can by completing typing tests."
+
+
 class Mongo(commands.Cog):
     def __init__(self, bot: WordPractice):
         self.bot = bot
@@ -367,11 +521,13 @@ class Mongo(commands.Cog):
         for n in (
             "Infraction",
             "Score",
+            "PremiumMembership",
             "UserBase",
             "User",
             "UserBackup",
             "Tournament",
             "QualificationTournament",
+            "ActivityTournament",
         ):
             setattr(self, n, instance.register(g[n]))
             getattr(self, n).bot = bot

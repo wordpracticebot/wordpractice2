@@ -28,13 +28,21 @@ default = {
         "colours": ["#1d0a57", "#9496ff"],
         "icon": "<:frost:924132450622373938>"
     },
-    "Red Samurai": {
-        "colours": ["#4d0505", "#f5f17a"],
-        "icon": "<:red_samurai:924132450911793162>"
-    },
     "Sakura": {
         "colours": ["#380808", "#f0aae9"],
         "icon": "<:sakura:924132451071197214>"
+    },
+    "Disturbed": {
+        "colours": ["#000000", "#ff4444"],
+        "icon": "<:disturbed:1062139361392607242>"
+    },
+    "Pablo": {
+        "colours": ["#083045", "#eed369"],
+        "icon": "<:pablo:1062139359832318063>"
+    },
+    "Red Samurai": {
+        "colours": ["#4d0505", "#f5f17a"],
+        "icon": "<:red_samurai:924132450911793162>"
     },
     "Discord Dark Theme": {
         "colours": ["#2f3136", "#ffffff"],
@@ -52,6 +60,10 @@ default = {
         "colours": ["#fefefd", "#968aad"],
         "icon": "<:snowy_day:924132451276705822>"
     },
+    "Blitzen": {
+        "colours": ["#e2d1f9", "#317774"],
+        "icon": "<:blitzen:1062139358142009365>"
+    },
     "Mewni Sunset": {
         "colours": ["#1a0f16", "#9686b4"],
         "icon": "<:mewni_sunset:924132450639179817>"
@@ -63,5 +75,5 @@ default = {
     "Light of Egress": {
         "colours": ["#2f2437", "#c7a1c0"],
         "icon": "<:light_of_egress:924132450693685268>"
-    },
+    }
 }

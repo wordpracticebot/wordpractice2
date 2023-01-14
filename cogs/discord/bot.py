@@ -29,8 +29,7 @@ from data.constants import (
     LB_DISPLAY_AMT,
     LB_LENGTH,
     PREMIUM_LINK,
-    REGULAR_SCORE_LIMIT,
-    SCORE_SAVE_AMT,
+    PREMIUM_PLUS_SAVE_AMT,
 )
 from helpers.checks import cooldown, user_check
 from helpers.converters import user_option
@@ -79,14 +78,24 @@ async def _get_lb_placing(lb_data, c, user_id):
 def get_graph_link(*, user, amt: int, dimensions: tuple):
     values = [[], [], []]
 
-    round_amt = 2 if amt <= 25 else 1 if amt <= 50 else 0
+    scores = user.scores[-amt:]
+    total = len(scores)
+
+    round_amt = 2 if total <= 25 else 1 if total <= 50 else 0
+    smooth_amt = (total // 100) + 1
 
     round_num = lambda n: int(b) if (b := round(n, round_amt)).is_integer() else b
 
-    for s in user.scores[-amt:]:
-        values[0].append(round_num(s.wpm))
-        values[1].append(round_num(s.raw))
-        values[2].append(round_num(s.acc))
+    for i in range(0, len(scores), smooth_amt):
+        chunk = scores[i : i + smooth_amt]
+
+        wpm, raw, acc = zip(*[(s.wpm, s.raw, s.acc) for s in chunk])
+
+        values[0].append(round_num(sum(wpm) / smooth_amt))
+        values[1].append(round_num(sum(raw) / smooth_amt))
+        values[2].append(round_num(sum(acc) / smooth_amt))
+
+    # Applying Smoothing
 
     labels = ["Wpm", "Raw Wpm", "Accuracy"]
 
@@ -97,6 +106,7 @@ def get_graph_link(*, user, amt: int, dimensions: tuple):
         "until": int(time.time() + GRAPH_EXPIRE_TIME),
         "y_values": y_values,
         "colours": user.theme + ["#ffffff"],
+        "amount": len(scores),
     }
 
     # Encrypting the data
@@ -275,19 +285,19 @@ class SeasonView(ViewFromDict):
 
 
 class GraphButton(DictButton):
-    def __init__(self, is_premium, **kwargs):
-        self.is_premium = is_premium
+    def __init__(self, save_amt, **kwargs):
+        self.save_amt = save_amt
 
         super().__init__(**kwargs)
 
     def toggle_eligible(self, value):
-        if self.is_premium is False and value >= REGULAR_SCORE_LIMIT:
+        if self.is_premium is False and value >= self.save_amt:
             self.disabled = True
 
 
 class GraphView(ViewFromDict):
     def __init__(self, ctx: Context, user):
-        test_amts = [10, 25, 50, 100, 200]
+        test_amts = [10, 25, 50, 100, 250]
 
         super().__init__(ctx, {f"{i} Tests": i for i in test_amts})
 
@@ -296,7 +306,7 @@ class GraphView(ViewFromDict):
         self.link_cache = {}  # amt: link
 
     def button(self, **kwargs):
-        return GraphButton(self.user.is_premium, **kwargs)
+        return GraphButton(self.user.save_amt, **kwargs)
 
     async def create_page(self):
         amt = self.the_dict[self.page]
@@ -339,7 +349,7 @@ class GraphView(ViewFromDict):
 
         if self.user.is_premium is False:
             embed.set_footer(
-                text=f"Premium Members can save up to {SCORE_SAVE_AMT} tests"
+                text=f"Premium Members can save up to {PREMIUM_PLUS_SAVE_AMT} tests"
             )
 
         embed.set_image(url=url)
@@ -356,9 +366,7 @@ class ScoreView(ScrollView):
         super().__init__(ctx, iter=iter, per_page=3)
 
     def get_user_scores(self):
-        limit = SCORE_SAVE_AMT if self.user.is_premium else REGULAR_SCORE_LIMIT
-
-        return self.user.scores[::-1][:limit]
+        return self.user.scores[::-1][: self.user.save_amt]
 
     def get_formatted_data(self):
         data_labels = {
@@ -420,7 +428,7 @@ class ScoreView(ScrollView):
             title=f"{self.user.display_name} | Recent Scores ({self.start_page + 1} - {self.end_page} of {self.total})",
             description=" "
             if self.user.is_premium
-            else f"**[Premium Members]({PREMIUM_LINK})** can download and save up to {SCORE_SAVE_AMT} test scores!",
+            else f"**[Premium Members]({PREMIUM_LINK})** can download and save up to {PREMIUM_PLUS_SAVE_AMT} test scores!",
         )
 
         for i, s in enumerate(self.items):
