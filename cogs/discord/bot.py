@@ -291,7 +291,7 @@ class GraphButton(DictButton):
         super().__init__(**kwargs)
 
     def toggle_eligible(self, value):
-        if value >= self.save_amt:
+        if value > self.save_amt:
             self.disabled = True
 
 
@@ -312,7 +312,8 @@ class GraphView(ViewFromDict):
         amt = self.the_dict[self.page]
 
         embed = self.ctx.embed(
-            title=f"Last {amt} Scores", add_footer=self.user.is_premium
+            title=f"Last {amt} Scores",
+            add_footer=self.user.is_premium,
         )
 
         wpm, raw, acc, cw, tw, scores = get_typing_average(self.user, amt)

@@ -394,7 +394,7 @@ class ViewFromDict(PageView):
             else:
                 btn.toggle_regular()
 
-            btn.toggle_eligible(self.the_dict[self.order[0]])
+            btn.toggle_eligible(self.the_dict[self.order[i]])
 
             self.add_item(btn)
 

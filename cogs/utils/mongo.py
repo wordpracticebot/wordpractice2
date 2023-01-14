@@ -286,7 +286,7 @@ class User(UserBase):
     @property
     def is_premium(self):
         if PREMIUM_LAUNCHED is False:
-            return False
+            return True
 
         if self.premium is not None and not self.premium.is_expired:
             return True
