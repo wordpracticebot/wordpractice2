@@ -313,7 +313,10 @@ class GraphView(ViewFromDict):
 
         embed = self.ctx.embed(
             title=f"Last {amt} Scores",
-            add_footer=self.user.is_premium,
+            description=f"**[Premium Members]({PREMIUM_LINK})** can save up to {PREMIUM_PLUS_SAVE_AMT} tests"
+            if self.user.is_premium is False
+            else None,
+            add_footer=False,
         )
 
         wpm, raw, acc, cw, tw, scores = get_typing_average(self.user, amt)
@@ -347,11 +350,6 @@ class GraphView(ViewFromDict):
             )
 
             self.link_cache[total] = url
-
-        if self.user.is_premium is False:
-            embed.set_footer(
-                text=f"Premium Members can save up to {PREMIUM_PLUS_SAVE_AMT} tests"
-            )
 
         embed.set_image(url=url)
 
