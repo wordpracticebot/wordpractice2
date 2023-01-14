@@ -79,7 +79,7 @@ VOTING_SITES = {
 }
 
 # Premium
-PREMIUM_LAUNCHED = False
+PREMIUM_LAUNCHED = True
 PREMIUM_LINK = "https://wordpractice.principle.sh/#/premium"
 
 # Score saving
