@@ -335,39 +335,40 @@ class TournamentTimePicker(BaseView):
         if self.select is not None:
             self.remove_item(self.select)
 
-        self.select = DateSelector(*self.values)
+        self.select = DateSelector(*self.value)
         self.add_item(self.select)
 
     @property
+    def value(self):
+        return self.values[self.date_index]
+
+    @property
     def values(self):
-        if self.date_index == 0:
-            return "Select a month", MONTHS
-
-        if self.date_index == 1:
-            return "Select a day", range(1, 32, 2)
-
-        if self.date_index == 2:
-            return "Select an hour", range(1, 25)
-
-        if self.date_index == 3:
-            return "Select a minute", range(0, 46, 15)
+        return [
+            ["Select a month", MONTHS],
+            ["Select a day", range(1, 32, 2)],
+            ["Select an hour", range(1, 24)],
+            ["Select a minute", range(0, 46, 15)],
+        ]
 
     def get_timestamp(self):
         now = datetime.utcnow()
 
+        _, values = zip(*self.values)
+
         return datetime(
             year=now.year,
-            month=self.date[0],
-            day=self.date[1],
-            hour=self.date[2],
-            minute=self.date[3],
+            month=int(self.date[0]) + 1,
+            day=values[1][self.date[1]],
+            hour=values[2][self.date[2]],
+            minute=values[3][self.date[3]],
             tzinfo=timezone.utc,
         )
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.grey, row=3)
     async def next(self, button, interaction):
         if self.date[self.date_index] is None:
-            await interaction.response.send_message(self.values[0], ephemeral=True)
+            await interaction.response.send_message(self.value[0], ephemeral=True)
             return
 
         if self.date_index == len(self.date) - 1:
