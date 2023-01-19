@@ -553,10 +553,8 @@ class TournamentView(ScrollView):
             prizes = f"**\n\nThe winner will receive {self.t.prizes [0]}.**"
 
         else:
-            prizes = "\n\n**Prizes:**"
-
-            for i, p in enumerate(self.t.prizes):
-                prizes += f"\n{i + 1}. {p}"
+            prize_display = "\n".join(self.t.prizes)
+            prizes = f"\n\n**Prizes:**\n{prize_display}"
 
         embed = self.ctx.embed(
             title=self.t.name,
