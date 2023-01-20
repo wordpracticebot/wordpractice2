@@ -482,7 +482,10 @@ class ActivityTournament(Tournament):
 
         return dict(
             sorted(
-                [[key, lb[key] - self.initial_rankings.get(str(key), 0)] for key in lb],
+                [
+                    [str(key), lb[key] - self.initial_rankings.get(str(key), 0)]
+                    for key in lb
+                ],
                 key=lambda item: item[1],
                 reverse=True,
             )[: self.lb_size]
