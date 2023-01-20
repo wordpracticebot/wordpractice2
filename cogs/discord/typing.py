@@ -220,6 +220,7 @@ class TournamentView(ScrollView):
 
         # Caches the leaderboard data
         self.lb_data = None
+        self.raw_lb_data = None
 
         self.prev_view = None
 
@@ -324,6 +325,7 @@ class TournamentView(ScrollView):
                 self.t_data = self.sort_t_data(raw_t_data)
 
                 self.lb_data = None
+                self.raw_lb_data = None
 
             if self.prev_view is not None:
                 # Disabling the buttons if they were clicked
@@ -493,6 +495,7 @@ class TournamentView(ScrollView):
             self.t_page -= 1
             self.page = 0
             self.lb_data = None
+            self.raw_lb_data = None
 
             await self.update_all(interaction)
 
@@ -502,6 +505,7 @@ class TournamentView(ScrollView):
             self.t_page += 1
             self.page = 0
             self.lb_data = None
+            self.raw_lb_data = None
 
             await self.update_all(interaction)
 
@@ -532,7 +536,9 @@ class TournamentView(ScrollView):
 
     async def create_page(self):
         t_type = self.get_tournament_type(self.t)
-        rankings = await self.t.get_rankings(self.ctx.bot)
+
+        if self.raw_lb_data is None:
+            self.raw_lb_data = await self.t.get_rankings(self.ctx.bot)
 
         if t_type == 0:
             t_time = f"Ends in <t:{self.t.unix_end}:R> (<t:{self.t.unix_end}:f>)"
@@ -541,7 +547,7 @@ class TournamentView(ScrollView):
         else:
             t_time = f"Ended <t:{self.t.unix_end}:R> (<t:{self.t.unix_end}:f>)"
 
-        if rankings and self.max_page > 1:
+        if self.raw_lb_data and self.max_page > 1:
             page_display = f"(Page {self.page + 1} - {self.max_page})"
         else:
             page_display = ""
@@ -568,10 +574,10 @@ class TournamentView(ScrollView):
         )
 
         # Displaying the rankings of the tournament
-        if rankings:
+        if self.raw_lb_data:
 
             if self.lb_data is None:
-                data = await get_users_from_lb(self.ctx.bot, rankings)
+                data = await get_users_from_lb(self.ctx.bot, self.raw_lb_data)
 
                 self.lb_data = sorted(data, key=lambda x: x[1], reverse=True)
 
@@ -594,7 +600,7 @@ class TournamentView(ScrollView):
                     inline=False,
                 )
 
-            placing = self.get_placing(self.ctx.author.id, rankings)
+            placing = self.get_placing(self.ctx.author.id, self.raw_lb_data)
 
             if placing is not None:
                 placing_index, score = placing
@@ -2146,6 +2152,8 @@ class Typing(commands.Cog):
     @cooldown(10, 3)
     async def tournaments(self, ctx: Context):
         """Typing tournaments"""
+
+        await ctx.defer()
 
         # Fetching the tournament data
         t_data = await self.bot.mongo.fetch_all_tournaments()

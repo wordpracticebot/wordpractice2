@@ -478,13 +478,15 @@ class ActivityTournament(Tournament):
         if self.final_rankings:
             lb = self.final_rankings
         else:
-            lb = (
-                await bot.lbs[self.category]
-                .stats[self.stat]
-                .get_lb_data(end=self.lb_size)
-            )
+            lb = await bot.lbs[self.category].stats[self.stat].get_lb_data(end=-1)
 
-        return {key: lb[key] - self.initial_rankings.get(str(key), 0) for key in lb}
+        return dict(
+            sorted(
+                [[key, lb[key] - self.initial_rankings.get(str(key), 0)] for key in lb],
+                key=lambda item: item[1],
+                reverse=True,
+            )[: self.lb_size]
+        )
 
     async def get_score(self, bot: WordPractice, user_id: int):
         score = await bot.redis.zscore(f"lb.{self.category}.{self.stat}", user_id)
