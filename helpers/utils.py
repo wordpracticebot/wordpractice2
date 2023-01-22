@@ -227,7 +227,7 @@ def get_test_input_stats(u_input: list, quote: list):
                 )
 
             elif result == 4:
-                word_history.append(f"{o_quote[w_index]} _____ {o_quote[w_index + 1]}")
+                word_history.append(f"{o_quote[w_index]} \_ {o_quote[w_index + 1]}")
 
                 cc += len(u_input[u_index])
                 w_shift += 1
