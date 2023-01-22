@@ -42,7 +42,7 @@ def get_log_embed(ctx: "Context", title, additional: str, error=False, author=No
         description=(
             f"**User:** {name}\n"
             f"**User ID:** {author.id}\n"
-            f"**Server:** {guild} ({ctx.guild.id})\n"
+            f"**Server:** {guild} ({None if ctx.guild is None else ctx.guild.id})\n"
             f"{additional}\n"
             f"**Timestamp:** <t:{timestamp}:R>"
         ),
