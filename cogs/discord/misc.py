@@ -10,6 +10,7 @@ from bot import Context, WordPractice
 from challenges.achievements import categories, get_achievement_display
 from config import SUPPORT_GUILD_ID
 from data.constants import (
+    DONATION_LINK,
     PREMIUM_LINK,
     PREMIUM_PLUS_SAVE_AMT,
     PRIVACY_POLICY_LINK,
@@ -314,6 +315,8 @@ class Misc(commands.Cog):
             add_footer=False,
         )
 
+        embed.set_footer(text="Note: No perks are given for one time donations")
+
         embed.add_field(
             name="Features",
             value=icons.green_dot + f"\n {icons.green_dot}".join(PREMIUM_PERKS),
@@ -325,7 +328,9 @@ class Misc(commands.Cog):
 
         embed.set_thumbnail(url="https://i.imgur.com/eeNvUUI.png")
 
-        view = create_link_view({"Upgrade": PREMIUM_LINK})
+        view = create_link_view(
+            {"Upgrade": PREMIUM_LINK, "One Time Donation": DONATION_LINK}
+        )
 
         await ctx.respond(embed=embed, view=view)
 

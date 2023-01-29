@@ -15,7 +15,7 @@ from challenges.achievements import check_achievements, check_categories
 from challenges.daily import get_daily_challenges
 from challenges.rewards import group_rewards
 from challenges.season import check_season_rewards
-from data.constants import ACHIEVEMENTS_SHOWN, SUPPORT_SERVER_INVITE
+from data.constants import ACHIEVEMENTS_SHOWN, DONATION_LINK, SUPPORT_SERVER_INVITE
 from helpers.errors import ImproperArgument, OnGoingTest
 from helpers.image import generate_achievement_image
 from helpers.ui import BaseView, create_link_view, get_log_embed
@@ -587,7 +587,7 @@ class Events(commands.Cog):
 
         if sent_msgs is False:
             # Random chance of there being an announcement
-            chance = random.randint(0, 50)
+            chance = random.randint(0, 75)
 
             if chance == 0:
                 announcements = await self.bot.mongo.get_announcements()
@@ -620,6 +620,22 @@ class Events(commands.Cog):
                         view=view,
                         ephemeral=True,
                     )
+
+            elif chance == 4:
+                embed = ctx.custom_embed(
+                    title="Are you enjoying the bot?",
+                    description="Why not donate to support its continuous development and unlock some **exclusive perks** in the process?",
+                    color=0xF1C40F,
+                    add_footer=False,
+                )
+
+                embed.set_footer(text=f"Type {ctx.prefix}premium to view all the perks")
+
+                embed.set_thumbnail(url="https://i.imgur.com/eeNvUUI.png")
+
+                view = create_link_view({"Donate": DONATION_LINK})
+
+                await ctx.respond(embed=embed, view=view)
 
         if user.to_mongo() == new_user.to_mongo():
             return

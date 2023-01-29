@@ -16,6 +16,7 @@ from discord.ext import bridge, commands
 import cogs
 import config
 from data.constants import (
+    DONATION_LINK,
     ERROR_CLR,
     GITHUB_LINK,
     LB_DISPLAY_AMT,
@@ -239,6 +240,7 @@ class WelcomeView(BaseView):
             {
                 "Our Github": GITHUB_LINK,
                 "Community Server": SUPPORT_SERVER_INVITE,
+                "Donate": DONATION_LINK,
             }
         )
 

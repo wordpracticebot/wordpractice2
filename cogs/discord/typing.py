@@ -26,6 +26,7 @@ from data.constants import (
     CAPTCHA_STARTING_THRESHOLD,
     CAPTCHA_WPM_DEC,
     DEFAULT_WRAP,
+    DONATION_LINK,
     IMPOSSIBLE_THRESHOLD,
     MAX_CAPTCHA_ATTEMPTS,
     MAX_RACE_JOIN,
@@ -867,10 +868,17 @@ class TestResultView(BaseView):
         super().__init__(ctx)
 
         # Adding link buttons because they can't be added with a decorator
-        self.add_item(discord.ui.Button(label="Join Server", url=SUPPORT_SERVER_INVITE))
         self.add_item(
             discord.ui.Button(label="Invite Bot", url=ctx.bot.create_invite_link())
         )
+
+        # 1/5 chance of showing donation link
+        if random.randint(0, 5) == 0:
+            self.add_item(discord.ui.Button(label="Donate", url=DONATION_LINK))
+        else:
+            self.add_item(
+                discord.ui.Button(label="Join Server", url=SUPPORT_SERVER_INVITE)
+            )
 
         # Settings of the test completed
         self.length = length
@@ -1322,7 +1330,8 @@ class RaceJoinView(BaseView):
         view = create_link_view(
             {
                 "Invite Bot": self.ctx.bot.create_invite_link(),
-                "Community Server": SUPPORT_SERVER_INVITE,
+                "Join Server": SUPPORT_SERVER_INVITE,
+                "Donate": DONATION_LINK,
             }
         )
 

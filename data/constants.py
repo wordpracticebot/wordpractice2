@@ -81,6 +81,8 @@ VOTING_SITES = {
 PREMIUM_LAUNCHED = True
 PREMIUM_LINK = "https://wordpractice.principle.sh/#/premium"
 
+DONATION_LINK = "https://ko-fi.com/wordpractice"
+
 # Score saving
 SCORE_SAVE_AMT = 200
 LIGHT_SAVE_AMT = 500
