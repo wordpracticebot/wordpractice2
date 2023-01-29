@@ -547,7 +547,8 @@ class WordPractice(bridge.AutoShardedBot):
     async def get_application_context(self, interaction, cls=CustomAppContext):
         ctx = await super().get_application_context(interaction, cls)
 
-        await ctx.add_initial_stats(interaction.user)
+        if ctx.initial_user is None:
+            await ctx.add_initial_stats(interaction.user)
 
         return ctx
 
@@ -560,7 +561,8 @@ class WordPractice(bridge.AutoShardedBot):
         if ctx.command is None:
             return ctx
 
-        await ctx.add_initial_stats(message.author)
+        if ctx.initial_user is None:
+            await ctx.add_initial_stats(message.author)
 
         return ctx
 

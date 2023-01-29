@@ -2037,6 +2037,11 @@ class Typing(commands.Cog):
             embed = ctx.embed(
                 title=f":trophy: {user.display_name} | New High Score",
                 description=description,
+                add_footer=False,
+            )
+
+            embed.set_footer(
+                text="Test word zones are based on the number of correct words you type"
             )
 
             await send(embed=embed)

@@ -348,6 +348,8 @@ class Events(commands.Cog):
 
         user = await self.bot.mongo.fetch_user(ctx.author, create=True)
 
+        await self.bot.redis.hdel("user", user.id)
+
         new_user = copy.deepcopy(user)
 
         now = datetime.utcnow()

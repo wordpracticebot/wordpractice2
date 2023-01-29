@@ -205,7 +205,7 @@ class Tasks(commands.Cog):
 
         await self.bot.redis.hdel("user", *a.keys())
 
-    @tasks.loop(hours=3)
+    @tasks.loop(hours=2)
     async def update_lbs(self):
         await self.bot.wait_until_ready()
 
