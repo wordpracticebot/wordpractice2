@@ -10,7 +10,6 @@ from bot import Context, WordPractice
 from challenges.achievements import categories, get_achievement_display
 from config import SUPPORT_GUILD_ID
 from data.constants import (
-    INFO_VIDEO,
     PREMIUM_LINK,
     PREMIUM_PLUS_SAVE_AMT,
     PRIVACY_POLICY_LINK,
@@ -119,7 +118,7 @@ class HelpView(BaseView):
                 name="What is wordPractice?",
                 value=(
                     "I'm the most feature dense typing test Discord Bot. I allow\n"
-                    f"you to practice your typing skills while having fun!\n[Informational Video]({INFO_VIDEO})"
+                    "you to practice your typing skills while having fun!"
                 ),
                 inline=False,
             )
@@ -149,6 +148,7 @@ class HelpView(BaseView):
 
         # Displaying all the commands
         for cmd in cmds:
+            print(cmd.name)
             cmd_name = format_command(self.ctx, cmd)
 
             embed.add_field(

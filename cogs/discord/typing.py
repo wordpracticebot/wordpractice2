@@ -566,11 +566,16 @@ class TournamentView(ScrollView):
             title=self.t.name,
             description=(
                 f"{self.t.description}{prizes}\n\n"
-                f"{self.t.rules}\n\n"
+                f"**How does it work?**\n{self.t.rules}\n\n"
                 f"{t_time}\n\n"
                 f"**Rankings: {page_display}**"
             ),
             url=self.t.link,
+            add_footer=False,
+        )
+
+        embed.set_footer(
+            text="Any form of cheating will result in an immediate disqualification."
         )
 
         # Displaying the rankings of the tournament

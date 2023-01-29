@@ -311,8 +311,10 @@ class GraphView(ViewFromDict):
     async def create_page(self):
         amt = self.the_dict[self.page]
 
+        total = min(amt, len(self.user.scores))
+
         embed = self.ctx.embed(
-            title=f"Last {amt} Scores",
+            title=f"Last {total} Scores",
             description=f"**[Premium Members]({PREMIUM_LINK})** can save up to {PREMIUM_PLUS_SAVE_AMT} tests"
             if self.user.is_premium is False
             else None,

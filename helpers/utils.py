@@ -41,11 +41,11 @@ def mention_command_from_name(*, ctx: "Context", group: str = None, name: str = 
         if group is not None:
             return format_group(ctx, group, name)
 
-        return ctx.bot.get_command(name).mention
+        return ctx.bot.get_application_command(name).mention
 
     group_name = f"{group} " if group is not None else ""
 
-    return f"{ctx.prefix} {group_name}{name}"
+    return f"`{ctx.prefix}{group_name}{name}`"
 
 
 def format_command(ctx: "Context", command):

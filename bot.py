@@ -18,7 +18,6 @@ import config
 from data.constants import (
     ERROR_CLR,
     GITHUB_LINK,
-    INFO_VIDEO,
     LB_DISPLAY_AMT,
     LB_LENGTH,
     PERMISSONS,
@@ -31,7 +30,7 @@ from data.constants import (
 )
 from helpers.errors import OnGoingTest
 from helpers.ui import BaseView, CustomEmbed, create_link_view, get_log_embed
-from helpers.utils import get_hint, message_banned_user
+from helpers.utils import get_hint, mention_command_from_name, message_banned_user
 
 if TYPE_CHECKING:
     from cogs.utils.logging import Logging
@@ -166,7 +165,7 @@ def get_exts():
 
 class WelcomeView(BaseView):
     def __init__(self, ctx: "Context", callback, response):
-        super().__init__(ctx, timeout=12)
+        super().__init__(ctx, timeout=120)
 
         self.callback = callback
         self.response = response
@@ -177,18 +176,60 @@ class WelcomeView(BaseView):
 
         embed = self.ctx.default_embed(
             title="Rules Accepted",
-            description="We hope that you enjoy your time using wordPractice",
+            description="Here are some important commands to get you started!",
         )
 
+        if self.ctx.is_slash:
+            test_cmd = mention_command_from_name(
+                ctx=self.ctx, group="tt", name="dictionary"
+            )
+        else:
+            test_cmd = f"`{self.ctx.prefix}tt`"
+
+        if self.ctx.is_slash:
+            race_cmd = mention_command_from_name(
+                ctx=self.ctx, group="race", name="dictionary"
+            )
+        else:
+            race_cmd = f"`{self.ctx.prefix}race`"
+
+        help_cmd = mention_command_from_name(ctx=self.ctx, name="help")
+
+        profile_cmd = mention_command_from_name(ctx=self.ctx, name="profile")
+
+        season_cmd = mention_command_from_name(ctx=self.ctx, name="season")
+        achievements_cmd = mention_command_from_name(ctx=self.ctx, name="achievements")
+        challenges_cmd = mention_command_from_name(ctx=self.ctx, name="challenges")
+
         embed.add_field(
-            name="Confused?",
-            value="Watch our informational video below or type `/help` for a list of commands",
+            name="Start Typing",
+            value=(
+                f"{test_cmd} - start your first typing test.\n"
+                f"{race_cmd} - create a multiplayer typing test."
+            ),
             inline=False,
         )
 
         embed.add_field(
-            name="Got ask questions?",
-            value="Join our support server below!",
+            name="Core Commands",
+            value=(
+                f"{profile_cmd} - view your profile.\n"
+                f"{season_cmd} - learn about the monthly season.\n"
+                f"{achievements_cmd} - view your achievements.\n"
+                f"{challenges_cmd} - see your progress on the daily challenge."
+            ),
+            inline=False,
+        )
+
+        embed.add_field(
+            name="Confused?",
+            value=f"Type {help_cmd} for a list of commands",
+            inline=False,
+        )
+
+        embed.add_field(
+            name="Got any questions?",
+            value="Join our community server below!",
             inline=False,
         )
 
@@ -196,9 +237,8 @@ class WelcomeView(BaseView):
 
         view = create_link_view(
             {
-                "Server": SUPPORT_SERVER_INVITE,
-                "Video": INFO_VIDEO,
-                "Github": GITHUB_LINK,
+                "Our Github": GITHUB_LINK,
+                "Community Server": SUPPORT_SERVER_INVITE,
             }
         )
 
@@ -569,6 +609,8 @@ class WordPractice(bridge.AutoShardedBot):
 
             ctx = await self.get_application_context(interaction)
 
+            await self.handle_new_user(ctx)
+
             # Asking the user to accept the rules before using the bot
             if ctx.initial_user is None:
 
@@ -591,6 +633,8 @@ class WordPractice(bridge.AutoShardedBot):
 
         if ctx is None:
             return
+
+        await self.handle_new_user(ctx)
 
         if ctx.command is not None:
             # Asking the user to accept the rules before using the bot

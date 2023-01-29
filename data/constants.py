@@ -15,7 +15,6 @@ GRAPH_EXPIRE_TIME = 60 * 60 * 24
 
 PRIVACY_POLICY_LINK = "https://wordpracticebot.github.io/privacy-policy/"
 RULES_LINK = "https://wordpracticebot.github.io/privacy-policy/rules"
-INFO_VIDEO = "https://youtu.be/MkbJzndnyvs"
 GITHUB_LINK = "https://github.com/principle105"  # TODO: put the proper github link here
 
 DEFAULT_VIEW_TIMEOUT = 45  # seconds
