@@ -609,8 +609,6 @@ class WordPractice(bridge.AutoShardedBot):
 
             ctx = await self.get_application_context(interaction)
 
-            await self.handle_new_user(ctx)
-
             # Asking the user to accept the rules before using the bot
             if ctx.initial_user is None:
 
@@ -633,8 +631,6 @@ class WordPractice(bridge.AutoShardedBot):
 
         if ctx is None:
             return
-
-        await self.handle_new_user(ctx)
 
         if ctx.command is not None:
             # Asking the user to accept the rules before using the bot
