@@ -350,8 +350,12 @@ class Misc(commands.Cog):
             description=f":trophy: Total Votes: {user.votes}",
         )
 
+        weekend = datetime.utcnow().weekday() > 5
+
         embed.add_field(
-            name="Rewards per Vote", value=f"{icons.xp} 750 XP", inline=False
+            name="Rewards per Vote",
+            value=f"{icons.xp} {1500 if weekend else 750} XP{' (x2 on weekends)' if weekend else ''}",
+            inline=False,
         )
 
         # Voting achievement progress

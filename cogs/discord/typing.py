@@ -78,6 +78,25 @@ LINE_SPACE = "\N{BOX DRAWINGS LIGHT HORIZONTAL}"
 
 HIGH_SCORE_CAPTCHA_TIMEOUT = 60
 
+COMMON_OCR_MISTAKES = [
+    ["l", "I"],
+    ["o", "0"],
+    ["O", "Q"],
+    ["B", "8"],
+    ["S", "5"],
+    ["Z", "2"],
+    ["G", "6"],
+    ["U", "V"],
+    ["I", "j"],
+    ["C", "G"],
+    ["D", "O"],
+    ["D", "0"],
+    ["R", "K"],
+    ["T", "1"],
+    ["f", "t"],
+    ["g", "q"],
+]
+
 
 def _load_test_file(name):
     with open(f"./word_list/{name}", "r", encoding="utf-8-sig") as f:
@@ -128,6 +147,37 @@ async def _cheating_check(ctx: Context, user, user_data, score, word_history):
         return user_data
 
     return False
+
+
+def _check_for_line_breaks(text: str, word_list: list[str]):
+    inp_word_list = text.split("\n")
+
+    length = range(min(len(word_list), len(inp_word_list)))
+
+    total = sum(
+        len(w) == len(a) for w, a in zip(word_list[:length], inp_word_list[:length])
+    )
+
+    return total / len(word_list)
+
+
+async def _ocr_check(text: str, word_list: list[str], wrong: dict[str, str]):
+    """Detects potential usage of an OCR software"""
+
+    # Check for line breaks
+    line_breaks = _check_for_line_breaks(text, word_list)
+
+    if line_breaks >= 0.75:
+        ...
+
+    ocr_flag = 0
+
+    # Check for common OCR mistakes
+    for pair in wrong.items():
+        if list(pair) in COMMON_OCR_MISTAKES:
+            ocr_flag += 1
+
+    ...
 
 
 def _get_test_warning(score, elapsed_time, test_zone):
@@ -402,7 +452,7 @@ class TournamentView(ScrollView):
                 timestamp=datetime.utcnow(),
                 is_race=False,
                 test_type_int=int(is_dict),
-                wrong=wrong,
+                wrong=list(wrong),
             )
 
             test_zone = get_test_zone_name(score.cw)
@@ -1179,7 +1229,7 @@ class RaceJoinView(BaseView):
             timestamp=datetime.utcnow(),
             is_race=True,
             test_type_int=int(self.is_dict),
-            wrong=wrong,
+            wrong=list(wrong),
         )
         r.word_history = word_history
 
@@ -1913,7 +1963,9 @@ class Typing(commands.Cog):
             word_display=word_display,
         )
 
-        view = TypingTestResultView(ctx, user, is_dict, length, wrong, *quote_info)
+        view = TypingTestResultView(
+            ctx, user, is_dict, length, list(wrong), *quote_info
+        )
 
         await message.reply(embed=embed, view=view, mention_author=False)
 

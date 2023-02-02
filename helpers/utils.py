@@ -123,8 +123,8 @@ def get_test_input_stats(u_input: list, quote: list):
     o_quote = quote.copy()
 
     # Ignoring word case
-    quote = [q.lower() for q in quote]
-    u_input = [u.lower() for u in u_input]
+    # quote = [q.lower() for q in quote]
+    # u_input = [u.lower() for u in u_input]
 
     # User input shift
     u_shift = 0
@@ -143,7 +143,7 @@ def get_test_input_stats(u_input: list, quote: list):
     u = 0
 
     # Wrong words
-    wrong = []
+    wrong = {}  # correct: wrong
 
     def _eval_one_iteration(shift=0):
         mu_index = u_index + shift
@@ -204,7 +204,7 @@ def get_test_input_stats(u_input: list, quote: list):
                 cc += len(quote[w_index]) - 1
                 u_shift += 1
 
-                wrong.append(o_quote[w_index])
+                wrong[o_quote[w_index]] = u_input[u_index] + " " + u_input[u_index + 1]
 
             elif result == 2:
                 word_history.append(f"~~{u_input[u_index]}~~")
@@ -220,11 +220,13 @@ def get_test_input_stats(u_input: list, quote: list):
                 w_shift += 1
                 u_shift += 1
 
-                wrong.append(
+                og = (
                     o_quote[w_index + 1]
                     if (a := o_quote[w_index]) in u_input[u_index]
                     else a
                 )
+
+                wrong[og] = combined
 
             elif result == 4:
                 word_history.append(f"{o_quote[w_index]} \_ {o_quote[w_index + 1]}")
@@ -233,7 +235,7 @@ def get_test_input_stats(u_input: list, quote: list):
                 w_shift += 1
                 extra_cc += 1
 
-                wrong.append(o_quote[w_index])
+                wrong[o_quote[w_index]] = o_quote[w_index] + o_quote[w_index + 1]
 
             continue
 
@@ -281,8 +283,7 @@ def get_test_input_stats(u_input: list, quote: list):
         cc += max(longest - wc, 0)
 
         word_history.append(f"~~{u_input[u_index]}~~ **({o_quote[w_index]})**")
-
-        wrong.append(o_quote[w_index])
+        wrong[o_quote[w_index]] = u_input[u_index]
 
         if (extra := len(quote[w_index]) - len(u_input[u_index])) > 0:
             extra_cc += extra
