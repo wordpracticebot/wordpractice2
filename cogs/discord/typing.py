@@ -1986,7 +1986,7 @@ class Typing(commands.Cog):
             timestamp=datetime.utcnow(),
             is_race=False,
             test_type_int=int(is_dict),
-            wrong=wrong,
+            wrong=list(wrong),
         )
 
         warning = _get_test_warning(score, end_time, result)
