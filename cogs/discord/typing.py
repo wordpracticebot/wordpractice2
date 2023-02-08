@@ -923,7 +923,7 @@ class TestResultView(BaseView):
         )
 
         # 1/5 chance of showing donation link
-        if random.randint(0, 5) == 0:
+        if random.randint(0, 1) == 0:
             self.add_item(discord.ui.Button(label="Donate", url=DONATION_LINK))
         else:
             self.add_item(
