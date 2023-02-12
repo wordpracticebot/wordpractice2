@@ -608,10 +608,25 @@ class WordPractice(bridge.AutoShardedBot):
         view = WelcomeView(ctx, callback, response)
         await view.start()
 
+    async def check_dm_cmd(self, ctx: Context):
+        if ctx.guild is None:
+            view = create_link_view({"Invite Bot": self.create_invite_link()})
+
+            await ctx.respond(
+                "Sorry, commands can only be run in servers!", view=view, ephemeral=True
+            )
+
+            return True
+
+        return False
+
     async def on_interaction(self, interaction):
         if interaction.type is InteractionType.application_command:
 
             ctx = await self.get_application_context(interaction)
+
+            if await self.check_dm_cmd(ctx):
+                return
 
             # Asking the user to accept the rules before using the bot
             if ctx.initial_user is None:
@@ -637,6 +652,9 @@ class WordPractice(bridge.AutoShardedBot):
             return
 
         if ctx.command is not None:
+            if await self.check_dm_cmd(ctx):
+                return
+
             # Asking the user to accept the rules before using the bot
             if ctx.initial_user is None:
 

@@ -180,6 +180,13 @@ async def _ocr_check(text: str, word_list: list[str], wrong: dict[str, str]):
     ...
 
 
+async def _tts_check(text: str):
+    # TODO: check for miscapitalization
+
+    # TODO: check for random punctuation
+    ...
+
+
 def _get_test_warning(score, elapsed_time, test_zone):
     if score.acc < 75:
         if score.raw > 300:

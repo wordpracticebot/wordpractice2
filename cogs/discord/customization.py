@@ -18,7 +18,7 @@ from helpers.checks import cooldown, premium_command, user_check
 from helpers.converters import HexOrRGB, colour_option, rgb_to_hex, user_option
 from helpers.errors import ImproperArgument
 from helpers.image import get_base_img, save_discord_static_img
-from helpers.ui import BaseView, ScrollView, create_link_view
+from helpers.ui import BaseView, ScrollView
 from helpers.user import get_pacer_display, get_theme_display
 from helpers.utils import copy_doc, invoke_completion, invoke_slash_command
 from static import themes

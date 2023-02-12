@@ -7,7 +7,7 @@ from discord.ext import commands
 from bot import Context
 from data.constants import PREMIUM_LINK
 from helpers.ui import create_link_view
-from helpers.utils import get_command_name
+from helpers.utils import get_command_name, invoke_completion
 
 if TYPE_CHECKING:
     from cogs.utils.mongo import User
@@ -24,6 +24,9 @@ def premium_command():
             )
 
             await ctx.respond(embed=embed, view=view)
+
+            invoke_completion(ctx)
+
             return False
 
         return True
