@@ -343,8 +343,6 @@ class Events(commands.Cog):
         await self.handle_command_completion(ctx)
 
     async def handle_command_completion(self, ctx: Context):
-        print("completion")
-
         if ctx.no_completion:
             return
 
