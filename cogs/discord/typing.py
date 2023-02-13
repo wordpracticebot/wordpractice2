@@ -446,7 +446,10 @@ class TournamentView(ScrollView):
 
             view.next_test.callback = _test_callback
 
-            await message.reply(embed=embed, view=view, mention_author=False)
+            try:
+                await message.reply(embed=embed, view=view, mention_author=False)
+            except discord.HTTPException:
+                await self.ctx.respond(embed=embed, view=view)
 
             # Creating the score object to manage the statistics better
             score = self.ctx.bot.mongo.Score(
@@ -1048,7 +1051,10 @@ class TypingTestResultView(TestResultView):
             word_display=word_display,
         )
 
-        await message.reply(embed=embed, mention_author=False)
+        try:
+            await message.reply(embed=embed, mention_author=False)
+        except discord.HTTPException:
+            await self.ctx.respond(embed=embed)
 
         await self.ctx.respond("Warning: Practice tests are not saved")
 
@@ -1974,7 +1980,10 @@ class Typing(commands.Cog):
             ctx, user, is_dict, length, list(wrong), *quote_info
         )
 
-        await message.reply(embed=embed, view=view, mention_author=False)
+        try:
+            await message.reply(embed=embed, view=view, mention_author=False)
+        except discord.HTTPException:
+            await ctx.respond(embed=embed, view=view)
 
         # For logging
         show_hs_captcha = False
@@ -2217,7 +2226,10 @@ class Typing(commands.Cog):
 
         view = TestResultView(ctx, user, is_dict, length)
 
-        await message.reply(embed=result_embed, view=view, mention_author=False)
+        try:
+            await message.reply(embed=result_embed, view=view, mention_author=False)
+        except discord.HTTPException:
+            await ctx.respond(embed=embed, view=view, ephemeral=True)
 
         # Logging the captcha
         await ctx.bot.test_wh.send(embed=embed)
