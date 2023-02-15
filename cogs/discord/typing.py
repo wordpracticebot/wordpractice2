@@ -1682,7 +1682,7 @@ class Typing(commands.Cog):
     @commands.group(usage="[length]", invoke_without_command=True)
     @cooldown(5, 1)
     @copy_doc(tt_dictionary)
-    async def tt(self, ctx: Context, length: int = 35):
+    async def tt(self, ctx: Context, length: int = 40):
         await invoke_slash_command(self.tt_dictionary, self, ctx, length)
 
     @tt.command(usage="[length]", name="quote")
@@ -1694,7 +1694,7 @@ class Typing(commands.Cog):
     @race_group.command(name="dictionary")
     @cooldown(6, 2)
     @word_option
-    async def race_dictionary(self, ctx: Context, length: int):
+    async def race_dictionary(self, ctx: Context, length: int = 40):
         """Take a multiplayer dictionary typing test"""
         quote_info = await self.handle_dictionary_input(ctx, length)
 
