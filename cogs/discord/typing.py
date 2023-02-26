@@ -288,7 +288,7 @@ class TournamentView(ScrollView):
         self.t_page = 0
 
         # The scroll view is used for scroll between the rankings in each tournament
-        super().__init__(ctx, iter=self.get_iter, per_page=10, row=1)
+        super().__init__(ctx, iter=self.get_iter, per_page=10, row=1, compact=False)
 
     @property
     def total(self):

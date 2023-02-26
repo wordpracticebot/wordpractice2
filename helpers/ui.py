@@ -216,6 +216,7 @@ class ScrollView(PageView):
         iter: Union[Iterable, Callable],
         per_page: int = 1,
         row=0,
+        compact: bool = None,
     ):
         super().__init__(ctx)
 
@@ -226,6 +227,8 @@ class ScrollView(PageView):
         self.row = row
 
         self.page = 0
+
+        self._compact = compact
 
         self.add_items()
 
@@ -246,7 +249,7 @@ class ScrollView(PageView):
 
     @property
     def compact(self):
-        return self.max_page <= 7
+        return self._compact if self._compact is not None else self.max_page <= 7
 
     @property
     def has_btns(self):
@@ -286,7 +289,6 @@ class ScrollView(PageView):
             self.add_scroll_btn(icons.fast_left_arrow, self.scroll_to_front)
 
         self.add_scroll_btn(icons.left_arrow, self.scroll_forward)
-
         self.add_scroll_btn(icons.right_arrow, self.scroll_backward)
 
         if self.compact is False:
