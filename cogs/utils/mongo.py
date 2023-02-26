@@ -450,7 +450,7 @@ class QualificationTournament(Tournament):
         return (
             f"The participants with the top {self.amount} highest scores qualify.\n\n"
             f"A bracket will be hosted on **<t:{self.unix_bracket_start}:f>** on the **[{self.host_server} server]({invite})** to determine the winner from those that qualify.\n\n"
-            "**__Make sure to join the [server]({invite}) if your participate.__**"
+            f"**__Make sure to join the server if your participate.__**"
         )
 
     def get_ranking_prefix(self, placing: int, _) -> str:
