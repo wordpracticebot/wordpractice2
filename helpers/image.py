@@ -88,7 +88,7 @@ def get_highscore_captcha_img(base_img, text_colour):
 def get_loading_img(img, text_colour):
     width, height = img.size
 
-    blurred = img.filter(ImageFilter.GaussianBlur(radius=7))
+    blurred = img.filter(ImageFilter.GaussianBlur(radius=6))
 
     d = ImageDraw.Draw(blurred)
 
