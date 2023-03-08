@@ -337,6 +337,9 @@ class TournamentView(ScrollView):
         return sorted(sum(tournaments, []), key=lambda t: t.end_time, reverse=True)
 
     def get_placing(self, user_id: int, rankings: dict[str, float]):
+        if user_id is None:
+            return None
+
         user_id = str(user_id)
 
         if user_id not in rankings:
