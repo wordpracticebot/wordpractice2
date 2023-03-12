@@ -22,6 +22,7 @@ def main():
         chunk_guilds_at_startup=False,
         help_command=None,
         debug_guild=DEBUG_GUILD_ID,
+        shard_count=5,
         intents=intents,
     )
 
