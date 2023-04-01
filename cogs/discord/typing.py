@@ -2148,11 +2148,11 @@ class Typing(commands.Cog):
         ctx.bot.active_start(ctx.author.id)
 
         # Getting the quote for the captcha
-        words, _ = _load_test_file(word_list.languages["english"]["easy"])
+        words, _ = _load_test_file(word_list.languages["english"]["normal"])
         captcha_word = random.choice(words)
 
         # Generating the captcha image
-        image = ImageCaptcha(width=200)
+        image = ImageCaptcha(width=100)
         buffer = image.generate(captcha_word)
         buffer.seek(0)
 
@@ -2219,7 +2219,7 @@ class Typing(commands.Cog):
 
             cls.interval_captcha_fails[ctx.author.id] = fails
 
-            if fails != 0 and fails % 5 == 0:
+            if fails != 0 and fails % 3 == 0:
                 flag_embed = get_log_embed(
                     ctx,
                     title="Several Consecutive Interval Captcha Fails",
