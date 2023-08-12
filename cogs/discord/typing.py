@@ -1735,9 +1735,9 @@ class Typing(commands.Cog):
 
         words, wrap = _load_test_file(word_list.languages[user.language][user.level])
 
-        raw_words = " ".join(random.sample(words, length), wrap)
+        raw_words = " ".join(random.sample(words, length))
 
-        return raw_words.split(" ")[:length]
+        return raw_words.split(" ")[:length], wrap
 
     @staticmethod
     async def handle_quote_input(length: str):
