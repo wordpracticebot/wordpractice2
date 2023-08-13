@@ -15,7 +15,7 @@ GRAPH_EXPIRE_TIME = 60 * 60 * 24
 
 PRIVACY_POLICY_LINK = "https://wordpracticebot.github.io/privacy-policy/"
 RULES_LINK = "https://wordpracticebot.github.io/privacy-policy/rules"
-GITHUB_LINK = "https://github.com/principle105"  # TODO: put the proper github link here
+GITHUB_LINK = "https://github.com/wordpracticebot/wordpractice2"
 
 DEFAULT_VIEW_TIMEOUT = 45  # seconds
 DEFAULT_THEME = default["Material"]["colours"]
