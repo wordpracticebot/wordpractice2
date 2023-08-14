@@ -180,7 +180,6 @@ class SeasonView(ViewFromDict):
             embed.description = "Sorry, there are no rewards available..."
 
         else:
-
             p = self.user.xp / challenges[-1][0]
 
             bar = get_bar(
@@ -945,7 +944,6 @@ class ProfileView(BaseView):
 
 class ProfileSelect(discord.ui.Select):
     def __init__(self, callbacks):
-
         self.callbacks = callbacks
 
         super().__init__(
@@ -962,7 +960,6 @@ class ProfileSelect(discord.ui.Select):
         option = self.values[0]
 
         if option != self.view.page:
-
             self.view.page = option
 
             await self.view.update_message(interaction)

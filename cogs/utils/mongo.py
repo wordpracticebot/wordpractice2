@@ -299,7 +299,10 @@ class User(UserBase):
 
     @property
     def icon(self):
-        return self.premium.icon if self.is_premium else ""
+        if self.is_premium and self.premium:
+            return self.premium.icon
+
+        return ""
 
     @property
     def export_scores(self):

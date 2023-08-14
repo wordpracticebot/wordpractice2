@@ -120,7 +120,6 @@ def _get_lag_from_start_time(start_time: float):
 async def _cheating_check(ctx: Context, user, user_data, score, word_history):
     """Prevents blatant cheating"""
     if score.wpm >= IMPOSSIBLE_THRESHOLD:
-
         reason = "Cheating on the typing test"
 
         user_data = await ctx.bot.mongo.add_inf(ctx, user, user_data, reason)
@@ -271,7 +270,6 @@ def _add_test_settings_to_embed(embed, language, pacer_name, word_display):
 
 class TournamentView(ScrollView):
     def __init__(self, ctx: Context, raw_t_data):
-
         self.start_date = datetime.utcnow()
 
         self.t_data = self.sort_t_data(raw_t_data)
@@ -370,7 +368,6 @@ class TournamentView(ScrollView):
         async def _test_callback(interaction):
             # Refetching the tournament data
             if self.fetched is False:
-
                 self.start_date = datetime.utcnow()
 
                 t_type = self.get_tournament_type(self.t)
@@ -506,11 +503,9 @@ class TournamentView(ScrollView):
                     estimate = estimate_placing(sorted_values, old_value, value)
 
                     if estimate is not None:
-
                         potential_placing, diff = estimate
 
                         if diff is not False:
-
                             placing = humanize.ordinal(potential_placing)
 
                             msg = f"Your tournament placing is now **{placing}"
@@ -644,14 +639,12 @@ class TournamentView(ScrollView):
 
         # Displaying the rankings of the tournament
         if self.raw_lb_data:
-
             if self.lb_data is None:
                 data = await get_users_from_lb(self.ctx.bot, self.raw_lb_data)
 
                 self.lb_data = sorted(data, key=lambda x: x[1], reverse=True)
 
             for i, (u, v) in enumerate(self.items):
-
                 placing = self.start_page + i + 1
 
                 lb_display = get_lb_display(
@@ -1255,7 +1248,6 @@ class RaceJoinView(BaseView):
         await self.race_msg.edit(embed=embed)
 
     async def do_race(self, interaction):
-
         author_theme = self.racers[self.ctx.author.id].data.theme
 
         raw_quote = " ".join(self.quote)
@@ -1429,7 +1421,6 @@ class RaceJoinView(BaseView):
             special_ctx.add_leaderboard_values()
 
             if r.save_score:
-
                 user.add_score(score)
                 user.add_words(score.cw)
                 user.add_xp(score.xp)
@@ -1843,7 +1834,6 @@ class Typing(commands.Cog):
         # Generating the acutal test image
 
         if pacer:
-
             buffer = await get_pacer(
                 ctx.bot,
                 base_img,
@@ -2053,7 +2043,6 @@ class Typing(commands.Cog):
         author=None,
         send=True,
     ):
-
         stats = (
             f"**Wpm:** {score.wpm}\n"
             f"**Raw:** {score.raw}\n"
