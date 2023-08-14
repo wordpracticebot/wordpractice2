@@ -295,7 +295,10 @@ class User(UserBase):
 
     @property
     def save_amt(self):
-        return self.premium.save_amt if self.is_premium else SCORE_SAVE_AMT
+        if self.is_premium and self.premium:
+            return self.premium.save_amt
+
+        return SCORE_SAVE_AMT
 
     @property
     def icon(self):
@@ -306,11 +309,14 @@ class User(UserBase):
 
     @property
     def export_scores(self):
-        return self.premium.export_scores if self.is_premium else False
+        if self.is_premium and self.premium:
+            return self.premium.export_scores
+
+        return False
 
     @property
     def view_heat_map(self):
-        if self.is_premium:
+        if self.is_premium and self.premium:
             return self.premium.view_heat_map
 
         return False
@@ -637,7 +643,6 @@ class Mongo(commands.Cog):
         user: discord.User = None,
         create: bool = False,
     ) -> Union[User, None]:
-
         if user_id is None:
             u = None
         else:
